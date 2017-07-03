@@ -21,7 +21,7 @@ import Parser.FileInputReader;
  * 
  * @author sbansal
  * @version 1.0
- * @since 2017-06-26
+ * @since 2017-07-03
  */
 public class DbFeeder {
 	
@@ -74,7 +74,12 @@ public class DbFeeder {
 			Document doc2 = new Document().append("file", "doc2");
 			
 			/** 2. feeding parsed Documents into the database */
-			addFile("src/storm.server.properties");
+			File folder = new File("src/ParserResources"); //any directory containing parsable files
+			InputPathReader directory = new InputPathReader(folder);
+			directory.parseAll();
+			for (String path : directory.getFilePaths()) {
+				addFile(path);
+			}
 			Iterator<File> files = fileSet.iterator();
 			while (files.hasNext()) {
 				
