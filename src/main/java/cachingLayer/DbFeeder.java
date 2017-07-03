@@ -20,8 +20,8 @@ import Parser.FileInputReader;
  * running simultaneously.
  * 
  * @author sbansal
- * @version 1.0
- * @since 2017-06-26
+ * @version 1.1
+ * @since 2017-07-03
  */
 public class DbFeeder {
 	
