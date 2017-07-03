@@ -1,4 +1,4 @@
-package Parser;
+package parser;
 
 import java.io.*;
 
@@ -6,16 +6,25 @@ import java.io.*;
  * Takes input file and parses according to file type.
  * 
  * @author ActianceEngInterns
- * @version 1.0
- * @since 2017-06-27
+ * @version 1.1
+ * @since 2017-06-30
  */
 public class FileInputReader {
 	private File input;
 	private Standardizer data;
-	
+	private String errorDescription;
+
 	public FileInputReader(File f) {
 		this.input = f;
 		instantiateParser();
+	}
+	
+	/**
+	 * Getter method for errorDescription
+	 * @return errorDescription
+	 */
+	public String getErrorDescription() {
+		return errorDescription;
 	}
 
 	/**
@@ -24,14 +33,16 @@ public class FileInputReader {
 	public void instantiateParser() {
 		String filename = input.getAbsolutePath();
 		String fileType = filename.substring(filename.lastIndexOf('.') + 1);
-		if (fileType.equalsIgnoreCase("config") ||
-			fileType.equalsIgnoreCase("conf")) {
+		if (fileType.equalsIgnoreCase("config") || fileType.equalsIgnoreCase("conf")) {
 			data = new StandConf();
-		} else if (fileType.equalsIgnoreCase("yaml") ||
-				   fileType.equalsIgnoreCase("yml")) {
+		} else if (fileType.equalsIgnoreCase("yaml") || fileType.equalsIgnoreCase("yml")) {
 			data = new StandYaml();
 		} else if (fileType.equalsIgnoreCase("properties")) {
 			data = new StandProp();
+		} else if (input.getName().equals("hosts")) {
+			data = new StandHost();
+		} else {
+			errorDescription = input.getName();
 		}
 	}
 
@@ -41,20 +52,19 @@ public class FileInputReader {
 	public void parseFile() {
 		if (data != null) {
 			data.standardize(input);
-		} else {
-			System.err.println("error: unsupported file type");
 		}
 	}
-	
+
 	/**
 	 * Returns the File-specific parser.
+	 * 
 	 * @return the File-specific parser
 	 */
 	public Standardizer getData() {
-		if (data != null) { 
+		parseFile();
+		if (data != null) {
 			return data;
 		}
-		System.err.println("error: unsupported file type");
 		return null;
 	}
 
@@ -64,8 +74,6 @@ public class FileInputReader {
 	public void clearData() {
 		if (data != null) {
 			data.clear();
-		} else {
-			System.err.println("error: unsupported file type");
-		} 
+		}
 	}
 }
