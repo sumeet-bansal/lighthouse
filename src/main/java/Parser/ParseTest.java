@@ -1,4 +1,4 @@
-package Parser;
+package parser;
 
 import java.io.*;
 
@@ -7,19 +7,20 @@ import java.io.*;
  * 
  * @author ActianceEngInterns
  * @version 1.0
- * @since 2017-06-27
+ * @since 2017-06-30
  */
 public class ParseTest {
-	
+
 	/**
 	 * Runs the tester.
-	 * @param args command-line arguments
+	 * 
+	 * @param args
+	 *            command-line arguments
 	 */
 	public static void main(String[] args) {
-		File f = new File("src/storm.server.properties");
-		FileInputReader reader = new FileInputReader(f);
-		reader.parseFile();
-		System.out.println(reader.getData());
+		File folder = new File("C:/Users/PKelaita/Documents/ParserResources"); //file path of directory, mine is used as an example
+		InputPathReader reader = new InputPathReader(folder);
+		reader.parseAll();
+		System.out.print(reader);
 	}
-	
 }
