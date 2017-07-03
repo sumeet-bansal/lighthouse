@@ -1,0 +1,105 @@
+package parser;
+
+import java.io.*;
+import java.util.*;
+
+/**
+ * Takes a folder as input, parses every file in it or its subfolders for keys,
+ * and stores keys and their values in an ArrayList.
+ * 
+ * @author ActianceEngInterns
+ * @version 1.1
+ * @since 2017-06-30
+ */
+public class InputPathReader {
+	private File folder;
+	private ArrayList<Standardizer> folderData = new ArrayList<Standardizer>();
+	// folderData stores Standardizers for each file, which store their keys and
+	// values
+	private ArrayList<String> filePaths = new ArrayList<String>();
+	private ArrayList<String[]> headers = new ArrayList<String[]>();
+	private long startTime;
+	private long endTime;
+	private long duration;
+	private ArrayList<String> errors = new ArrayList<String>();
+
+	public InputPathReader(File folder) {
+		this.folder = folder;
+	}
+
+	/**
+	 * Getter method for folderData
+	 * 
+	 * @return folderData
+	 */
+	public ArrayList<Standardizer> getFolderData() {
+		return folderData;
+	}
+
+	/**
+	 * Searches a given directory for files and adds them to filePaths as a
+	 * string representation of their paths
+	 * 
+	 * @param folder
+	 */
+	private void listFilesForFolder(File folder) {
+		for (File fileEntry : folder.listFiles()) {
+			if (fileEntry.isDirectory()) {
+				listFilesForFolder(fileEntry);
+			} else {
+				filePaths.add(fileEntry.getPath());
+			}
+		}
+	}
+
+	/**
+	 * Runs each path in filePaths through a FileInputReader and adds its
+	 * standardized data to folderData and variables called in toString().
+	 * Calculates runtime in milliseconds.
+	 */
+	public void parseAll() {
+		startTime = System.nanoTime();
+		listFilesForFolder(folder);
+		for (String path : filePaths) {
+			File f = new File(path);
+			FileInputReader reader = new FileInputReader(f);
+			try {
+				Standardizer data = reader.getData();
+				folderData.add(data);
+				String[] fileWithHeader = { path, data.toString() };
+				headers.add(fileWithHeader);
+			} catch (NullPointerException e) {
+				errors.add(reader.getErrorDescription());
+			}
+			reader.clearData();
+		}
+		endTime = System.nanoTime();
+		duration = (endTime - startTime) / 1000000;
+	}
+
+	/**
+	 * Prints each file in Standardizer.toString() format and specifies the file
+	 * name and path. Prints a list of files failed to parse and parseAll() runtime.
+	 * 
+	 * @return str
+	 */
+	public String toString() {
+		String str = new String();
+		for (String[] fileData : headers) {
+			File f = new File(fileData[0]);
+			str += ("File: " + f.getName() + "\nPath: " + fileData[0] + "\nKeys:\n" + fileData[1] + "\n");
+		}
+		String errorList = new String();
+		if (errors.size() != 0) {
+			errorList += "\n";
+			for (String err : errors) {
+				errorList += " - " + err + "\n";
+			}
+		} else {
+			errorList = "None\n";
+		}
+		str += ("Unsupported files: " + errorList + "\n");
+		str += ("Runtime: " + duration + " milliseconds");
+		return str;
+	}
+}
