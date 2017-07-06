@@ -51,9 +51,9 @@ public class MongoMethods {
 					append("age", 18).
 					append("uni", "u dub");
 			Document doc4 = new Document().
-					append("name", "Cameron").
+					append("name", "Anthony").
 					append("age", 19).
-					append("uni", "brown");
+					append("uni", "usd");
 			Document doc5 = new Document().
 					append("name", "Sara").
 					append("age", 22).
@@ -95,11 +95,11 @@ public class MongoMethods {
 			}
 
 			// delete Document
-			Document del = new Document("name", "Cameron");
+			Document del = new Document("name", "Anthony");
 			col.deleteOne(del);
 			del = new Document("name", "Sara");
 			col.deleteOne(del);
-			System.out.println("deleted Sara and Cameron");
+			System.out.println("deleted Sara and Anthony");
 			cursor = col.find().iterator();
 			while (cursor.hasNext()) {
 				System.out.println(cursor.next());

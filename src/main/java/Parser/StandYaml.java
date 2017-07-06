@@ -33,7 +33,7 @@ public class StandYaml extends Standardizer {
 				vals.add(entry.getValue());
 			}
 		} catch (Exception e) {
-			System.err.println("error: file must be in YAML format.");
+			System.err.println("error: file must be in .yaml format.");
 			error = true;
 		}
 	}

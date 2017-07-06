@@ -12,7 +12,12 @@ import java.io.*;
 public class FileInputReader {
 	private File input;
 	private Standardizer data;
+	private String errorDescription;
 	
+	/**
+	 * Constructor. Initializes internal File and Standardizer variables.
+	 * @param f input File being read
+	 */
 	public FileInputReader(File f) {
 		this.input = f;
 		instantiateParser();
@@ -32,6 +37,9 @@ public class FileInputReader {
 			data = new StandYaml();
 		} else if (fileType.equalsIgnoreCase("properties")) {
 			data = new StandProp();
+		} else {
+			errorDescription = filename;
+			System.err.println("error: unsupported file type in " + errorDescription);
 		}
 	}
 
@@ -41,8 +49,6 @@ public class FileInputReader {
 	public void parseFile() {
 		if (data != null) {
 			data.standardize(input);
-		} else {
-			System.err.println("error: unsupported file type");
 		}
 	}
 	
@@ -54,8 +60,15 @@ public class FileInputReader {
 		if (data != null) { 
 			return data;
 		}
-		System.err.println("error: unsupported file type");
 		return null;
+	}
+	
+	/**
+	 * Getter method for error description.
+	 * @return the error description
+	 */
+	public String getErrorDescription() {
+		return errorDescription;
 	}
 
 	/**
@@ -64,8 +77,6 @@ public class FileInputReader {
 	public void clearData() {
 		if (data != null) {
 			data.clear();
-		} else {
-			System.err.println("error: unsupported file type");
 		} 
 	}
 }
