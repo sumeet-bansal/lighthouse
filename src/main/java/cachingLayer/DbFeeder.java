@@ -1,21 +1,14 @@
 package cachingLayer;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.TreeSet;
-import java.util.Iterator;
+import java.util.*;
 
 import org.bson.Document;
 
-import com.mongodb.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.*;
+import com.mongodb.client.*;
 
-import parser.DirectoryParser;
-import parser.FileParser;
-import parser.AbstractParser;
+import parser.*;
 
 /**
  * Generates cache of normalized server config files and data. Must have
@@ -87,6 +80,14 @@ public class DbFeeder {
 		
 		for (AbstractParser s : parsedFiles) {
 
+			Document doc = new Document();	// represents a single parsed file
+
+			// gets metadata of parsed file and tags Document accordingly
+			Map<String, String> metadata = s.getMetadata();
+			for (Map.Entry<String, String> entry : metadata.entrySet()) {
+				doc.append(entry.getKey(), entry.getValue());
+			}
+			
 			// gets ArrayLists of keys and values from parsed file
 			ArrayList<String> keys = s.getKeys();
 			ArrayList<Object> vals = s.getVals();
@@ -95,7 +96,6 @@ public class DbFeeder {
 			if (keys.size() != vals.size()) {
 				System.err.println("invalid file: var-val mismatch");
 			}
-			Document doc = new Document();
 			for (int i = 0; i < keys.size(); i++) {
 				String key = keys.get(i).replace(".", "```");
 				doc.append(key, vals.get(i).toString());

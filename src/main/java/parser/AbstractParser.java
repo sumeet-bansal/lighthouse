@@ -48,13 +48,38 @@ public abstract class AbstractParser {
 		}
 		return vals;
 	}
+	
+	/**
+	 * Getter method for file metadata.
+	 * @return file metadata (i.e. environment, fabric, node info)
+	 */
+	public Map<String, String> getMetadata() {
+		String[] delimitedPath = path.split("/");
+		String[] predictedPath = {"filename", "node", "fabric", "environment"};
+		Map<String, String> metadata = new LinkedHashMap<>();
+		for (int i = 0; i < predictedPath.length; i++) {
+			metadata.put(predictedPath[i], delimitedPath[delimitedPath.length-1-i]);
+		}
+		return metadata;
+	}
 
 	/**
 	 * Setter method for file path instance variable.
-	 * @param input File being standardized
+	 * @param input path of File being standardized
 	 */
 	public void setPath(String path) {
-		this.path = path;
+		
+		// necessary because Windows file delimiters throw off String methods
+		String p = "";
+		for (int i = 0; i < path.length(); i++) {
+			if (path.charAt(i) != '\\') {
+				p += path.charAt(i);
+			} else {
+				p += "/";
+			}
+		}
+		
+		this.path = p;
 	}
 	
 	/**
