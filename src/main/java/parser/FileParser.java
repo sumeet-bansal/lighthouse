@@ -1,4 +1,4 @@
-package Parser;
+package parser;
 
 import java.io.*;
 
@@ -7,9 +7,9 @@ import java.io.*;
  * 
  * @author ActianceEngInterns
  * @version 1.0
- * @since 2017-06-27
+ * @since 2017-07-06
  */
-public class FileInputReader {
+public class FileParser {
 	private File input;
 	private Standardizer data;
 	private String errorDescription;
@@ -18,7 +18,7 @@ public class FileInputReader {
 	 * Constructor. Initializes internal File and Standardizer variables.
 	 * @param f input File being read
 	 */
-	public FileInputReader(File f) {
+	public FileParser(File f) {
 		this.input = f;
 		instantiateParser();
 	}
@@ -37,9 +37,14 @@ public class FileInputReader {
 			data = new StandYaml();
 		} else if (fileType.equalsIgnoreCase("properties")) {
 			data = new StandProp();
+		} else if (input.getName().equalsIgnoreCase("hosts")) {
+			data = new StandHost();
 		} else {
 			errorDescription = filename;
 			System.err.println("error: unsupported file type in " + errorDescription);
+		}
+		if (data != null) {
+			data.setPath(filename);
 		}
 	}
 

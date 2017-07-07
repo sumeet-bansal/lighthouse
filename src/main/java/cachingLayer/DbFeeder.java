@@ -13,43 +13,46 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
-import Parser.FileInputReader;
+import parser.DirectoryParser;
+import parser.FileParser;
+import parser.Standardizer;
 
 /**
- * Generates cache of normalized server config files. Must have 'mongod'
- * running simultaneously.
+ * Generates cache of normalized server config files and data. Must have
+ * 'mongod' running simultaneously. Directories must contain equal number of
+ * keys. Key names must be consistent.
  * 
- * @author sbansal
+ * @author ActianceEngInterns
  * @version 1.0
- * @since 2017-06-26
+ * @since 2017-07-06
  */
 public class DbFeeder {
 	
 	/** TODO
 	 * - configure DbFeeder to work with UI
-	 *   - replace main() with methods
-	 *     - set up MongoDB instance in ctor
-	 *   - method to create initial cache
-	 *   - method to update cache
-	 *     - work with recursive file finder via Listeners
-	 */
-	
-	/** FIXME
-	 * - weird bug with tab characters in printIter()
+	 * - method to update cache (via Listeners?)
 	 */
 	
 	private static HashSet<File> fileSet = new HashSet<File>();
+	private static MongoCollection<Document> col;
+	
+	/**
+	 * Quick tester.
+	 * @param args command-line arguments
+	 */
+	public static void main(String[] args) {
+		DbFeeder feeder = new DbFeeder();
+		feeder.feedDocs("C:/Users/sbansal/Documents/parserResources");
+	}
 	
 	/**
 	 * Creates the cache and pulls server configuration data from it as per
 	 * the query.
-	 * @param args command-line arguments
 	 */
-	public static void main(String args[]) {
+	public DbFeeder() {
 		
 		try {
 			
-			/** 1. setting up the caching layer */
 			// connecting with server
 			@SuppressWarnings("resource")
 			MongoClient mongoClient = new MongoClient("localhost", 27017);
@@ -58,57 +61,51 @@ public class DbFeeder {
 			// connecting with Database
 			MongoDatabase dbs = mongoClient.getDatabase("test");
 			System.out.println("connected to database " + dbs.getName());
-			
-			// create Collection
-			String colName = "ahos";
-			MongoCollection<Document> col = dbs.getCollection(colName);
-			col.drop(); dbs.createCollection(colName);
-			System.out.println("created collection " + colName);
 
 			// drop Collection
-			col.drop();
-			System.out.println("dropped collection");
-
-			// temporary for testing purposes
-			Document doc1 = new Document().append("file", "doc1");
-			Document doc2 = new Document().append("file", "doc2");
+			//col.drop();
+			//System.out.println("dropped collection");
 			
-			/** 2. feeding parsed Documents into the database */
-			addFile("src/storm.server.properties");
-			Iterator<File> files = fileSet.iterator();
-			while (files.hasNext()) {
-				
-				// gets ArrayLists of keys and values from parser
-				File f = files.next();
-				FileInputReader reader = new FileInputReader(f);
-				reader.parseFile();
-				System.out.println(reader.getData().getKeys());
-				ArrayList<String> keys = reader.getData().getKeys();
-				System.out.println(reader.getData().getVals());
-				ArrayList<Object> vals = reader.getData().getVals();
-				
-				// feeds ArrayLists into Documents
-				if (keys.size() != vals.size()) {
-					System.err.println("invalid file: var-val mismatch");
-				}
-				Document doc = new Document();
-				for (int i = 0; i < keys.size(); i++) {
-					doc.append(keys.get(i), vals.get(i));
-					doc1.append(keys.get(i), vals.get(i));
-					doc2.append(keys.get(i), vals.get(i));
-				}
-				System.out.println(doc.toJson());
-				
-				// inserts Document generated from File into MongoDB Collection
-				col.insertOne(doc);
-			}
-			
-			/** 3. compares two given Documents */
-			compareAll(doc1, doc2);
-			compareDiffs(doc1, doc2);
+			// create Collection
+			String colName = "dbtest";
+			col = dbs.getCollection(colName);
+			col.drop(); dbs.createCollection(colName);
+			System.out.println("created collection " + colName);
 			
 		} catch (Exception e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Feeds parsed Documents into the database.
+	 */
+	public void feedDocs(String path) {
+		
+		File folder = new File(path);
+		DirectoryParser directory = new DirectoryParser(folder);
+		directory.parseAll();
+		ArrayList<Standardizer> parsedFiles = directory.getParsedData();
+		
+		for (Standardizer s : parsedFiles) {
+
+			// gets ArrayLists of keys and values from parsed file
+			ArrayList<String> keys = s.getKeys();
+			ArrayList<Object> vals = s.getVals();
+
+			// feeds ArrayLists into Documents
+			if (keys.size() != vals.size()) {
+				System.err.println("invalid file: var-val mismatch");
+			}
+			Document doc = new Document();
+			for (int i = 0; i < keys.size(); i++) {
+				String key = keys.get(i).replace(".", "```");
+				doc.append(key, vals.get(i).toString());
+			}
+
+			// inserts Document generated from parsed file data into MongoDB Collection
+			System.out.println(doc.toJson());
+			col.insertOne(doc);
 		}
 	}
 	
@@ -127,14 +124,22 @@ public class DbFeeder {
 	 * @param key the key whose three-backtick sets are being converted
 	 * @return the converted key, with dots instead of three-backtick sets
 	 */
-	private static String dotConversion(String key) {
-		while (key.indexOf("```") != -1) {
-			int dotIndex = key.indexOf("```");
-			String pre = key.substring(0, dotIndex);
-			String post = key.substring(dotIndex+3);
-			key = pre + "." + post;
-		}
+	private static String backtickToDot(String key) {
+		key.replace("```", ".");
 		return key;
+	}
+
+	/**
+	 * Due to MongoDB constraints, all equal characters in the value field were
+	 * converted to an infrequently used substring--three at signs (@@@)--and
+	 * this converts those key Strings back to their original form with equal
+	 * signs.
+	 * @param value the value whose three-at-sign sets are being converted
+	 * @return the converted value, with equal signs instead of three-at-signs
+	 */
+	private String equalSignToAtSign(String value) {
+		value.replace("@@@", "=");
+		return value;
 	}
 
 	/**
@@ -150,7 +155,7 @@ public class DbFeeder {
 			String key = iter.next();
 			String val1 = doc1.get(key).toString();// != null ? doc1.get(key) : "";
 			String val2 = doc2.get(key).toString();// != null ? doc2.get(key) : "";
-			key = dotConversion(key);
+			key = backtickToDot(key);
 			if (val1 != null && val2 != null && !val1.equals(val2)) {
 				// tabs may cause output to not print
 				System.out.println(key + "\t" + val1 + "\t" + key + "\t" + val2 + "\t\t\tdiff");

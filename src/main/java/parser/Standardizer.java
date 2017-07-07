@@ -1,7 +1,7 @@
-package Parser;
+package parser;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Abstract class that declares common methods and instance variables for each
@@ -9,13 +9,14 @@ import java.util.ArrayList;
  * 
  * @author ActianceEngInterns
  * @version 1.0
- * @since 2017-06-27
+ * @since 2017-07-06
  */
 public abstract class Standardizer {
 	
-	static ArrayList<String> keys = new ArrayList<>();
-	static ArrayList<Object> vals = new ArrayList<>();
-	static boolean error = false;
+	String path;
+	ArrayList<String> keys = new ArrayList<>();
+	ArrayList<Object> vals = new ArrayList<>();
+	boolean error = false;
 	
 	/**
 	 * Getter method for key ArrayList.
@@ -23,18 +24,11 @@ public abstract class Standardizer {
 	 */
 	public ArrayList<String> getKeys() {
 		
-		// due to MongoDB constraints, all dot characters (.) are being
+		// due to MongoDB constraints, all dot characters ('.') are being
 		// converted to an extremely infrequently used substring--in this
 		// case, a series of three backticks ("```").
 		for (int i = 0; i < keys.size(); i++) {
-			String key = keys.get(i);
-			while (key.indexOf('.') != -1) {
-				int dotIndex = key.indexOf('.');
-				String pre = key.substring(0, dotIndex);
-				String post = key.substring(dotIndex+1);
-				key = pre + "```" + post;
-			}
-			keys.set(i, key);
+			keys.get(i).replace(".", "```");
 		}
 		
 		return keys;
@@ -45,7 +39,22 @@ public abstract class Standardizer {
 	 * @return the value ArrayList
 	 */
 	public ArrayList<Object> getVals() {
+		
+		// due to MongoDB constraints, all equal sign characters ('=') are
+		// being converted to an extremely infrequently used substring--in
+		// this case, a series of three at signs ("@@@").
+		for (int i = 0; i < vals.size(); i++) {
+			vals.get(i).toString().replace("=", "@@@");
+		}
 		return vals;
+	}
+
+	/**
+	 * Setter method for file path instance variable.
+	 * @param input File being standardized
+	 */
+	public void setPath(String path) {
+		this.path = path;
 	}
 	
 	/**
@@ -80,5 +89,5 @@ public abstract class Standardizer {
 		}
 		return str;
 	}
-
+	
 }
