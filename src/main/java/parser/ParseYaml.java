@@ -12,7 +12,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
  * @version 1.0
  * @since 2017-06-27
  */
-public class StandYaml extends Standardizer {
+public class ParseYaml extends AbstractParser {
 	
 	/**
 	 * Standardizes input File into separate ArrayLists for keys and values.

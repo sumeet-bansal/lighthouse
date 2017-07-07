@@ -14,7 +14,7 @@ import java.util.*;
 public class DirectoryParser {
 	
 	private File folder;
-	private ArrayList<Standardizer> parsedFiles = new ArrayList<Standardizer>();
+	private ArrayList<AbstractParser> parsedFiles = new ArrayList<AbstractParser>();
 	private ArrayList<String> filePaths = new ArrayList<>();
 	private ArrayList<String[]> headers = new ArrayList<String[]>();
 	private ArrayList<String> errors = new ArrayList<>();
@@ -28,7 +28,7 @@ public class DirectoryParser {
 	 * 
 	 * @return folderData
 	 */
-	public ArrayList<Standardizer> getParsedData() {
+	public ArrayList<AbstractParser> getParsedData() {
 		return parsedFiles;
 	}
 
@@ -59,7 +59,7 @@ public class DirectoryParser {
 			File f = new File(path);
 			FileParser reader = new FileParser(f);
 			reader.parseFile();
-			Standardizer data = reader.getData();
+			AbstractParser data = reader.getData();
 			parsedFiles.add(data);
 			String[] fileWithHeader = { path, data.toString() };
 			headers.add(fileWithHeader);

@@ -10,7 +10,7 @@ import java.util.*;
  * @version 1.0
  * @since 2017-06-30
  */
-public class StandHost extends Standardizer {
+public class ParseHost extends AbstractParser {
 	
 	/**
 	 * Standardizes input File into separate ArrayLists for keys and values.

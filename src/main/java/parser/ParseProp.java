@@ -10,7 +10,7 @@ import java.util.*;
  * @version 1.0
  * @since 2017-06-27
  */
-public class StandProp extends Standardizer {
+public class ParseProp extends AbstractParser {
 	private Properties prop = new Properties();
 	
 	/**

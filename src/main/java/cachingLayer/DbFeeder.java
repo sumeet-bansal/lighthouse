@@ -15,16 +15,14 @@ import com.mongodb.client.MongoDatabase;
 
 import parser.DirectoryParser;
 import parser.FileParser;
-import parser.Standardizer;
+import parser.AbstractParser;
 
 /**
  * Generates cache of normalized server config files and data. Must have
- * 'mongod' running simultaneously. Directories must contain equal number of
- * keys. Key names must be consistent.
+ * 'mongod' running simultaneously.
  * 
  * @author ActianceEngInterns
- * @version 1.0
- * @since 2017-07-06
+ * @version 1.1
  */
 public class DbFeeder {
 	
@@ -85,9 +83,9 @@ public class DbFeeder {
 		File folder = new File(path);
 		DirectoryParser directory = new DirectoryParser(folder);
 		directory.parseAll();
-		ArrayList<Standardizer> parsedFiles = directory.getParsedData();
+		ArrayList<AbstractParser> parsedFiles = directory.getParsedData();
 		
-		for (Standardizer s : parsedFiles) {
+		for (AbstractParser s : parsedFiles) {
 
 			// gets ArrayLists of keys and values from parsed file
 			ArrayList<String> keys = s.getKeys();

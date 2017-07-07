@@ -11,7 +11,7 @@ import java.util.*;
  * @version 1.0
  * @since 2017-07-06
  */
-public abstract class Standardizer {
+public abstract class AbstractParser {
 	
 	String path;
 	ArrayList<String> keys = new ArrayList<>();

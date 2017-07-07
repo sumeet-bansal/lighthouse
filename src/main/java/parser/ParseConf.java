@@ -9,7 +9,7 @@ import java.io.*;
  * @version 1.0
  * @since 2017-06-27
  */
-public class StandConf extends Standardizer {
+public class ParseConf extends AbstractParser {
 	
 	/**
 	 * Standardizes input File into separate ArrayLists for keys and values.

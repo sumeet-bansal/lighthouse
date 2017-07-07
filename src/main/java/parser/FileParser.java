@@ -11,7 +11,7 @@ import java.io.*;
  */
 public class FileParser {
 	private File input;
-	private Standardizer data;
+	private AbstractParser data;
 	private String errorDescription;
 	
 	/**
@@ -31,14 +31,14 @@ public class FileParser {
 		String fileType = filename.substring(filename.lastIndexOf('.') + 1);
 		if (fileType.equalsIgnoreCase("config") ||
 			fileType.equalsIgnoreCase("conf")) {
-			data = new StandConf();
+			data = new ParseConf();
 		} else if (fileType.equalsIgnoreCase("yaml") ||
 				   fileType.equalsIgnoreCase("yml")) {
-			data = new StandYaml();
+			data = new ParseYaml();
 		} else if (fileType.equalsIgnoreCase("properties")) {
-			data = new StandProp();
+			data = new ParseProp();
 		} else if (input.getName().equalsIgnoreCase("hosts")) {
-			data = new StandHost();
+			data = new ParseHost();
 		} else {
 			errorDescription = filename;
 			System.err.println("error: unsupported file type in " + errorDescription);
@@ -61,7 +61,7 @@ public class FileParser {
 	 * Returns the File-specific parser.
 	 * @return the File-specific parser
 	 */
-	public Standardizer getData() {
+	public AbstractParser getData() {
 		if (data != null) { 
 			return data;
 		}
