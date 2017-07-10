@@ -18,7 +18,7 @@ public class FileParserTester {
 	 * @param args command-line arguments
 	 */
 	public static void main(String[] args) {
-		File f = new File("src/storm.server.properties");
+		File f = new File("src/hosts");
 		FileParser reader = new FileParser(f);
 		reader.parseFile();
 		System.out.println(reader.getData());
