@@ -28,15 +28,6 @@ public class DbFeeder {
 	private MongoCollection<Document> col;
 	
 	/**
-	 * Quick tester.
-	 * @param args command-line arguments
-	 */
-	public static void main(String[] args) {
-		DbFeeder feeder = new DbFeeder();
-		feeder.feedDocs("C:/Users/sbansal/Documents/parserResources");
-	}
-	
-	/**
 	 * Creates the cache and pulls server configuration data from it as per
 	 * the query.
 	 */
