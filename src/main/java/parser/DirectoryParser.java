@@ -13,64 +13,60 @@ import java.util.*;
  */
 public class DirectoryParser {
 	
-	private File folder;
-	private ArrayList<AbstractParser> parsedFiles = new ArrayList<AbstractParser>();
+	private File directory;
+	private ArrayList<AbstractParser> parsedData = new ArrayList<>();
 	private ArrayList<String> filePaths = new ArrayList<>();
-	private ArrayList<String[]> headers = new ArrayList<String[]>();
+	
+	private ArrayList<String[]> headers = new ArrayList<>();
 	private ArrayList<String> errors = new ArrayList<>();
 
-	public DirectoryParser(File folder) {
-		this.folder = folder;
+	public DirectoryParser(File directory) {
+		this.directory = directory;
 	}
 
 	/**
-	 * Getter method for folderData
-	 * 
-	 * @return folderData
+	 * Getter method for the parsed data of the files in the directory.
+	 * @return the parsed data
 	 */
 	public ArrayList<AbstractParser> getParsedData() {
-		return parsedFiles;
+		return parsedData;
 	}
 
 	/**
-	 * Searches a given directory for files and adds them to filePaths as a
-	 * string representation of their paths
-	 * 
-	 * @param folder
+	 * Recursively searches for all files in a directory and adds their
+	 * respective file paths to the appropriate internal ArrayList.
+	 * @param the directory being searched
 	 */
-	private void listFilesForFolder(File folder) {
-		for (File fileEntry : folder.listFiles()) {
-			if (fileEntry.isDirectory()) {
-				listFilesForFolder(fileEntry);
+	private void fileFinder(File directory) {
+		for (File file : directory.listFiles()) {
+			if (file.isDirectory()) {
+				fileFinder(file);
 			} else {
-				filePaths.add(fileEntry.getPath());
+				filePaths.add(file.getPath());
 			}
 		}
 	}
 
 	/**
-	 * Runs each path in filePaths through a FileInputReader and adds its
-	 * standardized data to folderData and variables called in toString().
-	 * Calculates runtime in milliseconds.
+	 * Parses each file in directory and adds the resulting data to the
+	 * appropriate internal ArrayList. Calculates runtime in milliseconds.
 	 */
 	public void parseAll() {
-		listFilesForFolder(folder);
+		fileFinder(directory);
 		for (String path : filePaths) {
-			File f = new File(path);
-			FileParser reader = new FileParser(f);
+			FileParser reader = new FileParser(new File(path));
 			reader.parseFile();
-			AbstractParser data = reader.getData();
-			parsedFiles.add(data);
-			String[] fileWithHeader = { path, data.toString() };
+			parsedData.add(reader.getData());
+			
+			String[] fileWithHeader = { path, reader.getData().toString() };
 			headers.add(fileWithHeader);
 		}
 	}
 
 	/**
-	 * Prints each file in Standardizer.toString() format and specifies the file
-	 * name and path. Prints a list of files failed to parse and parseAll() runtime.
-	 * 
-	 * @return str
+	 * Prints each valid file in Standardizer format and lists all invalid
+	 * files.
+	 * @return String representation of DirectoryParser instance
 	 */
 	public String toString() {
 		String str = new String();
