@@ -2,10 +2,10 @@ package parserTester;
 
 import cachingLayer.Comparator;
 
-public class ComparatorTester {
+public class Driver {
 
 	/**
-	 * Test different outcomes of Comparator's methods
+	 * Tester for comparator
 	 * @param args
 	 */
 	@SuppressWarnings("unused")
@@ -22,16 +22,10 @@ public class ComparatorTester {
 		String c8 = "Test root/*/fabric2/*/hosts";
 		
 		c.addQuery(c1, c2);
+		c.addQuery(c7, c8);
 		c.compare();
 		
-		System.out.println();
-		
-		String[][] table = c.getTable();
-		for (String[] arr : table) {
-			for (String str : arr) {
-				System.out.print(str + "     ");
-			}
-			System.out.println();
-		}
+		c.writeToCSV("ceph_and_hosts_diffs", "C:/test diffs");
+		c.clearQuery();
 	}
 }
