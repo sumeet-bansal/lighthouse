@@ -9,7 +9,6 @@ import java.util.*;
  * 
  * @author ActianceEngInterns
  * @version 1.1
- * @since 2017-07-06
  */
 public class DirectoryParser {
 	

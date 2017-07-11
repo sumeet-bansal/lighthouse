@@ -1,23 +1,16 @@
 package cachingLayer;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import org.bson.Document;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
+import com.mongodb.client.*;
 
 /**
- * Pulls queried data from mongoDB and compares key values
+ * Pulls queried data from MongoDB and compares key values.
  * 
  * @author ActianceEngInterns
  * @version 1.0
- * @since 2017/07/10
  */
 public class Comparator {
 	private DbFeeder feeder = new DbFeeder();

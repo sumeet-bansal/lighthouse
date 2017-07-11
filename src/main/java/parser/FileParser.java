@@ -7,7 +7,6 @@ import java.io.*;
  * 
  * @author ActianceEngInterns
  * @version 1.0
- * @since 2017-07-06
  */
 public class FileParser {
 	private File input;
