@@ -19,11 +19,6 @@ import parser.*;
  */
 public class DbFeeder {
 	
-	/** TODO
-	 * - configure DbFeeder to work with UI
-	 * - method to update cache (via Listeners?)
-	 */
-	
 	private HashSet<File> fileSet = new HashSet<File>();
 	private MongoCollection<Document> col;
 	
@@ -61,6 +56,7 @@ public class DbFeeder {
 
 	/**
 	 * Feeds parsed Documents into the database.
+	 * @param path the path containing the files to be cached
 	 */
 	public void feedDocs(String path) {
 		

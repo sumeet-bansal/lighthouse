@@ -11,16 +11,13 @@ import java.util.TreeSet;
 
 import org.bson.Document;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
+import com.mongodb.client.*;
 
 /**
- * Pulls queried data from mongoDB and compares key values
+ * Pulls queried data from MongoDB and compares key values.
  * 
  * @author ActianceEngInterns
  * @version 1.0
- * @since 2017/07/10
  */
 public class Comparator {
 	private DbFeeder feeder = new DbFeeder();
@@ -207,7 +204,8 @@ public class Comparator {
 	 * @param doc2
 	 *            Document with values to be printed out
 	 */
-	private ArrayList<String[]> createTable(Set<String> set, Document doc1, Document doc2) {
+	private ArrayList<String[]> createTable(Set<String> set, Document doc1, Document doc2) {	
+		// set up row information
 		ArrayList<String[]> table = new ArrayList<String[]>();
 		Iterator<String> iter = set.iterator();
 		while (iter.hasNext()) {
@@ -295,16 +293,6 @@ public class Comparator {
 	 */
 	@SuppressWarnings("unused")
 	private void compareDiffs(Document doc1, Document doc2) {
-		// remove path identifiers
-		doc1.remove("environment");
-		doc1.remove("fabric");
-		doc1.remove("node");
-		doc1.remove("filename");
-		doc2.remove("environment");
-		doc2.remove("fabric");
-		doc2.remove("node");
-		doc2.remove("filename");
-
 		// generate key sets
 		Set<String> doc1unique = new HashSet<>(doc1.keySet());
 		Set<String> doc2unique = new HashSet<>(doc2.keySet());
