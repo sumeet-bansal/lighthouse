@@ -3,7 +3,10 @@ package cachingLayer;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -20,29 +23,26 @@ import com.mongodb.client.*;
  * @version 1.0
  */
 public class Comparator {
-	private DbFeeder feeder = new DbFeeder();
 	private MongoCollection<Document> col;
-	private String root;
 	private ArrayList<Document[]> queryList = new ArrayList<Document[]>();
-	private String[][] table;
+	private ArrayList<String[]> table = new ArrayList<String[]>();
+	private ArrayList<String> names = new ArrayList<String>();
 
-	public Comparator(String root) {
-		feeder.feedDocs(root);
-		this.root = root.substring(3);
-		System.out.println("Root folder: " + this.root + "\n\n");
-		this.col = feeder.getCol();
+	public Comparator(MongoCollection<Document> col) {
+		this.col = col;
 	}
 
-	public String[][] getTable() {
+	public ArrayList<String[]> getTable() {
 		return table;
 	}
 
 	/**
-	 * Takes in two path inputs, makes sure the inputs are valid, generates
-	 * filter documents to find the files to compare within those parameters
+	 * Takes in two path inputs, makes sure the inputs are valid, generates filter
+	 * documents to find the files to compare within those parameters
 	 * 
 	 * @param path1
 	 * @param path2
+	 * @return filters
 	 */
 	private Document[] query(String path1, String path2) {
 		if (path1.equals(path2)) {
@@ -55,9 +55,6 @@ public class Comparator {
 		if (!arr1[0].equals(arr2[0])) {
 			System.err.println("Paths must be in the same root file");
 			return null;
-		} else if (!arr1[0].equals(root.split("/")[0])) {
-			System.err.println("Paths must be in the specified root file");
-			return null;
 		} else if (arr1.length != arr2.length) {
 			System.err.println("Paths must be at the same specified level");
 			return null;
@@ -67,15 +64,15 @@ public class Comparator {
 		}
 		Document filter1 = new Document();
 		Document filter2 = new Document();
-		String[] filterKeys = { "environment", "fabric", "node", "filename" };
+		String[] pathFilters = { "environment", "fabric", "node", "filename" };
 		for (int i = 1; i < arr1.length; i++) {
 			if (!arr1[i].equals("*")) {
-				filter1.append(filterKeys[i - 1], arr1[i]);
+				filter1.append(pathFilters[i - 1], arr1[i]);
 			}
 		}
 		for (int i = 1; i < arr2.length; i++) {
 			if (!arr2[i].equals("*")) {
-				filter2.append(filterKeys[i - 1], arr2[i]);
+				filter2.append(pathFilters[i - 1], arr2[i]);
 			}
 		}
 		Document[] filters = { filter1, filter2 };
@@ -95,11 +92,21 @@ public class Comparator {
 			System.out.println("Added files with attributes:");
 			System.out.println("\t" + filters[0]);
 			System.out.println("\t" + filters[1]);
+
+			String name1 = filters[0].getString("filename");
+
+			int end = name1.length();
+			if (name1.contains(".")) {
+				end = name1.indexOf(".");
+			}
+			names.add(name1.substring(0, end));
+
 		} catch (Exception e) {
 			System.err.println("Unable to add files with attributes:");
 			for (Document doc : filters) {
 				System.err.println("\t" + doc);
 			}
+			e.printStackTrace();
 		}
 	}
 
@@ -152,7 +159,6 @@ public class Comparator {
 	 * Pulls files from MongoDB matching the filter docs in queryList
 	 */
 	public void compare() {
-		ArrayList<String[]> data;
 		if (queryList.isEmpty()) {
 			System.out.println("query is empty");
 			return;
@@ -176,17 +182,11 @@ public class Comparator {
 		}
 
 		try {
-			// Compare query-specified documents
-			data = compareAll(compare1, compare2);
-
-			// Convert ArrayList<String[]> to 2D array suitable for CSV export
-			String[][] dataTable = new String[data.size() + 1][6];
-			String[] header = { "Key 1", "Value 1", "Key 2", "Value 2", "Key Status", "Value Status" };
-			dataTable[0] = header;
-			for (int i = 0; i < data.size(); i++) {
-				dataTable[i + 1] = data.get(i);
-			}
-			table = dataTable;
+			// Compare query-specified documents and add header to CSV table representation
+			table = compareAll(compare1, compare2);
+			String[] header = { "File 1", "Key 1", "Value 1", "File 2", "Key 2", "Value 2", "Key Status",
+					"Value Status" };
+			table.add(0, header);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -194,8 +194,8 @@ public class Comparator {
 	}
 
 	/**
-	 * Stores key and value information in an arraylist, compares them, and adds
-	 * the outcomes of the comparisons to the arrayList
+	 * Stores key and value information in an arraylist, compares them, and adds the
+	 * outcomes of the comparisons to the arrayList
 	 * 
 	 * @param set
 	 *            Set of keys to be printed out
@@ -204,7 +204,7 @@ public class Comparator {
 	 * @param doc2
 	 *            Document with values to be printed out
 	 */
-	private ArrayList<String[]> createTable(Set<String> set, Document doc1, Document doc2) {	
+	private ArrayList<String[]> createTable(Set<String> set, Document doc1, Document doc2) {
 		// set up row information
 		ArrayList<String[]> table = new ArrayList<String[]>();
 		Iterator<String> iter = set.iterator();
@@ -212,22 +212,34 @@ public class Comparator {
 			String key = iter.next();
 			Object val1 = doc1.get(key);
 			Object val2 = doc2.get(key);
-			// MongoDB does not allow dots in key names the database, so they
-			// are converted to the string "```" in order to be stored, and
-			// are converted back to dots to be displayed
 			key = key.replace("```", ".");
-			// diff in values
-			if (val1 != null && val2 != null && !val1.equals(val2)) {
-				String[] row = createRow(key, val1, key, val2, "Same", "Different");
+
+			// valPath arrays represent a value and a path, as a result of splitting
+			// the String stored in vals at the separator "\0"
+			String[] valPath1 = new String[2];
+			String[] valPath2 = new String[2];
+			if (val1 != null) {
+				valPath1 = val1.toString().split("@@@");
+			}
+			if (val2 != null) {
+				valPath2 = val2.toString().split("@@@");
+			}
+
+			// generate diff report
+			if (val1 != null && val2 != null && !valPath1[0].equals(valPath2[0])) {
+				// diff in value
+				String[] row = { valPath1[1], key, valPath1[0], valPath2[1], key, valPath2[0], "Same", "Different" };
 				table.add(row);
 			} else if (val1 == null) { // missing value
-				String[] row = createRow("null", "null", key, val2, "Missing in file 1", "Missing in file 1");
+				String[] row = { "null", "null", "null", valPath2[1], key, valPath2[0], "Missing in file 1",
+						"Missing in file 1" };
 				table.add(row);
 			} else if (val2 == null) { // missing value
-				String[] row = createRow(key, val1, "null", "null", "Missing in file 2", "Missing in file 2");
+				String[] row = { valPath1[1], key, valPath1[0], "null", "null", "null", "Missing in file 2",
+						"Missing in file 2" };
 				table.add(row);
 			} else { // everything is the same
-				String[] row = createRow(key, val1, key, val2, "Same", "Same");
+				String[] row = { valPath1[1], key, valPath1[0], valPath2[1], key, valPath2[0], "Same", "Same" };
 				table.add(row);
 			}
 		}
@@ -235,27 +247,7 @@ public class Comparator {
 	}
 
 	/**
-	 * Converts values to Strings and adds keys, values, and statuses to an
-	 * Array representing one row in a CSV file
-	 * 
-	 * @param key1
-	 * @param val1
-	 * @param key2
-	 * @param val2
-	 * @param keyStatus
-	 *            Same, Different, Missing in file 1, or Missing in file 2
-	 * @param valStatus
-	 *            Same, Different, Missing in file 1, or Missing in file 2
-	 * @return row
-	 */
-	private String[] createRow(String key1, Object val1, String key2, Object val2, String keyStatus, String valStatus) {
-		String[] row = { key1, val1.toString(), key2, val2.toString(), keyStatus, valStatus };
-		return row;
-	}
-
-	/**
-	 * Compares all keys between two Documents in database as per UI
-	 * specifications.
+	 * Compares all keys between two Documents in database as per UI specifications.
 	 * 
 	 * @param doc1
 	 *            Document to be compared
@@ -263,6 +255,7 @@ public class Comparator {
 	 *            Document to be compared
 	 */
 	private ArrayList<String[]> compareAll(Document doc1, Document doc2) {
+
 		// remove path identifiers
 		doc1.remove("environment");
 		doc1.remove("fabric");
@@ -283,8 +276,8 @@ public class Comparator {
 
 	// In progress
 	/**
-	 * Compares keys with different values (including null) between two
-	 * Documents in database as per UI specifications.
+	 * Compares keys with different values (including null) between two Documents in
+	 * database as per UI specifications.
 	 * 
 	 * @param doc1
 	 *            Document to be compared
@@ -366,5 +359,24 @@ public class Comparator {
 				ex.printStackTrace();
 			}
 		}
+	}
+
+	/**
+	 * Writes data to CSV file with a default name if the name is not user-specified
+	 * 
+	 * @param directory
+	 */
+	public void writeToCSV(String directory) {
+		String defaultName = "diffreport";
+		String nameColon = "\ua789";
+		DateFormat nameFormat = new SimpleDateFormat("_yyyy-MM-dd_HH" + nameColon + "mm" + nameColon + "ss");
+		Date date = new Date();
+		defaultName += nameFormat.format(date);
+		for (String name : names) {
+			if (defaultName.length() < 100) {
+				defaultName += "_" + name;
+			}
+		}
+		writeToCSV(defaultName, directory);
 	}
 }

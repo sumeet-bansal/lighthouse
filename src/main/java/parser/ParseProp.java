@@ -33,7 +33,7 @@ public class ParseProp extends AbstractParser {
 		
 		keys.addAll(prop.stringPropertyNames());
 		for (int i = 0; i < keys.size(); i++) {
-			vals.add(prop.getProperty(keys.get(i)));
+			vals.add(prop.getProperty(keys.get(i)).replace(",", "~"));
 		}
 	}
 }
