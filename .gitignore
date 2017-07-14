@@ -1,9 +1,8 @@
-# compiled source #
-###################
+# compiled source
+target/
 *.class
 
-# packages #
-############
+# packages
 # commit the raw source--git has its own built in compression methods
 *.7z
 *.dmg
@@ -14,8 +13,7 @@
 *.tar
 *.zip
 
-# OS generated files #
-######################
+# OS generated files
 .DS_Store
 .DS_Store?
 ._*
@@ -23,3 +21,15 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Eclipse files
+.classpath
+.project
+.settings/
+*.yaml
+*.yml
+*.config
+*.conf
+*.properties
+*.prop
+hosts
