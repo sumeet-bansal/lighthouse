@@ -18,7 +18,7 @@ import parser.*;
  */
 public class DbFeeder {
 
-	private HashSet<File> fileSet = new HashSet<File>();
+	private static HashSet<File> fileSet = new HashSet<File>();
 	
 	//public static fields
 	public static MongoDatabase DATABASE;
@@ -95,8 +95,18 @@ public class DbFeeder {
 		}
 	}
 	
+	/**
+	 * Clears all documetns from database
+	 */
 	public static void clearDB() {
-		COLLECTION.drop();
+		try {
+		COLLECTION.deleteMany(new Document());
+		System.out.println("Cleared data from collection " + COLLECTION.getNamespace());
+		fileSet.clear();
+		} catch (Exception e) {
+			System.err.println("Could not clear data from collection " + COLLECTION.getNamespace());
+			e.printStackTrace();
+		}
 	}
 
 	/**

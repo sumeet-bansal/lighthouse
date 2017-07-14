@@ -89,15 +89,15 @@ public class Comparator {
 		Document[] filters = query(path1, path2);
 		try {
 			queryList.add(filters);
-			System.out.println("Added files with attributes:");
-			System.out.println("\t" + filters[0]);
-			System.out.println("\t" + filters[1]);
+			System.out.println("Adding files with attributes:");
+			System.out.println("\t" + filters[0].toJson());
+			System.out.println("\t" + filters[1].toJson());
 
 			String name1 = filters[0].getString("filename");
 
 			int end = name1.length();
 			if (name1.contains(".")) {
-				end = name1.indexOf(".");
+				end = name1.lastIndexOf(".");
 			}
 			names.add(name1.substring(0, end));
 
@@ -150,7 +150,7 @@ public class Comparator {
 	 * Clears queryList
 	 */
 	public void clearQuery() {
-		int size = queryList.size();
+		int size = queryList.size()*2;
 		queryList.clear();
 		System.out.println("Cleared " + size + " file(s) from query\n");
 	}
@@ -167,6 +167,7 @@ public class Comparator {
 		// Create query-specified documents
 		Document compare1 = new Document();
 		Document compare2 = new Document();
+		int count = 0;
 		for (Document[] filter : queryList) {
 			Document filter1 = filter[0];
 			Document filter2 = filter[1];
@@ -174,13 +175,17 @@ public class Comparator {
 			FindIterable<Document> iter2 = col.find(filter2);
 			MongoCursor<Document> cursor1 = iter1.iterator();
 			MongoCursor<Document> cursor2 = iter2.iterator();
-			System.out.println("valid: " + (cursor1.hasNext() && cursor2.hasNext()));
-			while (cursor1.hasNext() && cursor2.hasNext()) {
+			while (cursor1.hasNext()) {
 				compare1.putAll(cursor1.next());
+				count ++;
+			}
+			while (cursor2.hasNext()) {
 				compare2.putAll(cursor2.next());
+				count++;
 			}
 		}
-
+		System.out.println("Found " + count + " file(s) matching query");
+		
 		try {
 			// Compare query-specified documents and add header to CSV table representation
 			table = compareAll(compare1, compare2);
@@ -368,8 +373,7 @@ public class Comparator {
 	 */
 	public void writeToCSV(String directory) {
 		String defaultName = "diffreport";
-		String nameColon = "\ua789";
-		DateFormat nameFormat = new SimpleDateFormat("_yyyy-MM-dd_HH" + nameColon + "mm" + nameColon + "ss");
+		DateFormat nameFormat = new SimpleDateFormat("_yyyy-MM-dd_HH.mm.ss");
 		Date date = new Date();
 		defaultName += nameFormat.format(date);
 		for (String name : names) {

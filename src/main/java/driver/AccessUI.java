@@ -1,7 +1,12 @@
 package driver;
 
+import org.bson.Document;
+
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+
 import cachingLayer.Comparator;
-import cachingLayer.DbFeeder;
 
 public class AccessUI {
 
@@ -13,13 +18,14 @@ public class AccessUI {
 	@SuppressWarnings("unused")
 	public static void main(String[] args) {
 
-		// populate database
-		DbFeeder.setup();
-		DbFeeder.feedDocs("C:/test root");
-
+		// pull collection from database
+		@SuppressWarnings("resource")
+		MongoClient client = new MongoClient("localhost", 27017);
+		MongoDatabase database = client.getDatabase("ADS_DB");
+		MongoCollection<Document> col = database.getCollection("ADS_COL");
 
 		// instantiate comparator with colletion
-		Comparator c = new Comparator(DbFeeder.COLLECTION);
+		Comparator c = new Comparator(col);
 
 		String c1 = "Test root/*/fabric1/*/ceph.conf";
 		String c2 = "Test root/*/fabric2/*/ceph.conf";
@@ -30,12 +36,10 @@ public class AccessUI {
 		String c7 = "Test root/*/fabric1/*/hosts";
 		String c8 = "Test root/*/fabric2/*/hosts";
 
-		c.addQuery(c3, c4);
-
+		c.addQuery(c1, c2);
+		c.addQuery(c7, c8);
 		c.compare();
-
 		c.writeToCSV("C:/test diffs");
-
 		c.clearQuery();
 	}
 }

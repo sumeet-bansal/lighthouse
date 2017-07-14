@@ -1,7 +1,6 @@
 package parserTester;
 
 import java.io.*;
-import java.util.*;
 
 import parser.*;
 
