@@ -9,6 +9,7 @@ import com.mongodb.*;
 import com.mongodb.client.*;
 
 import parser.*;
+
 /**
  * Generates cache of normalized server config files and data. Must have
  * 'mongod' running simultaneously.
@@ -19,18 +20,16 @@ import parser.*;
 public class DbFeeder {
 
 	private static HashSet<File> fileSet = new HashSet<File>();
-	
-	//public static fields
+
+	// public static fields
 	public static MongoDatabase DATABASE;
 	public static MongoCollection<Document> COLLECTION;
-	
 
 	/**
-	 * Creates the cache and pulls server configuration data from it as per the
-	 * query.
+	 * Static initializer to create the cache and pulls server configuration data
+	 * from it as per the query.
 	 */
-	public static void setup() {
-
+	public static void connectToDatabase() {
 		try {
 
 			// connecting with server
@@ -40,14 +39,12 @@ public class DbFeeder {
 
 			// connecting with Database
 			DATABASE = mongoClient.getDatabase("ADS_DB");
-			System.out.println("connected to database " + DATABASE.getName());
+			System.out.println("Connected to database " + DATABASE.getName());
 
 			// create Collection
 			String colName = "ADS_COL";
 			COLLECTION = DATABASE.getCollection(colName);
-			COLLECTION.drop();
-			DATABASE.createCollection(colName);
-			System.out.println("created collection " + colName);
+			System.out.println("Accessed collection " + COLLECTION.getNamespace());
 
 		} catch (Exception e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
@@ -66,6 +63,7 @@ public class DbFeeder {
 		directory.parseAll();
 		ArrayList<AbstractParser> parsedFiles = directory.getParsedData();
 
+		int count = 0;
 		for (AbstractParser s : parsedFiles) {
 
 			Document doc = new Document(); // represents a single parsed file
@@ -90,21 +88,22 @@ public class DbFeeder {
 			}
 
 			// inserts Document generated from parsed file data into MongoDB Collection
-			System.out.println(doc.toJson());
 			COLLECTION.insertOne(doc);
+			count++;
 		}
+		System.out.println("Added " + count + " files to collection " + COLLECTION.getNamespace());
 	}
-	
+
 	/**
 	 * Clears all documetns from database
 	 */
 	public static void clearDB() {
 		try {
-		COLLECTION.deleteMany(new Document());
-		System.out.println("Cleared data from collection " + COLLECTION.getNamespace());
-		fileSet.clear();
+			COLLECTION.deleteMany(new Document());
+			System.out.println("Cleared data from collection " + COLLECTION.getNamespace());
+			fileSet.clear();
 		} catch (Exception e) {
-			System.err.println("Could not clear data from collection " + COLLECTION.getNamespace());
+			System.err.println("Could not clear data from collection");
 			e.printStackTrace();
 		}
 	}

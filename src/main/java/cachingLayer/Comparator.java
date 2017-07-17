@@ -14,6 +14,7 @@ import java.util.TreeSet;
 
 import org.bson.Document;
 
+import com.mongodb.MongoClient;
 import com.mongodb.client.*;
 
 /**
@@ -21,15 +22,21 @@ import com.mongodb.client.*;
  * 
  * @author ActianceEngInterns
  * @version 1.0
+ * 
+ *          TODO Address bug throwing NullPointerException when blocking
+ *          directories higher up in the filepath than those specified by the
+ *          add query. Also do more QA on block and wildcard functions
  */
 public class Comparator {
-	private MongoCollection<Document> col;
 	private ArrayList<Document[]> queryList = new ArrayList<Document[]>();
+	private ArrayList<Document> blockList = new ArrayList<Document>();
 	private ArrayList<String[]> table = new ArrayList<String[]>();
 	private ArrayList<String> names = new ArrayList<String>();
+	private MongoCollection<Document> col;
 
-	public Comparator(MongoCollection<Document> col) {
-		this.col = col;
+	@SuppressWarnings("resource")
+	public Comparator() {
+		col = new MongoClient("localhost", 27017).getDatabase("ADS_DB").getCollection("ADS_COL");
 	}
 
 	public ArrayList<String[]> getTable() {
@@ -86,81 +93,104 @@ public class Comparator {
 	 * @param path2
 	 */
 	public void addQuery(String path1, String path2) {
+		System.out.println();
 		Document[] filters = query(path1, path2);
 		try {
+			// add query filters to queryList
 			queryList.add(filters);
-			System.out.println("Adding files with attributes:");
+			System.out.println("Looking for files with attributes:");
 			System.out.println("\t" + filters[0].toJson());
 			System.out.println("\t" + filters[1].toJson());
 
-			String name1 = filters[0].getString("filename");
+			// add file names or lowest filepath specification to CSV name
+			String[] pathFilters = { "filename", "node", "fabric", "environment" };
 
-			int end = name1.length();
-			if (name1.contains(".")) {
-				end = name1.lastIndexOf(".");
+			for (String filter : pathFilters) {
+				try {
+					String name1 = filters[0].getString(filter);
+					int end1 = name1.length();
+					if (name1.contains(".")) {
+						end1 = name1.lastIndexOf(".");
+					}
+					if (!names.contains(name1.substring(0, end1))) {
+						names.add(name1.substring(0, end1));
+					}
+
+					String name2 = filters[1].getString(filter);
+					int end2 = name1.length();
+					if (name2.contains(".")) {
+						end2 = name2.lastIndexOf(".");
+					}
+					if (!names.contains(name2.substring(0, end2))) {
+						names.add(name2.substring(0, end2));
+					}
+				} catch (NullPointerException e) {
+					continue;
+				}
+				break;
 			}
-			names.add(name1.substring(0, end));
 
 		} catch (Exception e) {
 			System.err.println("Unable to add files with attributes:");
 			for (Document doc : filters) {
-				System.err.println("\t" + doc);
+				System.err.println("\t" + doc.toJson());
 			}
 			e.printStackTrace();
 		}
+		System.out.println();
 	}
 
 	/**
-	 * Removes filters from queryList
+	 * Blocks files with certain attributes in the query from being compared.
 	 * 
-	 * @param path1
-	 * @param path2
+	 * @param path
 	 */
-	public void removeQuery(String path1, String path2) {
-		Document[] filters = query(path1, path2);
+	public void blockQuery(String path) {
 		try {
-			int count = 0;
-			for (int i = 0; i < queryList.size(); i++) {
-				Document[] arr = queryList.get(i);
-				if (arr[0].equals(filters[0]) && arr[1].equals(filters[1])) {
-					queryList.remove(i);
-					if (count == 0) {
-						System.out.println("Removed files with attributes:");
-						System.out.println("\t" + filters[0]);
-						System.out.println("\t" + filters[1]);
-					}
-					count++;
+			String[] arr = path.split("/");
+			if (arr.length > 5 || arr.length < 2) {
+				System.err.println("\nInvalid block input! Path must be at environment, fabric, node, or file level\n");
+				return;
+			}
+			Document filter = new Document();
+			String[] pathFilters = { "environment", "fabric", "node", "filename" };
+
+			for (int i = 1; i < arr.length; i++) {
+				if (!arr[i].equals("*")) {
+					filter.append(pathFilters[i - 1], arr[i]);
+				} else {
+					filter.append(pathFilters[i - 1], "*");
 				}
 			}
-			if (count == 0) {
-				System.err.println("Unable to remove files with attributes:");
-				for (Document doc : filters) {
-					System.err.println("\t" + doc);
-				}
-			}
+			blockList.add(filter);
+			System.out.println("Blocking files with attributes:");
+			System.out.println("\t" + filter.toJson());
+
 		} catch (Exception e) {
-			System.err.println("Unable to remove files with attributes:");
-			for (Document doc : filters) {
-				System.err.println("\t" + doc);
-			}
+			System.out.println("Invalid block input!");
+			e.printStackTrace();
 		}
+		System.out.println();
 	}
 
 	/**
 	 * Clears queryList
 	 */
 	public void clearQuery() {
-		int size = queryList.size()*2;
+		int size = queryList.size() * 2;
 		queryList.clear();
-		System.out.println("Cleared " + size + " file(s) from query\n");
+		blockList.clear();
+		System.out.println("Cleared " + size + " entries from query\n");
 	}
 
 	/**
-	 * Pulls files from MongoDB matching the filter docs in queryList
+	 * Pulls files from MongoDB matching the filter docs in queryList. Check's each
+	 * documents filepath indicators to see if they match with the indicators
+	 * specified by the user-given block query. Files that do not competely match
+	 * block queries are compared and added to the CSV table
 	 */
 	public void compare() {
 		if (queryList.isEmpty()) {
-			System.out.println("query is empty");
 			return;
 		}
 
@@ -168,26 +198,96 @@ public class Comparator {
 		Document compare1 = new Document();
 		Document compare2 = new Document();
 		int count = 0;
+		int blockCount = 0;
+
 		for (Document[] filter : queryList) {
+
+			// Create iterators for added files
 			Document filter1 = filter[0];
 			Document filter2 = filter[1];
 			FindIterable<Document> iter1 = col.find(filter1);
 			FindIterable<Document> iter2 = col.find(filter2);
 			MongoCursor<Document> cursor1 = iter1.iterator();
 			MongoCursor<Document> cursor2 = iter2.iterator();
+
+			// Find and compare all files that are not blocked
 			while (cursor1.hasNext()) {
-				compare1.putAll(cursor1.next());
-				count ++;
-			}
-			while (cursor2.hasNext()) {
-				compare2.putAll(cursor2.next());
+
+				Document doc = cursor1.next();
+
+				// Check if files on the left side of the query are blocked
+				boolean checkEnv = true;
+				boolean checkFab = true;
+				boolean checkNode = true;
+				boolean checkFile = true;
+
+				for (Document block : blockList) {
+					if (block.getString("environment").equals(doc.getString("environment"))
+							|| block.getString("environment").equals("*")) {
+						checkEnv = false;
+					}
+					if (block.getString("fabric").equals(doc.getString("fabric"))
+							|| block.getString("fabric").equals("*")) {
+						checkFab = false;
+					}
+					if (block.getString("node").equals(doc.getString("node")) || block.getString("node").equals("*")) {
+						checkNode = false;
+					}
+					if (block.getString("filename").equals(doc.getString("filename"))
+							|| block.getString("filename").equals("*")) {
+						checkFile = false;
+					}
+				}
+
+				if (checkEnv || checkFab || checkNode || checkFile) {
+					compare1.putAll(doc);
+				} else {
+					blockCount++;
+				}
 				count++;
 			}
+
+			while (cursor2.hasNext()) {
+
+				Document doc = cursor2.next();
+
+				// Check if files on the right side of the query are blocked
+				boolean checkEnv = true;
+				boolean checkFab = true;
+				boolean checkNode = true;
+				boolean checkFile = true;
+
+				for (Document block : blockList) {
+					if (block.getString("environment").equals(doc.getString("environment"))
+							|| block.getString("environment").equals("*")) {
+						checkEnv = false;
+					}
+					if (block.getString("fabric").equals(doc.getString("fabric"))
+							|| block.getString("fabric").equals("*")) {
+						checkFab = false;
+					}
+					if (block.getString("node").equals(doc.getString("node")) || block.getString("node").equals("*")) {
+						checkNode = false;
+					}
+					if (block.getString("filename").equals(doc.getString("filename"))
+							|| block.getString("filename").equals("*")) {
+						checkFile = false;
+					}
+				}
+
+				if (checkEnv || checkFab || checkNode || checkFile) {
+					compare2.putAll(doc);
+				} else {
+					blockCount++;
+				}
+				count++;
+			}
+
 		}
-		System.out.println("Found " + count + " file(s) matching query");
-		
+		System.out.println("\nFound " + count + " files and blocked " + blockCount + " file(s) matching query");
+
+		// Compare query-specified documents and add header to CSV table representation
 		try {
-			// Compare query-specified documents and add header to CSV table representation
 			table = compareAll(compare1, compare2);
 			String[] header = { "File 1", "Key 1", "Value 1", "File 2", "Key 2", "Value 2", "Key Status",
 					"Value Status" };
@@ -330,7 +430,11 @@ public class Comparator {
 	 */
 	public void writeToCSV(String fileName, String directory) {
 		if (queryList.size() == 0) {
-			System.err.println("Cannot write CSV; query list is empty");
+			System.err.println("\nUnable write CSV because query list is empty\n");
+			return;
+		}
+		if (table.size() == 1) {
+			System.err.println("\nUnable to write CSV because no docuemnts were found matching your query\n");
 			return;
 		}
 		String path = directory + "/" + fileName + ".csv";

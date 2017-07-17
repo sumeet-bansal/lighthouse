@@ -1,45 +1,89 @@
 package driver;
 
-import org.bson.Document;
-
-import com.mongodb.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import java.util.ArrayList;
 
 import cachingLayer.Comparator;
 
 public class AccessUI {
 
 	/**
-	 * Runs the comparator
+	 * Passes command-line arguments to query the database, compares files specified
+	 * by query, and writes a CSV file to C:/test diffs (will change later). Syntax
+	 * is as follows: <root directory (optional, any level)> <files to query
+	 * (include root directory if not specified)> block (optional) <files to block
+	 * (include root directory if not specified)>
+	 * 
+	 * TODO Configure UI to pass command line arguments to driver classes
 	 * 
 	 * @param args
 	 */
-	@SuppressWarnings("unused")
 	public static void main(String[] args) {
 
-		// pull collection from database
-		@SuppressWarnings("resource")
-		MongoClient client = new MongoClient("localhost", 27017);
-		MongoDatabase database = client.getDatabase("ADS_DB");
-		MongoCollection<Document> col = database.getCollection("ADS_COL");
+		try {
+			ArrayList<String> list = new ArrayList<String>();
+			ArrayList<String> addList = new ArrayList<String>();
+			ArrayList<String> blockList = new ArrayList<String>();
 
-		// instantiate comparator with colletion
-		Comparator c = new Comparator(col);
+			// copy command line arguments to arrayLists
 
-		String c1 = "Test root/*/fabric1/*/ceph.conf";
-		String c2 = "Test root/*/fabric2/*/ceph.conf";
-		String c3 = "Test root/*/fabric1/*/storm2.yaml";
-		String c4 = "Test root/*/fabric2/*/storm2.yaml";
-		String c5 = "Test root/*/fabric1/*/storm.server.properties";
-		String c6 = "Test root/*/fabric2/*/storm.server.properties";
-		String c7 = "Test root/*/fabric1/*/hosts";
-		String c8 = "Test root/*/fabric2/*/hosts";
+			for (String str : args) {
+				list.add(str);
+			}
 
-		c.addQuery(c1, c2);
-		c.addQuery(c7, c8);
-		c.compare();
-		c.writeToCSV("C:/test diffs");
-		c.clearQuery();
+			int r = -1;
+			if (list.contains("block")) {
+				r = list.indexOf("block");
+				if (r < 2) {
+					System.err.println(
+							"Invalid input, please specify at least one full query to add before removing files from query");
+					return;
+				}
+				for (int i = r + 1; i < list.size(); i++) {
+					blockList.add(list.get(i));
+				}
+				for (int i = 0; i < r; i++) {
+					addList.add(list.get(i));
+				}
+			} else {
+				for (String str : list) {
+					addList.add(str);
+				}
+			}
+
+			// check if args list is odd or even and append terms with root folder
+			// accordingly
+			if (!(addList.size() % 2 == 0)) {
+				String root = addList.get(0) + "/";
+				addList.remove(0);
+				for (int i = 0; i < addList.size(); i++) {
+					addList.set(i, root + addList.get(i));
+				}
+				for (int i = 0; i < blockList.size(); i++) {
+					blockList.set(i, root + blockList.get(i));
+				}
+			}
+
+			// compare groups of 2 paths given by the order of args
+			Comparator c = new Comparator();
+			for (int i = 0; i < addList.size(); i += 2) {
+				c.addQuery(addList.get(i), addList.get(i + 1));
+			}
+			if (r != -1) {
+				for (int i = 0; i < blockList.size(); i++) {
+					c.blockQuery(blockList.get(i));
+					System.out.println(blockList.get(i));
+				}
+			}
+
+			c.compare();
+			c.writeToCSV("C:/test diffs");
+			c.clearQuery();
+		} catch (ArrayIndexOutOfBoundsException e) {
+			System.err.println("Please specify files to query");
+		} catch (Exception e) {
+			System.err.println("Invalid input! Regular syntax is as follows:\n"
+					+ "<root directory> <files to query> block <files to block within query>\n"
+					+ "please note: specifying root directory and blocking files within query are optional");
+		}
 	}
 }
