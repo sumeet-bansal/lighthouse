@@ -16,6 +16,7 @@ public class ZKClientManager {
 
 	private static ZooKeeper zkeeper;
 	private static ZKConnector zkConnection;
+	private static String host = "127.0.0.1";
 
 	/**
 	 * Constructor.
