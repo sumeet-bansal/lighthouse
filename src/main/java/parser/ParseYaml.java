@@ -13,10 +13,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
  * @since 2017-06-27
  */
 public class ParseYaml extends AbstractParser {
-	
+
 	/**
-	 * Standardizes input File into separate ArrayLists for keys and values.
-	 * @param input File to be standardized
+	 * Standardizes input File into a Map of keys and values.
+	 * @param input the File to be standardized
 	 */
 	public void standardize(File input) {
 		
@@ -25,13 +25,9 @@ public class ParseYaml extends AbstractParser {
 
 			// converts YAML file to LinkedHashMap
 			@SuppressWarnings("unchecked")
-			LinkedHashMap<String, ArrayList<String>> map = mapper.readValue(input, LinkedHashMap.class);
-
-			// stores HashMap data in separate ArrayLists for keys and values
-			for (Map.Entry<String, ArrayList<String>> entry : map.entrySet()) {
-				keys.add(entry.getKey());
-				vals.add(entry.getValue());
-			}
+			Map<String, Object> map = mapper.readValue(input, LinkedHashMap.class);
+			data = new LinkedHashMap<>(map);
+			
 		} catch (Exception e) {
 			System.err.println("error: file must be in .yaml format.");
 			error = true;

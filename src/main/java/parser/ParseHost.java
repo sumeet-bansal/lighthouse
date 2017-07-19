@@ -10,10 +10,10 @@ import java.util.*;
  * @version 1.1
  */
 public class ParseHost extends AbstractParser {
-	
+
 	/**
-	 * Standardizes input File into separate ArrayLists for keys and values.
-	 * @param input File to be standardized
+	 * Standardizes input File into a Map of keys and values.
+	 * @param input the File to be standardized
 	 */
 	public void standardize(File input) {
 		
@@ -41,8 +41,7 @@ public class ParseHost extends AbstractParser {
 				// first non-space block must be value, rest must be keys
 				String val = charBlocks.remove(0);
 				for (String key : charBlocks) {
-					keys.add(key);
-					vals.add(val);
+					data.put(key, val);
 				}
 				
 			}

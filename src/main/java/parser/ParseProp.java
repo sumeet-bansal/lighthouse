@@ -12,10 +12,10 @@ import java.util.*;
  */
 public class ParseProp extends AbstractParser {
 	private Properties prop = new Properties();
-	
+
 	/**
-	 * Standardizes input File into separate ArrayLists for keys and values.
-	 * @param input File to be standardized
+	 * Standardizes input File into a Map of keys and values.
+	 * @param input the File to be standardized
 	 */
 	public void standardize(File input) {
 		
@@ -31,9 +31,11 @@ public class ParseProp extends AbstractParser {
 			return;
 		}
 		
+		ArrayList<String> keys = new ArrayList<>();
 		keys.addAll(prop.stringPropertyNames());
 		for (int i = 0; i < keys.size(); i++) {
-			vals.add(prop.getProperty(keys.get(i)));
+			String key = keys.get(i);
+			data.put(key, prop.getProperty(key));
 		}
 	}
 	

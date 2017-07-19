@@ -10,14 +10,15 @@ import java.io.*;
  * @since 2017-06-27
  */
 public class ParseConf extends AbstractParser {
-	
+
 	/**
-	 * Standardizes input File into separate ArrayLists for keys and values.
-	 * @param input File to be standardized
+	 * Standardizes input File into a Map of keys and values.
+	 * @param input the File to be standardized
 	 */
 	public void standardize(File input) {
 		
 		try {
+			
 			FileReader fr = new FileReader(input);
 			BufferedReader br = new BufferedReader(fr);
 			
@@ -42,16 +43,20 @@ public class ParseConf extends AbstractParser {
 						valplace++;
 					}
 					
-					keys.add(grouping + "." + str.substring(0, keyplace));
+					String key = grouping + "." + str.substring(0, keyplace);
+					String val;
 					if (str.substring(valplace+1).indexOf(',') != -1) {
-						vals.add("[" + str.substring(valplace+1) + "]");
+						val = "[" + str.substring(valplace+1) + "]";
 					} else {
-						vals.add(str.substring(valplace+1));
+						val = str.substring(valplace+1);
 					}
+					data.put(key, val);
 
 				}
 			}
+			
 			br.close();
+			
 		} catch (IOException e) {
 			System.err.println("error: file must be in .config format.");
 			error = true;

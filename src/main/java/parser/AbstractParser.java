@@ -13,26 +13,20 @@ import java.util.*;
 public abstract class AbstractParser {
 
 	protected String path;
-	protected ArrayList<String> keys = new ArrayList<>();
-	protected ArrayList<Object> vals = new ArrayList<>();
 	protected Map<String, Object> data = new LinkedHashMap<>();
 	protected boolean error = false;
 	
 	/**
-	 * Getter method for the Map representation of the parsed data.
-	 * @return the Map representation of the parsed data
+	 * Getter method for the parsed data.
+	 * @return a Map representation of the parsed data
 	 */
 	public Map<String, Object> getData() {
-		for (int i = 0; i < keys.size(); i++) {
-			data.put(keys.get(i), vals.get(i));
-		}
 		return data;
 	}
 
 	/**
-	 * Getter method for file metadata.
-	 * 
-	 * @return file metadata (i.e. environment, fabric, node info)
+	 * Getter method for the file metadata (e.g. environment, fabric, node).
+	 * @return a Map representation of the file metadata
 	 */
 	public Map<String, String> getMetadata() {
 		String[] delimitedPath = path.split("/");
@@ -47,9 +41,7 @@ public abstract class AbstractParser {
 
 	/**
 	 * Setter method for file path instance variable.
-	 * 
-	 * @param input
-	 *            path of File being standardized
+	 * @param input the path of the File being standardized
 	 */
 	public void setPath(String path) {
 
@@ -67,10 +59,8 @@ public abstract class AbstractParser {
 	}
 
 	/**
-	 * Standardizes input File into separate ArrayLists for keys and values.
-	 * 
-	 * @param input
-	 *            File to be standardized
+	 * Standardizes input File into a Map of keys and values.
+	 * @param input the File to be standardized
 	 */
 	public abstract void standardize(File input);
 
@@ -78,28 +68,22 @@ public abstract class AbstractParser {
 	 * Clears the internal data structures.
 	 */
 	public void clear() {
-		int size = keys.size();
-		for (int i = 0; i < size; i++) {
-			keys.remove(0);
-			vals.remove(0);
-		}
 		data.clear();
 		System.gc();
 	}
 
 	/**
 	 * Returns representation of Parser data.
-	 * 
 	 * @return representation of Parser data
 	 */
 	public String toString() {
 		String str = new String();
-		if (keys.size() != 0) {
-			for (int i = 0; i < keys.size(); i++) {
-				str += (keys.get(i) + "=" + vals.get(i) + "\n");
+		if (data.size() != 0) {
+			for (Map.Entry<String, Object> entry : data.entrySet()) {
+				str += entry.getKey() + "=" + entry.getValue() + "\n";
 			}
 		} else if (!error) {
-			str = "Key list is empty.";
+			str = "Map is empty.";
 		}
 		return str;
 	}
