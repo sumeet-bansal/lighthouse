@@ -11,43 +11,43 @@ import java.io.*;
  */
 public class ZKGenerator {
 	
-	private static ZKClientManager zkmanager = new ZKClientManager();
-	private static String basepath = "/alcatrazproperties/2.5", server;
-	private static Map<String, Object> map;
+	private ZKClientManager zkmanager = new ZKClientManager();
+	private String basepath = "/alcatrazproperties/2.5", fabric;
+	private Map<String, String> map;
 	
 	/**
 	 * Runs the .properties file generator.
-	 * @param args command-line arguments
 	 */
-	public static void main(String[] args) {
+	public void generate() {
 		
 		// gets all fabrics in environment
-		List<String> servers = zkmanager.getZNodeChildren(basepath);
+		List<String> fabrics = zkmanager.getZNodeChildren(basepath);
 		
-		for (int i = 0; i < servers.size(); i++) {
+		for (int i = 0; i < fabrics.size(); i++) {
 			
 			// generates directory structure
-			new File(servers.get(i) + "/common").mkdirs();
-
+			new File("environment/" + fabrics.get(i) + "/common").mkdirs();
+			
 			// generates .properties files
 			map = new LinkedHashMap<>();
-			server =  servers.get(i);
-			recursive(basepath + "/" + server);
-			write(server, map);
+			fabric =  fabrics.get(i);
+			recursive(basepath + "/" + fabric);
+			write(fabric, map);
+			System.out.println("generated .properties file for " + fabric);
 		}
 	}	
 	
 	/**
 	 * Recursively traverses ZNodes to generate full path keys.
-	 * @param path path of the current ZNode
+	 * @param path the path of the current ZNode
 	 */
-	private static void recursive(String path) {
+	private void recursive(String path) {
 		
 		// base case: current ZNode is leaf
 		if (zkmanager.getZNodeStats(path).getNumChildren() == 0) {
-			String key = path.replace("/", ".").substring(basepath.length() + 1);
-			Object data = zkmanager.getZNodeData(path, false);
-			map.put(key.substring(server.length() + 1), data);
+			String key = path.substring(basepath.length()+1);
+			String data = (String) zkmanager.getZNodeData(path, false);
+			map.put(key.substring(fabric.length() + 1), data);
 			return;
 		}
 		
@@ -59,19 +59,41 @@ public class ZKGenerator {
 	}
 	
 	/**
-	 * Writes server data to .properties files.
-	 * @param server current server
-	 * @param map Map of full path keys and respective data from server
+	 * Writes fabric data to .properties files.
+	 * @param fabric the current fabric
+	 * @param map a Map of root-to-leaf keys and respective data from fabric
 	 */
-	private static void write(String server, Map<String, Object> map) {
+	private void write(String server, Map<String, String> map) {
 		try {
-			String directory = server + "/common/";
+			String directory = "environment/" + server + "/common/";
+			
+			// 'blacklist' branch gets separate .properties for UI readability
+			ArrayList<String> blacklist = new ArrayList<>();
+			
 			Writer writer = new BufferedWriter(new OutputStreamWriter(
-			          new FileOutputStream(directory + server + ".properties"), "utf-8"));
-			for (Map.Entry<String, Object> entry : map.entrySet()) {
-			    writer.write(entry.getKey() + "=" + entry.getValue() + "\n");
+			          new FileOutputStream(directory + "server.properties"),
+			          "utf-8"));
+			for (Map.Entry<String, String> entry : map.entrySet()) {
+				String key = entry.getKey();
+				Object value = entry.getValue();
+				if (entry.getKey().startsWith("blacklist")) {
+				    blacklist.add(key + "=" + value + "\n");
+				} else {
+					writer.write(key + "=" + value + "\n");
+				}
 			}
 		    writer.close();
+			
+			if (blacklist.size() > 0) {
+				writer = new BufferedWriter(new OutputStreamWriter(
+				          new FileOutputStream(directory +
+				          "server.blacklist.properties"), "utf-8"));
+				for (int i = 0; i < blacklist.size(); i++) {
+					writer.write(blacklist.get(i));
+				}
+				writer.close();
+			}
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
