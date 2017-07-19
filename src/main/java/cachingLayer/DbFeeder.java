@@ -74,17 +74,12 @@ public class DbFeeder {
 				doc.append(entry.getKey(), entry.getValue());
 			}
 
-			// gets ArrayLists of keys and values from parsed file
-			ArrayList<String> keys = s.getKeys();
-			ArrayList<Object> vals = s.getVals();
-
-			// feeds ArrayLists into Documents
-			if (keys.size() != vals.size()) {
-				System.err.println("invalid file: var-val mismatch");
-			}
-			for (int i = 0; i < keys.size(); i++) {
-				String key = keys.get(i).replace(".", "```");
-				doc.append(key, vals.get(i).toString());
+			// feeds data of parsed file to Document
+			Map<String, Object> data = s.getData();
+			for (Map.Entry<String, Object> entry : data.entrySet()) {
+				String key = entry.getKey().replace(".", "```");
+				String value = entry.getValue().toString();
+				doc.append(key, value);
 			}
 
 			// inserts Document generated from parsed file data into MongoDB Collection
@@ -95,7 +90,7 @@ public class DbFeeder {
 	}
 
 	/**
-	 * Clears all documetns from database
+	 * Clears all Documents from database.
 	 */
 	public static void clearDB() {
 		try {

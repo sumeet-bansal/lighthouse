@@ -12,31 +12,21 @@ import java.util.*;
  */
 public abstract class AbstractParser {
 
-	String path;
-	ArrayList<String> keys = new ArrayList<>();
-	ArrayList<Object> vals = new ArrayList<>();
-	boolean error = false;
-
+	protected String path;
+	protected ArrayList<String> keys = new ArrayList<>();
+	protected ArrayList<Object> vals = new ArrayList<>();
+	protected Map<String, Object> data = new LinkedHashMap<>();
+	protected boolean error = false;
+	
 	/**
-	 * Getter method for key ArrayList.
-	 * 
-	 * @return the key ArrayList
+	 * Getter method for the Map representation of the parsed data.
+	 * @return the Map representation of the parsed data
 	 */
-	public ArrayList<String> getKeys() {
-		return keys;
-	}
-
-	/**
-	 * Getter method for value ArrayList. Values are separated from their path
-	 * by the delimiter NUL
-	 * 
-	 * @return the value ArrayList
-	 */
-	public ArrayList<Object> getVals() {
-		for (int i = 0; i < vals.size(); i++) {
-			vals.set(i, vals.get(i) + "@@@" + path);
+	public Map<String, Object> getData() {
+		for (int i = 0; i < keys.size(); i++) {
+			data.put(keys.get(i), vals.get(i));
 		}
-		return vals;
+		return data;
 	}
 
 	/**
@@ -51,6 +41,7 @@ public abstract class AbstractParser {
 		for (int i = 0; i < predictedPath.length; i++) {
 			metadata.put(predictedPath[i], delimitedPath[delimitedPath.length - 1 - i]);
 		}
+		metadata.put("path", path);
 		return metadata;
 	}
 
@@ -84,7 +75,7 @@ public abstract class AbstractParser {
 	public abstract void standardize(File input);
 
 	/**
-	 * Clears the internal key and value ArrayLists.
+	 * Clears the internal data structures.
 	 */
 	public void clear() {
 		int size = keys.size();
@@ -92,6 +83,8 @@ public abstract class AbstractParser {
 			keys.remove(0);
 			vals.remove(0);
 		}
+		data.clear();
+		System.gc();
 	}
 
 	/**
