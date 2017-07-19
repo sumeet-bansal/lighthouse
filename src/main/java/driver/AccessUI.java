@@ -63,7 +63,7 @@ public class AccessUI {
 				}
 			}
 
-			// compare groups of 2 paths given by the order of args
+			// add groups of 2 paths given by the order of args
 			Comparator c = new Comparator();
 			for (int i = 0; i < addList.size(); i += 2) {
 				c.addQuery(addList.get(i), addList.get(i + 1));
@@ -71,10 +71,10 @@ public class AccessUI {
 			if (r != -1) {
 				for (int i = 0; i < blockList.size(); i++) {
 					c.blockQuery(blockList.get(i));
-					System.out.println(blockList.get(i));
 				}
 			}
 
+			// compare files, build CSV file and clear current query
 			c.compare();
 			c.writeToCSV("C:/test diffs");
 			c.clearQuery();
@@ -84,6 +84,8 @@ public class AccessUI {
 			System.err.println("Invalid input! Regular syntax is as follows:\n"
 					+ "<root directory> <files to query> block <files to block within query>\n"
 					+ "please note: specifying root directory and blocking files within query are optional");
+			System.out.println();
+			e.printStackTrace();
 		}
 	}
 }

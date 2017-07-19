@@ -1,5 +1,11 @@
 package driver;
 
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+
+import org.bson.Document;
+
 import cachingLayer.DbFeeder;
 
 /**
@@ -29,15 +35,49 @@ public class AccessDB {
 			case ("clear"):
 				DbFeeder.clearDB();
 				break;
+			case ("update"):
+				try {
+					// find name of root folder in database values
+					MongoCollection<Document> col = DbFeeder.COLLECTION;
+					FindIterable<Document> iter = col.find();
+					MongoCursor<Document> cursor = iter.iterator();
+					Document doc = cursor.next();
+					
+					doc.remove("environment");
+					doc.remove("fabric");
+					doc.remove("node");
+					doc.remove("filename");
+					
+					String str = doc.toJson().replaceFirst("/", "");
+					String root = "C:/" + str.substring(str.indexOf("@@@") + 5, str.indexOf("/"));
+					
+					// update database with root folder
+					DbFeeder.clearDB();
+					DbFeeder.feedDocs(root);
+					System.out.println("\nSuccessfully updated database with respect to root directory " + root);
+				} catch (Exception e) {
+					System.out.println("\nError: Could not update, database is empty");
+					e.printStackTrace();
+				}
+				break;
+			case ("info"):
+				long count = DbFeeder.COLLECTION.count();
+				System.out.println("\nCount:");
+				System.out.println(count + " files currently in databse");
+				break;
 			default:
-				System.err.println(
-						"\nInvalid database access input!\nUse \"populate <root directory>\" to feed files to the database\nUse \"clear\" to clear the database");
+				printError();
 				break;
 			}
 		} catch (ArrayIndexOutOfBoundsException e) {
-			System.err.println(
-					"\nInvalid database access input!\nUse \"populate <root directory>\" to feed files to the database\nUse \"clear\" to clear the database");
+			printError();
 		}
+	}
 
+	public static void printError() {
+		String message = "\nInvalid database access input!"
+				+ "\n - Use \"populate <root directory>\" to feed files to the database"
+				+ "\n - Use \"clear\" to clear the database\n - Use \"info\" to see the contents of the database";
+		System.err.println(message);
 	}
 }
