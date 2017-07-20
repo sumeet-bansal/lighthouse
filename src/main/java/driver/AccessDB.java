@@ -1,27 +1,26 @@
 package driver;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
+import com.mongodb.client.*;
 
 import org.bson.Document;
 
 import cachingLayer.DbFeeder;
 
 /**
- * Runs DbFeeder
+ * Runs DbFeeder from the command line.
  * 
- * @author PKelaita
- *
+ * @author ActianceEngInterns
+ * @version 1.1
  */
 public class AccessDB {
 
 	/**
-	 * Passes command line arguments to either clear the database or populate with a
-	 * specified root folder. Syntax is as follows: clear - clears the database OR
-	 * populate <root folder> - populates the database
+	 * Passes command line arguments to either clear the database or populate
+	 * it with a specified root folder. Syntax:
+	 * 		clear 					clears the database
+	 * 		populate <root dir> 	populates the database
 	 * 
-	 * @param args
+	 * @param args command-line arguments
 	 */
 	public static void main(String[] args) {
 
@@ -38,9 +37,8 @@ public class AccessDB {
 			case ("update"):
 				try {
 					// find name of root folder in database values
-					MongoCollection<Document> col = DbFeeder.COLLECTION;
-					FindIterable<Document> iter = col.find();
-					MongoCursor<Document> cursor = iter.iterator();
+					MongoCollection<Document> col = DbFeeder.getCol();
+					MongoCursor<Document> cursor = col.find().iterator();
 					Document doc = cursor.next();
 					
 					doc.remove("environment");
@@ -61,7 +59,7 @@ public class AccessDB {
 				}
 				break;
 			case ("info"):
-				long count = DbFeeder.COLLECTION.count();
+				long count = DbFeeder.getCol().count();
 				System.out.println("\nCount:");
 				System.out.println(count + " files currently in databse");
 				break;
@@ -75,9 +73,10 @@ public class AccessDB {
 	}
 
 	public static void printError() {
-		String message = "\nInvalid database access input!"
-				+ "\n - Use \"populate <root directory>\" to feed files to the database"
-				+ "\n - Use \"clear\" to clear the database\n - Use \"info\" to see the contents of the database";
+		String message = "\nInvalid database access input."
+				+ "\n Use \"populate <root directory>\" to feed files to the database"
+				+ "\n Use \"clear\" to clear the database"
+				+ "\n Use \"info\" to see the contents of the database";
 		System.err.println(message);
 	}
 }

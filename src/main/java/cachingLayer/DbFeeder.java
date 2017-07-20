@@ -1,6 +1,6 @@
 package cachingLayer;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
 
 import org.bson.Document;
@@ -15,36 +15,32 @@ import parser.*;
  * 'mongod' running simultaneously.
  * 
  * @author ActianceEngInterns
- * @version 1.1
+ * @version 2.0
  */
 public class DbFeeder {
 
-	private static HashSet<File> fileSet = new HashSet<File>();
-
-	// public static fields
-	public static MongoDatabase DATABASE;
-	public static MongoCollection<Document> COLLECTION;
-
+	private static MongoDatabase database;
+	private static MongoCollection<Document> collection;
+	
 	/**
-	 * Static initializer to create the cache and pulls server configuration data
-	 * from it as per the query.
+	 * Initializes the cache.
 	 */
 	public static void connectToDatabase() {
 		try {
 
-			// connecting with server
+			// connects with server
 			@SuppressWarnings("resource")
 			MongoClient mongoClient = new MongoClient("localhost", 27017);
-			System.out.println("server connection successfully done");
+			System.out.println("successfully connected to server");
 
-			// connecting with Database
-			DATABASE = mongoClient.getDatabase("ADS_DB");
-			System.out.println("Connected to database " + DATABASE.getName());
+			// connects with Database
+			database = mongoClient.getDatabase("ADS_DB");
+			System.out.println("connected to database " + database.getName());
 
-			// create Collection
+			// creates Collection
 			String colName = "ADS_COL";
-			COLLECTION = DATABASE.getCollection(colName);
-			System.out.println("Accessed collection " + COLLECTION.getNamespace());
+			collection = database.getCollection(colName);
+			System.out.println("accessed collection " + colName);
 
 		} catch (Exception e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
@@ -53,9 +49,7 @@ public class DbFeeder {
 
 	/**
 	 * Feeds parsed Documents into the database.
-	 * 
-	 * @param path
-	 *            the path containing the files to be cached
+	 * @param path the path containing the files to be cached
 	 */
 	public static void feedDocs(String path) {
 		File folder = new File(path);
@@ -63,30 +57,29 @@ public class DbFeeder {
 		directory.parseAll();
 		ArrayList<AbstractParser> parsedFiles = directory.getParsedData();
 
-		int count = 0;
 		for (AbstractParser s : parsedFiles) {
-
-			Document doc = new Document(); // represents a single parsed file
-
-			// gets metadata of parsed file and tags Document accordingly
-			Map<String, String> metadata = s.getMetadata();
-			for (Map.Entry<String, String> entry : metadata.entrySet()) {
-				doc.append(entry.getKey(), entry.getValue());
-			}
 
 			// feeds data of parsed file to Document
 			Map<String, Object> data = s.getData();
-			for (Map.Entry<String, Object> entry : data.entrySet()) {
-				String key = entry.getKey().replace(".", "```");
-				String value = entry.getValue().toString();
-				doc.append(key, value);
-			}
+			for (Map.Entry<String, Object> property : data.entrySet()) {
+				
+				Document doc = new Document(); // represents a single property
 
-			// inserts Document generated from parsed file data into MongoDB Collection
-			COLLECTION.insertOne(doc);
-			count++;
+				// due to MongoDB constraints, all dot chars in key fields
+				// converted to an infrequent substring--three backticks (```)
+				String key = property.getKey().replace(".", "```");
+				String value = property.getValue().toString();
+				doc.append(key, value);
+
+				// gets metadata of parsed file and tags Document accordingly
+				Map<String, String> metadata = s.getMetadata();
+				for (Map.Entry<String, String> entry : metadata.entrySet()) {
+					doc.append(entry.getKey(), entry.getValue());
+				}
+
+				collection.insertOne(doc);
+			}
 		}
-		System.out.println("Added " + count + " files to collection " + COLLECTION.getNamespace());
 	}
 
 	/**
@@ -94,23 +87,28 @@ public class DbFeeder {
 	 */
 	public static void clearDB() {
 		try {
-			COLLECTION.deleteMany(new Document());
-			System.out.println("Cleared data from collection " + COLLECTION.getNamespace());
-			fileSet.clear();
+			collection.deleteMany(new Document());
+			System.out.println("cleared collection " + collection.getNamespace());
 		} catch (Exception e) {
-			System.err.println("Could not clear data from collection");
+			System.err.println("failed to clear data from collection");
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
-	 * Adds a File to the internal HashSet for caching.
-	 * 
-	 * @param filepath
-	 *            the file path of the File to be added and cached
+	 * Getter method for the MongoDB database.
+	 * @return the MongoDatabase being used
 	 */
-	public void addFile(String filepath) {
-		fileSet.add(new File(filepath));
+	public static MongoDatabase getDB() {
+		return database;
+	}
+	
+	/**
+	 * Getter method for MongoDB collection.
+	 * @return the MongoCollection being used
+	 */
+	public static MongoCollection<Document> getCol() {
+		return collection;
 	}
 
 }
