@@ -51,7 +51,7 @@ public class DbFeeder {
 	 * Feeds parsed Documents into the database.
 	 * @param path the path containing the files to be cached
 	 */
-	public static void feedDocs(String path) {
+	public static void populate(String path) {
 		File folder = new File(path);
 		DirectoryParser directory = new DirectoryParser(folder);
 		directory.parseAll();
@@ -67,9 +67,10 @@ public class DbFeeder {
 
 				// due to MongoDB constraints, all dot chars in key fields
 				// converted to an infrequent substring--three backticks (```)
-				String key = property.getKey().replace(".", "```");
+				String key = property.getKey();
 				String value = property.getValue().toString();
-				doc.append(key, value);
+				doc.append("key", key);
+				doc.append("value", value);
 
 				// gets metadata of parsed file and tags Document accordingly
 				Map<String, String> metadata = s.getMetadata();

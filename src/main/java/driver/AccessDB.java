@@ -29,7 +29,7 @@ public class AccessDB {
 		try {
 			switch (args[0]) {
 			case "populate":
-				DbFeeder.feedDocs(args[1]);
+				DbFeeder.populate(args[1]);
 				break;
 			case ("clear"):
 				DbFeeder.clearDB();
@@ -51,7 +51,7 @@ public class AccessDB {
 					
 					// update database with root folder
 					DbFeeder.clearDB();
-					DbFeeder.feedDocs(root);
+					DbFeeder.populate(root);
 					System.out.println("\nSuccessfully updated database with respect to root directory " + root);
 				} catch (Exception e) {
 					System.out.println("\nError: Could not update, database is empty");
@@ -61,7 +61,7 @@ public class AccessDB {
 			case ("info"):
 				long count = DbFeeder.getCol().count();
 				System.out.println("\nCount:");
-				System.out.println(count + " files currently in databse");
+				System.out.println(count + " properties currently in databse");
 				break;
 			default:
 				printError();

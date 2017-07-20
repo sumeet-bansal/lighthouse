@@ -20,7 +20,7 @@ public class DbFeederTester {
 	 */
 	public static void main(String[] args) {
 		DbFeeder feeder = new DbFeeder();
-		feeder.feedDocs("C:/Users/sbansal/Documents/parserResources");
+		feeder.populate("C:/Users/sbansal/Documents/parserResources");
 	}
 
 }
