@@ -15,7 +15,7 @@ import zookeeperModule.*;
  */
 public class ZKClientManagerTester {
 
-	private static ZKClientManager zkmanager = new ZKClientManager();
+	private static ZKClientManager zkmanager = new ZKClientManager("127.0.0.1");
 	private static String path = "/alcatrazproperties/2.5/storm/test";
 	byte[] data = "test data".getBytes();
 

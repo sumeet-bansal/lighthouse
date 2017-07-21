@@ -7,13 +7,30 @@ import java.io.*;
  * Generates .properties files for all fabrics in an environment.
  * 
  * @author ActianceEngInterns
- * @version 1.0
+ * @version 1.1
  */
 public class ZKGenerator {
 	
-	private ZKClientManager zkmanager = new ZKClientManager();
+	private ZKClientManager zkmanager;
 	private String basepath = "/alcatrazproperties/2.5", fabric;
 	private Map<String, String> map;
+	private String root, env;
+	
+	// separates specific branches from .properties for UI readability
+	private Map<String, ArrayList<String>> exceptions = new HashMap<>();
+	
+	/**
+	 * Constructor.
+	 * @param host the host being connected to
+	 * @param root the root directory being written to
+	 * @param environment the name of the environment
+	 */
+	public ZKGenerator(String host, String root, String environment) {
+		this.root = root;
+		env = environment;
+		zkmanager = new ZKClientManager(host);
+		exceptions.put("properties", new ArrayList<>());
+	}
 	
 	/**
 	 * Runs the .properties file generator.
@@ -26,14 +43,14 @@ public class ZKGenerator {
 		for (int i = 0; i < fabrics.size(); i++) {
 			
 			// generates directory structure
-			new File("environment/" + fabrics.get(i) + "/common").mkdirs();
+			new File(root + env + fabrics.get(i) + "/common").mkdirs();
 			
 			// generates .properties files
 			map = new LinkedHashMap<>();
 			fabric =  fabrics.get(i);
 			recursive(basepath + "/" + fabric);
 			write(fabric, map);
-			System.out.println("generated .properties file for " + fabric);
+			System.out.println("generated .properties file(s) for " + fabric);
 		}
 	}	
 	
@@ -63,12 +80,9 @@ public class ZKGenerator {
 	 * @param fabric the current fabric
 	 * @param map a Map of root-to-leaf keys and respective data from fabric
 	 */
-	private void write(String server, Map<String, String> map) {
+	private void write(String fabric, Map<String, String> map) {
 		try {
-			String directory = "environment/" + server + "/common/";
-			
-			// 'blacklist' branch gets separate .properties for UI readability
-			ArrayList<String> blacklist = new ArrayList<>();
+			String directory = root + env + fabric + "/common/";
 			
 			Writer writer = new BufferedWriter(new OutputStreamWriter(
 			          new FileOutputStream(directory + "server.properties"),
@@ -76,27 +90,62 @@ public class ZKGenerator {
 			for (Map.Entry<String, String> entry : map.entrySet()) {
 				String key = entry.getKey();
 				Object value = entry.getValue();
-				if (entry.getKey().startsWith("blacklist")) {
-				    blacklist.add(key + "=" + value + "\n");
-				} else {
+
+				// sorts excepted properties into separate branches
+				boolean excepted = false;
+				ArrayList<String> exceptedProps = exceptions.get("properties");
+				for (int i = 0; i < exceptedProps.size(); i++) {
+					String prop = exceptedProps.get(i);
+					if (entry.getKey().startsWith(prop)) {
+					    addException(prop, key + "=" + value + "\n");
+					    excepted = true;
+					}	
+				}
+
+				if (!excepted) {
 					writer.write(key + "=" + value + "\n");
 				}
+				
 			}
 		    writer.close();
-			
-			if (blacklist.size() > 0) {
-				writer = new BufferedWriter(new OutputStreamWriter(
-				          new FileOutputStream(directory +
-				          "server.blacklist.properties"), "utf-8"));
-				for (int i = 0; i < blacklist.size(); i++) {
-					writer.write(blacklist.get(i));
-				}
-				writer.close();
-			}
+
+			// writes each excepted property branch to own separate .properties file
+		    for (Map.Entry<String, ArrayList<String>> entry : exceptions.entrySet()) {
+		    	if (!entry.getKey().equals("properties")) {
+					if (entry.getValue().size() > 0) {
+						writer = new BufferedWriter(new OutputStreamWriter(
+						          new FileOutputStream(directory +
+						          "server." + entry.getKey() + ".properties"), "utf-8"));
+						for (int i = 0; i < entry.getValue().size(); i++) {
+							writer.write(entry.getValue().get(i));
+						}
+						writer.close();
+					}
+		    	}
+		    }
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Adds a property branch to the list of excepted property branches.
+	 * @param prop the excepted property
+	 */
+	public void addException(String prop) {
+		exceptions.get("properties").add(prop);
+		exceptions.put(prop, new ArrayList<>());
+	}
+	
+	/**
+	 * Adds a specific property to the excepted branch instead of the normal
+	 * .properties file.
+	 * @param prop the base property
+	 * @param line the full-path property and its respective value
+	 */
+	private void addException(String prop, String line) {
+		exceptions.get(prop).add(line);
 	}
 	
 }

@@ -10,18 +10,20 @@ import org.apache.zookeeper.data.Stat;
  * Manipulates ZooKeeper nodes (ZNodes).
  * 
  * @author AlcatrazEngInterns
- * @version 1.0
+ * @version 1.1
  */
 public class ZKClientManager {
 
-	private static ZooKeeper zkeeper;
-	private static ZKConnector zkConnection;
-	private static String host = "127.0.0.1";
+	private ZooKeeper zkeeper;
+	private ZKConnector zkConnection;
+	private String host;
 
 	/**
 	 * Constructor.
+	 * @param host the host being connected to
 	 */
-	public ZKClientManager() {
+	public ZKClientManager(String host) {
+		this.host = host;
 		initialize();
 	}
 

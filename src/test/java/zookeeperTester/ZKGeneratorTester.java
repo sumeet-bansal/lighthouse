@@ -14,18 +14,22 @@ import zookeeperModule.*;
  */
 public class ZKGeneratorTester {
 
-	private ZKClientManager zkmanager = new ZKClientManager();
+	private ZKClientManager zkmanager;
 	private ArrayList<AbstractParser> parsedFiles;
 	private String zkpath = "/alcatrazproperties/2.5/";
-	private String localf = "C:/Users/sbansal/workspace/diagnosticSuite/environment/";
+	private String root = "C:/Users/sbansal/workspace/diagnosticSuite/root/";
+	private String host = "127.0.0.1", env = "some_dev/";
 
 	/**
-	 * Sets up testing suite.
+	 * Sets up testing suite.	
 	 */
 	@Before
 	public void setup() {
-		ZKGenerator generator = new ZKGenerator(); generator.generate();
-		DirectoryParser directory = new DirectoryParser(new File(localf));
+		zkmanager = new ZKClientManager(host);
+		ZKGenerator generator = new ZKGenerator(host, root, env);
+		generator.addException("blacklist");
+		generator.generate();
+		DirectoryParser directory = new DirectoryParser(new File(root + env));
 		directory.parseAll();
 		parsedFiles = directory.getParsedData();
 	}
