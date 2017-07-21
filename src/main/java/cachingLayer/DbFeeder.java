@@ -56,7 +56,8 @@ public class DbFeeder {
 		DirectoryParser directory = new DirectoryParser(folder);
 		directory.parseAll();
 		ArrayList<AbstractParser> parsedFiles = directory.getParsedData();
-
+		int count = 0;
+		
 		for (AbstractParser s : parsedFiles) {
 
 			// feeds data of parsed file to Document
@@ -64,9 +65,6 @@ public class DbFeeder {
 			for (Map.Entry<String, Object> property : data.entrySet()) {
 				
 				Document doc = new Document(); // represents a single property
-
-				// due to MongoDB constraints, all dot chars in key fields
-				// converted to an infrequent substring--three backticks (```)
 				String key = property.getKey();
 				String value = property.getValue().toString();
 				doc.append("key", key);
@@ -79,8 +77,10 @@ public class DbFeeder {
 				}
 
 				collection.insertOne(doc);
+				count++;
 			}
 		}
+		System.out.println("\nAdded " + count + " properties to database");
 	}
 
 	/**
@@ -88,8 +88,22 @@ public class DbFeeder {
 	 */
 	public static void clearDB() {
 		try {
-			collection.deleteMany(new Document());
-			System.out.println("cleared collection " + collection.getNamespace());
+			BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
+			String result;
+			while (true) {
+				System.out.print("Clear entire database? (y/n): ");
+				result = input.readLine();
+				if (result.equalsIgnoreCase("y")) {
+					long num = collection.count();
+					collection.deleteMany(new Document());
+					System.out.println("\nCleared " + num +  " properties from collection " + collection.getNamespace());
+					return;
+				} else if (result.equalsIgnoreCase("n")) {
+					return;
+				} else {
+					continue;
+				}
+			}
 		} catch (Exception e) {
 			System.err.println("failed to clear data from collection");
 			e.printStackTrace();

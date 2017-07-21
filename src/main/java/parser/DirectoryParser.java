@@ -51,7 +51,7 @@ public class DirectoryParser {
 
 	/**
 	 * Parses each file in directory and adds the resulting data to the appropriate
-	 * internal ArrayList. Calculates runtime in milliseconds.
+	 * internal ArrayList.
 	 */
 	public void parseAll() {
 		fileFinder(directory);
