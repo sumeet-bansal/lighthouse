@@ -1,15 +1,6 @@
 package driver;
 
-import com.mongodb.client.*;
-
-import org.bson.Document;
-
-import org.slf4j.LoggerFactory;
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
 import cachingLayer.DbFeeder;
-
 /**
  * Runs DbFeeder from the command line.
  * 
@@ -28,11 +19,6 @@ public class AccessDB {
 	 */
 	public static void run(String[] args) {
 
-		// disable mongo logging
-		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-		Logger rootLogger = loggerContext.getLogger("org.mongodb.driver");
-		rootLogger.setLevel(Level.OFF);
-
 		DbFeeder.connectToDatabase();
 
 		try {
@@ -42,30 +28,6 @@ public class AccessDB {
 				break;
 			case ("clear"):
 				DbFeeder.clearDB();
-				break;
-			case ("update"):
-				try {
-					// find name of root folder in database values
-					MongoCollection<Document> col = DbFeeder.getCol();
-					MongoCursor<Document> cursor = col.find().iterator();
-					Document doc = cursor.next();
-
-					doc.remove("environment");
-					doc.remove("fabric");
-					doc.remove("node");
-					doc.remove("filename");
-
-					String str = doc.toJson().replaceFirst("/", "");
-					String root = "C:/" + str.substring(str.indexOf("@@@") + 5, str.indexOf("/"));
-
-					// update database with root folder
-					DbFeeder.clearDB();
-					DbFeeder.populate(root);
-					System.out.println("\nSuccessfully updated database with respect to root directory " + root);
-				} catch (Exception e) {
-					System.out.println("\nError: Could not update, database is empty");
-					e.printStackTrace();
-				}
 				break;
 			case ("info"):
 				long count = DbFeeder.getCol().count();

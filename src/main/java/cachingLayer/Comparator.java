@@ -57,10 +57,7 @@ public class Comparator {
 
 		String[] arr1 = path1.split("/");
 		String[] arr2 = path2.split("/");
-		if (!arr1[0].equals(arr2[0])) {
-			System.err.println("Paths must be in the same root file");
-			return null;
-		} else if (arr1.length != arr2.length) {
+		if (arr1.length != arr2.length) {
 			System.err.println("Paths must be at the same specified level");
 			return null;
 		} else if (arr1.length > 5 || arr1.length < 2) {
@@ -70,17 +67,23 @@ public class Comparator {
 		Document filter1 = new Document();
 		Document filter2 = new Document();
 		String[] pathFilters = { "environment", "fabric", "node", "filename" };
-		for (int i = 1; i < arr1.length; i++) {
+		for (String str : arr1) {
+			System.out.print(str + "\t");
+		}
+		System.out.println();
+		for (int i = 0; i < arr1.length; i++) {
 			if (!arr1[i].equals("*")) {
-				filter1.append(pathFilters[i - 1], arr1[i]);
+				filter1.append(pathFilters[i], arr1[i]);
 			}
 		}
-		for (int i = 1; i < arr2.length; i++) {
+		for (int i = 0; i < arr2.length; i++) {
 			if (!arr2[i].equals("*")) {
-				filter2.append(pathFilters[i - 1], arr2[i]);
+				filter2.append(pathFilters[i], arr2[i]);
 			}
 		}
 		Document[] filters = { filter1, filter2 };
+		System.out.println(filter1.toJson());
+		System.out.println(filter2.toJson());
 		return filters;
 	}
 
