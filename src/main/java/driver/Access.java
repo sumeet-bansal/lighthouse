@@ -1,35 +1,53 @@
 package driver;
 
+import java.util.*;
+
+/**
+ * Runs the complete diagnostic tool from the command line.
+ * 
+ * @author ActianceEngInterns
+ * @version 1.0
+ */
 public class Access {
+	
+	private static String help = "POSSIBLE COMMANDS \n"
+			+ "'zk'\tused for functions related to ZooKeeper\n"
+			+ "'db'\tused for functions related to directly accessing the database\n"
+			+ "'query'\tused for functions related to querying the database for diffs\n";
+	
 	/**
-	 * User specifies whether to access Database ("db") or Comparator ("query") and
-	 * passes arguments to their "run" classes
-	 * 
-	 * @param args
+	 * Takes command-line arguments and delegates functionality as appropriate.
+	 * @param args command-line arguments
 	 */
 	public static void main(String[] args) {
-		try {
-
-			String cmd = args[0];
-			String[] pass = new String[args.length - 1];
-			for (int i = 1; i < args.length; i++) {
-				pass[i - 1] = args[i];
-			}
-
-			switch (cmd) {
+		
+		// if no args passed, automatically sets arg[0] to "help"
+		if (args.length == 0) {
+			args = new String[1];
+			args[0] = "help";
+		}
+		
+		// command-specific args
+		String[] pass = null;
+		if (args.length > 1) {
+			pass = Arrays.copyOfRange(args, 1, args.length);
+		}
+		
+		// delegates functionality as appropriate
+		switch (args[0]) {
 			case "db":
 				AccessDB.run(pass);
 				break;
 			case "query":
 				AccessUI.run(pass);
 				break;
+			case "help":
+				System.out.println(help);
+				break;
 			default:
-				System.err.println("Invalid input! Please specify \"db\" or \"query\" before passing arguments!");
+				// should be unreachable but in case of future modifications to code
+				System.err.println("Invalid input. Use the 'help' command for details on usage.");
 				return;
-			}
-
-		} catch (Exception e) {
-			System.err.println("Invalid input! Please specify \"db\" or \"query\" before passing arguments!");
 		}
 	}
 }
