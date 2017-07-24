@@ -1,6 +1,13 @@
 package driver;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
+
+import org.slf4j.LoggerFactory;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 
 import cachingLayer.Comparator;
 
@@ -17,7 +24,12 @@ public class AccessUI {
 	 * 
 	 * @param args
 	 */
-	public static void main(String[] args) {
+	public static void run(String[] args) {
+
+		// disable mongo logging
+		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+		Logger rootLogger = loggerContext.getLogger("org.mongodb.driver");
+		rootLogger.setLevel(Level.OFF);
 
 		try {
 			ArrayList<String> list = new ArrayList<String>();
@@ -76,7 +88,10 @@ public class AccessUI {
 
 			// compare files, build CSV file and clear current query
 			c.compare();
-			c.writeToCSV("C:/test diffs");
+			String writePath = System.getProperty("user.home") + File.separator + "Documents" + File.separator
+					+ "Diagnostic reports";
+			new File(writePath).mkdirs();
+			c.writeToCSV(writePath);
 			c.clearQuery();
 		} catch (ArrayIndexOutOfBoundsException e) {
 			System.err.println("Please specify files to query");

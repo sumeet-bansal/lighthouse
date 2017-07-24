@@ -4,6 +4,10 @@ import com.mongodb.client.*;
 
 import org.bson.Document;
 
+import org.slf4j.LoggerFactory;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 import cachingLayer.DbFeeder;
 
 /**
@@ -15,14 +19,19 @@ import cachingLayer.DbFeeder;
 public class AccessDB {
 
 	/**
-	 * Passes command line arguments to either clear the database or populate
-	 * it with a specified root folder. Syntax:
-	 * 		clear 					clears the database
-	 * 		populate <root dir> 	populates the database
+	 * Passes command line arguments to either clear the database or populate it
+	 * with a specified root folder. Syntax: clear clears the database populate
+	 * <root dir> populates the database
 	 * 
-	 * @param args command-line arguments
+	 * @param args
+	 *            command-line arguments
 	 */
-	public static void main(String[] args) {
+	public static void run(String[] args) {
+
+		// disable mongo logging
+		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+		Logger rootLogger = loggerContext.getLogger("org.mongodb.driver");
+		rootLogger.setLevel(Level.OFF);
 
 		DbFeeder.connectToDatabase();
 
@@ -40,15 +49,15 @@ public class AccessDB {
 					MongoCollection<Document> col = DbFeeder.getCol();
 					MongoCursor<Document> cursor = col.find().iterator();
 					Document doc = cursor.next();
-					
+
 					doc.remove("environment");
 					doc.remove("fabric");
 					doc.remove("node");
 					doc.remove("filename");
-					
+
 					String str = doc.toJson().replaceFirst("/", "");
 					String root = "C:/" + str.substring(str.indexOf("@@@") + 5, str.indexOf("/"));
-					
+
 					// update database with root folder
 					DbFeeder.clearDB();
 					DbFeeder.populate(root);
@@ -75,8 +84,7 @@ public class AccessDB {
 	public static void printError() {
 		String message = "\nInvalid database access input."
 				+ "\n Use \"populate <root directory>\" to feed files to the database"
-				+ "\n Use \"clear\" to clear the database"
-				+ "\n Use \"info\" to see the contents of the database";
+				+ "\n Use \"clear\" to clear the database" + "\n Use \"info\" to see the contents of the database";
 		System.err.println(message);
 	}
 }
