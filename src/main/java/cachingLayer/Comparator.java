@@ -67,9 +67,6 @@ public class Comparator {
 		Document filter1 = new Document();
 		Document filter2 = new Document();
 		String[] pathFilters = { "environment", "fabric", "node", "filename" };
-		for (String str : arr1) {
-			System.out.print(str + "\t");
-		}
 		System.out.println();
 		for (int i = 0; i < arr1.length; i++) {
 			if (!arr1[i].equals("*")) {
@@ -82,8 +79,6 @@ public class Comparator {
 			}
 		}
 		Document[] filters = { filter1, filter2 };
-		System.out.println(filter1.toJson());
-		System.out.println(filter2.toJson());
 		return filters;
 	}
 
@@ -289,10 +284,37 @@ public class Comparator {
 		}
 		System.out.println("\nFound " + count + " properties and blocked " + blockCount + " properties matching query");
 
-		// Compare query-specified documents and add header to CSV table representation
+		// if single query, set file 1 and file 2 column names to query comparison
+		String file1 = "File 1";
+		String file2 = "File 2";
+		if (queryList.size() == 1) {
+			Document comp1 = queryList.get(0)[0];
+			Document comp2 = queryList.get(0)[1];
+			
+			String[] pathKeys = { "environment", "fabric", "node", "filename" };
+			String name1 = "";
+			String name2 = "";
+			boolean change = false;
+			for (String key : pathKeys) {
+				String val1 = comp1.getString(key);
+				String val2 = comp2.getString(key);
+				if (val1 != null && val2 != null && !val1.equals(val2)) {
+					name1 = val1;
+					name2 = val2;
+					change = true;
+				}
+			}
+			if (change) {
+				file1 = name1;
+				file2 = name2;
+			}
+			
+		}
+		
+		// Compare query-specified documents and add header to CSV table representation\
 		try {
 			table = createTable(docs1, docs2);
-			String[] header = { "File 1", "Key 1", "Value 1", "File 2", "Key 2", "Value 2", "Key Status",
+			String[] header = { file1 , "Key 1", "Value 1", file2, "Key 2", "Value 2", "Key Status",
 					"Value Status" };
 			table.add(0, header);
 
