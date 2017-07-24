@@ -18,7 +18,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>3.8.1</version>
+			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -26,22 +26,22 @@
 			<artifactId>mongodb-driver</artifactId>
 			<version>3.4.2</version>
 		</dependency>
-	  	<dependency>
-	  		<groupId>com.fasterxml.jackson.dataformat</groupId>
-	  		<artifactId>jackson-dataformat-yaml</artifactId>
-	  		<version>2.3.0</version>
-	  	</dependency>
-	  	<dependency>
-	        <groupId>com.fasterxml.jackson.core</groupId>
-	        <artifactId>jackson-databind</artifactId>
-	        <version>2.2.3</version>
-	    </dependency>
-	    <dependency>
-	        <groupId>org.apache.commons</groupId>
-	        <artifactId>commons-lang3</artifactId>
-	        <version>3.4</version>
-	    </dependency>
-	    <dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+			<version>2.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.2.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.4</version>
+		</dependency>
+		<dependency>
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>
 			<version>2.5</version>
@@ -53,9 +53,9 @@
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper -->
 		<dependency>
-		    <groupId>org.apache.zookeeper</groupId>
-		    <artifactId>zookeeper</artifactId>
-		    <version>3.4.10</version>
+			<groupId>org.apache.zookeeper</groupId>
+			<artifactId>zookeeper</artifactId>
+			<version>3.4.10</version>
 		</dependency>		
 	</dependencies>
 
@@ -86,6 +86,16 @@
 				<configuration>
 					<port>9090</port>
 					<path>/</path>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.0.2</version>
+				<configuration>
+					<archive>
+						<manifestFile>C:/Users/PKelaita/workspace/diagnosticSuite/target/classes/META-INF/MANIFEST.MF</manifestFile>
+					</archive>
 				</configuration>
 			</plugin>
 		</plugins>
