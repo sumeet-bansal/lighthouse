@@ -10,10 +10,15 @@ import java.util.*;
  */
 public class Access {
 	
-	private static String help = "POSSIBLE COMMANDS \n"
-			+ "'zk'\tused for functions related to ZooKeeper\n"
-			+ "'db'\tused for functions related to directly accessing the database\n"
-			+ "'query'\tused for functions related to querying the database for diffs\n";
+	private static String help = "Usage: java -jar <jar> <commands>\nPOSSIBLE COMMANDS \n"
+			+ "'help'\n\tgoes to the help page for the general diagnostic tool\n"
+			+ "\tUsage: java jar -jar <jar> help\n"
+			+ "'zk'\n\tused for functions related to ZooKeeper\n"
+			+ "\tUsage: java -jar <jar> zk <commands>\n"
+			+ "'db'\n\tused for functions related to directly accessing the database\n"
+			+ "\tUsage: java -jar <jar> db <commands>\n"
+			+ "'query'\n\tused for functions related to querying the database for diffs\n"
+			+ "\tUsage: java -jar <jar> query <commands>";
 	
 	/**
 	 * Takes command-line arguments and delegates functionality as appropriate.
@@ -45,7 +50,7 @@ public class Access {
 				AccessUI.run(pass);
 				break;
 			case "help":
-				System.out.println(help);
+				System.err.println(help);
 				break;
 			default:
 				// should be unreachable but in case of future modifications to code

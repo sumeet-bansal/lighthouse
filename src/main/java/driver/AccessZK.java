@@ -10,6 +10,15 @@ import zookeeperModule.*;
  */
 public class AccessZK {
 	
+	private static String help = "Usage: java -jar <jar file> zk <commands>"
+			+ "\nPOSSIBLE COMMANDS \n"
+			+ "'help'\n\tgoes to the help page for 'zk'\n"
+			+ "\tUsage: java -jar <jar> zk help\n"
+			+ "'generate'\n\tgenerates .properties files from a given environment\n"
+			+ "\tUsage: java -jar <jar> zk generate "
+			+ "<host IP> <root folder> <environment name> "
+			+ "<exception> <exception> ... <exception>";
+	
 	/**
 	 * Accesses a ZooKeeper instance to generate .properties from a given
 	 * environment.
@@ -18,10 +27,8 @@ public class AccessZK {
 	public static void run(String[] args) {
 		
 		// describes proper usage of 'zk' command
-		if (args.length < 3) {
-				System.err.println("Usage: java -jar <jar file> zk "
-						+ "<host IP> <root folder> <environment name> "
-						+ "<exception1> <exception2> ... <exceptionN>");
+		if (args.length < 3 || args[0] == "help") {
+				System.err.println(help);
 				return;
 		}
 
