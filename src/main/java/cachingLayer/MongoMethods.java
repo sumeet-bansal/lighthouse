@@ -1,18 +1,19 @@
 package cachingLayer;
 
-import java.util.List;
-
 import org.bson.Document;
 
 import com.mongodb.MongoClient;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.*;
 
+/**
+ * A reference guide for working with MongoDB through Java.
+ * 
+ * @author ActianceEngInterns
+ * @version 1.0
+ */
 public class MongoMethods {
 
-	public static void main( String args[] ) {
+	public static void main(String args[]) {
 
 		try {
 			
@@ -22,8 +23,7 @@ public class MongoMethods {
 			System.out.println("server connection successfully done");
 			
 			// list all Databases
-			@SuppressWarnings("deprecation")
-			List<String> databases = mongoClient.getDatabaseNames();
+			MongoIterable<String> databases = mongoClient.listDatabaseNames();
 			System.out.println(databases);
 			
 			// connecting with Database
@@ -52,7 +52,7 @@ public class MongoMethods {
 					append("uni", "u dub");
 			Document doc4 = new Document().
 					append("name", "Anthony").
-					append("age", 19).
+					append("age", 20).
 					append("uni", "usd");
 			Document doc5 = new Document().
 					append("name", "Sara").
@@ -104,11 +104,6 @@ public class MongoMethods {
 			while (cursor.hasNext()) {
 				System.out.println(cursor.next());
 			}
-/*
-			// list all Collections
-			List<String> cols = dbs.listCollectionNames();
-			System.out.println(cols);
-*/	
 			// drop Collection
 			col.drop();
 			System.out.println("dropped collection");
