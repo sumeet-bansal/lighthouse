@@ -35,6 +35,9 @@ public class Access {
 		
 		// delegates functionality as appropriate
 		switch (args[0]) {
+			case "zk":
+				AccessZK.run(pass);
+				break;
 			case "db":
 				AccessDB.run(pass);
 				break;
