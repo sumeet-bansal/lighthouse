@@ -20,10 +20,6 @@ import com.mongodb.client.*;
  * 
  * @author ActianceEngInterns
  * @version 1.0
- * 
- *          TODO Address bug throwing NullPointerException when blocking
- *          directories higher up in the filepath than those specified by the
- *          add query. Also do more QA on block and wildcard functions
  */
 public class Comparator {
 	private ArrayList<Document[]> queryList = new ArrayList<Document[]>();
@@ -59,9 +55,6 @@ public class Comparator {
 		String[] arr2 = path2.split("/");
 		if (arr1.length != arr2.length) {
 			System.err.println("Paths must be at the same specified level");
-			return null;
-		} else if (arr1.length > 5 || arr1.length < 2) {
-			System.err.println("Paths must be at environment, fabric, node, or file level");
 			return null;
 		}
 		Document filter1 = new Document();
@@ -144,18 +137,14 @@ public class Comparator {
 	public void blockQuery(String path) {
 		try {
 			String[] arr = path.split("/");
-			if (arr.length > 5 || arr.length < 2) {
-				System.err.println("\nInvalid block input! Path must be at environment, fabric, node, or file level\n");
-				return;
-			}
 			Document filter = new Document();
 			String[] pathFilters = { "environment", "fabric", "node", "filename" };
 
-			for (int i = 1; i < arr.length; i++) {
+			for (int i = 0; i < arr.length; i++) {
 				if (!arr[i].equals("*")) {
-					filter.append(pathFilters[i - 1], arr[i]);
+					filter.append(pathFilters[i], arr[i]);
 				} else {
-					filter.append(pathFilters[i - 1], "*");
+					filter.append(pathFilters[i], "*");
 				}
 			}
 			blockList.add(filter);
