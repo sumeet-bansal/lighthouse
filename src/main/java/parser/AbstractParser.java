@@ -8,7 +8,7 @@ import java.util.*;
  * file type parser.
  * 
  * @author ActianceEngInterns
- * @version 1.0
+ * @version 1.1
  */
 public abstract class AbstractParser {
 

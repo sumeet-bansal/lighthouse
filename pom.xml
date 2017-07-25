@@ -3,8 +3,8 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>ActianceEngInterns</groupId>
-	<artifactId>Command-Line-Diagnostic-Tool</artifactId>
-	<version>0.0.1</version>
+	<artifactId>ADS</artifactId>
+	<version>1.0</version>
 	<packaging>jar</packaging>
 
 	<name>Driver</name>
@@ -110,7 +110,7 @@
 						</goals>
 						<configuration>
 							<outputDirectory>
-								C:/Users/Pkelaita/workspace/diagnosticSuite/target/dependency-jars/
+								C:/Users/sbansal/workspace/diagnosticSuite/target/dependency-jars/
 							</outputDirectory>
 						</configuration>
 					</execution>

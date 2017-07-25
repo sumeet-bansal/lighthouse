@@ -19,13 +19,16 @@ public class DirectoryParser {
 	private ArrayList<String[]> headers = new ArrayList<>();
 	private ArrayList<String> errors = new ArrayList<>();
 
+	/**
+	 * Constructor.
+	 * @param directory the root directory being parsed
+	 */
 	public DirectoryParser(File directory) {
 		this.directory = directory;
 	}
 
 	/**
 	 * Getter method for the parsed data of the files in the directory.
-	 * 
 	 * @return the parsed data
 	 */
 	public ArrayList<AbstractParser> getParsedData() {
@@ -36,8 +39,7 @@ public class DirectoryParser {
 	 * Recursively searches for all files in a directory and adds their respective
 	 * file paths to the appropriate internal ArrayList.
 	 * 
-	 * @param the
-	 *            directory being searched
+	 * @param directory the directory being searched
 	 */
 	private void fileFinder(File directory) {
 		for (File file : directory.listFiles()) {
@@ -71,8 +73,7 @@ public class DirectoryParser {
 
 	/**
 	 * Prints each valid file in Standardizer format and lists all invalid files.
-	 * 
-	 * @return String representation of DirectoryParser instance
+	 * @return a String representation of DirectoryParser instance
 	 */
 	public String toString() {
 		String str = new String();
@@ -91,9 +92,5 @@ public class DirectoryParser {
 		}
 		str += ("Unsupported files: " + errorList + "\n");
 		return str;
-	}
-
-	public ArrayList<String> getFilePaths() {
-		return filePaths;
 	}
 }
