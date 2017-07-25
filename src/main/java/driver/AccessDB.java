@@ -37,7 +37,7 @@ public class AccessDB {
 
 		switch (args[0]) {
 			case "populate":
-				if (args.length == 1) {
+				if (args.length > 1) {
 					DbFeeder.populate(args[1]);
 				} else {
 					System.err.println(help);

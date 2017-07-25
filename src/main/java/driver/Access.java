@@ -1,6 +1,7 @@
 package driver;
 
 import java.util.*;
+import org.apache.log4j.*;
 
 /**
  * Runs the complete diagnostic tool from the command line.
@@ -26,6 +27,16 @@ public class Access {
 	 */
 	public static void main(String[] args) {
 		
+		// disable mongo logging
+		@SuppressWarnings("unchecked")
+		List<Logger> loggers = Collections.<Logger>list(LogManager.getCurrentLoggers());
+		loggers.add(LogManager.getRootLogger());
+		for ( Logger logger : loggers ) {
+		    logger.setLevel(Level.ERROR);
+		}
+//		PropertyConfigurator.configure("resources/log4j.properties");
+		
+
 		// if no args passed, automatically sets arg[0] to "help"
 		if (args.length == 0) {
 			args = new String[1];
