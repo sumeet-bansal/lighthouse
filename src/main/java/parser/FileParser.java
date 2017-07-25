@@ -31,11 +31,13 @@ public class FileParser {
 		try {
 			String filename = input.getAbsolutePath();
 			String fileType = filename.substring(filename.lastIndexOf('.') + 1);
-			if (fileType.equalsIgnoreCase("config") || fileType.equalsIgnoreCase("conf")) {
+			if (fileType.equalsIgnoreCase("config") ||
+				fileType.equalsIgnoreCase("conf") ||
+				fileType.equalsIgnoreCase("cfg")) {
 				data = new ParseConf();
 			} else if (fileType.equalsIgnoreCase("yaml") || fileType.equalsIgnoreCase("yml")) {
 				data = new ParseYaml();
-			} else if (fileType.equalsIgnoreCase("properties")) {
+			} else if (fileType.equalsIgnoreCase("properties") || fileType.equalsIgnoreCase("prop")) {
 				data = new ParseProp();
 			} else if (input.getName().equalsIgnoreCase("hosts")) {
 				data = new ParseHost();
