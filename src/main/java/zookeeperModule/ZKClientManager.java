@@ -1,6 +1,5 @@
 package zookeeperModule;
 
-import java.io.*;
 import java.util.*;
 
 import org.apache.zookeeper.*;

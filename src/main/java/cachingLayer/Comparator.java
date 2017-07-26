@@ -1,14 +1,8 @@
 package cachingLayer;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Set;
-import java.util.TreeSet;
+import java.io.*;
+import java.text.*;
+import java.util.*;
 
 import org.bson.Document;
 
