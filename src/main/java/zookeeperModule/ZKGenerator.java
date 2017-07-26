@@ -27,7 +27,6 @@ public class ZKGenerator {
 	 */
 	public ZKGenerator(String host, String root, String environment) {
 		this.root = root;
-		System.out.println(root + environment);
 		if (root.charAt(root.length()-1) != '/') {
 			this.root +="/";
 		}
@@ -154,5 +153,4 @@ public class ZKGenerator {
 	private void addException(String prop, String line) {
 		exceptions.get(prop).add(line);
 	}
-	
 }
