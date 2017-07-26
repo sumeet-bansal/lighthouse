@@ -27,7 +27,14 @@ public class ZKGenerator {
 	 */
 	public ZKGenerator(String host, String root, String environment) {
 		this.root = root;
+		System.out.println(root + environment);
+		if (root.charAt(root.length()-1) != '/') {
+			this.root +="/";
+		}
 		env = environment;
+		if (env.charAt(env.length()-1) != '/') {
+			env +="/";
+		}
 		zkmanager = new ZKClientManager(host);
 		exceptions.put("properties", new ArrayList<>());
 	}
