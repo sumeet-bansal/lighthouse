@@ -33,20 +33,21 @@ public class AccessDB {
 			args[0] = "help";
 		}
 		
-		DbFeeder.connectToDatabase();
-
 		switch (args[0]) {
 			case "populate":
 				if (args.length > 1) {
+					DbFeeder.connectToDatabase();
 					DbFeeder.populate(args[1]);
 				} else {
 					System.err.println(help);
 				}
 				break;
 			case "clear":
+				DbFeeder.connectToDatabase();
 				DbFeeder.clearDB();
 				break;
 			case "info":
+				DbFeeder.connectToDatabase();
 				long count = DbFeeder.getCol().count();
 				System.out.println("\nCount:");
 				System.out.println(count + " properties currently in database");
@@ -55,7 +56,6 @@ public class AccessDB {
 				System.err.println(help);
 				break;
 			default:
-				// should be unreachable but in case of future modifications to code
 				System.err.println("Invalid input. Use the 'help' command for details on usage.");
 				return;
 		}

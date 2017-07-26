@@ -1,83 +1,85 @@
 package driver;
 
-import java.io.File;
-import java.util.ArrayList;
+import java.io.*;
+import java.util.*;
 
 import cachingLayer.Comparator;
 
+/**
+ * Runs the Comparator from the command line.
+ * 
+ * @author ActianceEngInterns
+ * @version 1.1
+ */
 public class AccessUI {
-
+	
+	private static String sep = File.separator;
+	
+	private static String help = "Usage: java -jar <jar file> query <commands>"
+			+ "\nPOSSIBLE COMMANDS \n"
+			+ "'help'\n\tgoes to the help page for 'query'\n"
+			+ "\tUsage: java -jar <jar> query help\n"
+			+ "'compare'\n\tcompares the selected root directories and generates appropriate CSVs\n"
+			+ "\tUsage: java -jar <jar> query compare <path1> <path2>\n";
+	//		+ "'exclude'\n\texcludes selected files from the query\n"
+	//		+ "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file> <file> ... <file>\n";
+	
 	/**
-	 * Passes command-line arguments to query the database, compares files specified
-	 * by query, and writes a CSV file to C:/test diffs (will change later). Syntax
-	 * is as follows: <root directory (optional, any level)> <files to query
-	 * (include root directory if not specified)> block (optional) <files to block
-	 * (include root directory if not specified)>
-	 * 
-	 * TODO Configure UI to pass command line arguments to driver classes
-	 * 
-	 * @param args
+	 * Queries the database and generates CSV files containing comparison
+	 * data.
+	 * @param args command-line arguments
 	 */
 	public static void run(String[] args) {
 
-		try {
-			ArrayList<String> list = new ArrayList<String>();
-			ArrayList<String> addList = new ArrayList<String>();
-			ArrayList<String> blockList = new ArrayList<String>();
+		// if no args passed, automatically sets arg[0] to "help"
+		if (args.length == 0) {
+			args = new String[1];
+			args[0] = "help";
+		}
 
-			// copy command line arguments to arrayLists
+		ArrayList<String> queried = new ArrayList<String>();
+		ArrayList<String> excluded = new ArrayList<String>();
 
-			for (String str : args) {
-				list.add(str);
-			}
-
-			int r = -1;
-			if (list.contains("block")) {
-				r = list.indexOf("block");
-				if (r < 2) {
-					System.err.println(
-							"Invalid input, please specify at least one full query to add before removing files from query");
+		// includes future implementation of 'exclude'
+		switch (args[0]) {
+			case "compare":
+				int i = 1;
+				ArrayList<String> arr = queried;
+				while (i < args.length) {
+					if (args[i].equals("exclude")) {
+						arr = excluded;
+					} else {
+						arr.add(args[i]);
+					}
+					i++;
+				}
+				if (queried.size()%2 != 0) {
+					System.err.println(help);
 					return;
 				}
-				for (int i = r + 1; i < list.size(); i++) {
-					blockList.add(list.get(i));
-				}
-				for (int i = 0; i < r; i++) {
-					addList.add(list.get(i));
-				}
-			} else {
-				for (String str : list) {
-					addList.add(str);
-				}
-			}
-
-			// add groups of 2 paths given by the order of args
-			Comparator c = new Comparator();
-			for (int i = 0; i < addList.size(); i += 2) {
-				c.addQuery(addList.get(i), addList.get(i + 1));
-			}
-			if (r != -1) {
-				for (int i = 0; i < blockList.size(); i++) {
-					c.blockQuery(blockList.get(i));
-				}
-			}
-
-			// compare files, build CSV file and clear current query
-			c.compare();
-			String writePath = System.getProperty("user.home") + File.separator + "Documents" + File.separator
-					+ "Diagnostic reports";
-			new File(writePath).mkdirs();
-			c.writeToCSV(writePath);
-			c.clearQuery();
-		} catch (ArrayIndexOutOfBoundsException e) {
-			System.err.println("Please specify files to query");
-			e.printStackTrace();
-		} catch (Exception e) {
-			System.err.println("Invalid input! Regular syntax is as follows:\n"
-					+ "<files to query> block <files to block within query>\n"
-					+ "please note: blocking files within query is optional");
-			System.out.println();
-			e.printStackTrace();
+				break;
+			case "help":
+				System.err.println(help);
+				break;
+			default:
+				System.err.println("Invalid input. Use the 'help' command for details on usage.");
+				return;
 		}
+			
+		Comparator c = new Comparator();
+		for (int i = 0; i < queried.size(); i += 2) {
+			c.addQuery(queried.get(i), queried.get(i+1));
+		}
+		for (int i = 0; i < excluded.size(); i++) {
+			c.blockQuery(excluded.get(i));
+		}
+
+		// compare files, build CSV file and clear current query
+		c.compare();
+		String writePath = System.getProperty("user.home") + sep + "Desktop" + sep
+				+ "diagnostic reports";
+		new File(writePath).mkdirs();
+		c.writeToCSV(writePath);
+		c.clearQuery();
 	}
 }

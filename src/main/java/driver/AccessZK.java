@@ -16,11 +16,11 @@ public class AccessZK {
 			+ "\tUsage: java -jar <jar> zk help\n"
 			+ "'generate'\n\tgenerates .properties files from a given environment\n"
 			+ "\tUsage: java -jar <jar> zk generate "
-			+ "<host IP> <root folder> <environment name> "
-			+ "<exception> <exception> ... <exception>";
+			+ "<host IP> <root folder> <environment name>\n"
+			+ "\t       [exception] [exception] ... [exception]";
 	
 	/**
-	 * Accesses a ZooKeeper instance to generate .properties from a given
+	 * Accesses a ZooKeeper instance to generate .properties files from a given
 	 * environment.
 	 * @param args command-line arguments
 	 */
@@ -33,7 +33,7 @@ public class AccessZK {
 		}
 
 		// initializes and utilizes ZKGenerator, handles specified branch exceptions
-		ZKGenerator generator = new ZKGenerator(args[0], args[1], args[2]);
+		ZKGenerator generator = new ZKGenerator(args[1], args[2], args[3]);
 		for (int i = 3; i < args.length; i++) {
 			generator.addException(args[i]);
 		}

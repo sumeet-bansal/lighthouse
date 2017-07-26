@@ -44,7 +44,7 @@ public class Access {
 		}
 		
 		// command-specific args
-		String[] pass = null;
+		String[] pass = { "help" };
 		if (args.length > 1) {
 			pass = Arrays.copyOfRange(args, 1, args.length);
 		}
@@ -64,7 +64,6 @@ public class Access {
 				System.err.println(help);
 				break;
 			default:
-				// should be unreachable but in case of future modifications to code
 				System.err.println("Invalid input. Use the 'help' command for details on usage.");
 				return;
 		}
