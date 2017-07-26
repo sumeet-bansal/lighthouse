@@ -19,9 +19,12 @@ public class AccessQRY {
 			+ "\nPOSSIBLE COMMANDS \n"
 			+ "'help'\n\tgoes to the help page for 'query'\n"
 			+ "\tUsage: java -jar <jar> query help\n"
+	//		+ "'find'\n\tfinds all instances of a specific property or properties\n"
+	//		+ "\tUsage: java -jar <jar> query find <property> <property> ... <property>\n"
 			+ "'compare'\n\tcompares the selected root directories and generates appropriate CSVs\n"
 			+ "\tUsage: java -jar <jar> query compare <path1> <path2>\n";
 	//		+ "'exclude'\n\texcludes selected files from the query\n"
+	//		+ "\tmust be used in conjunction with the 'compare' command"
 	//		+ "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file> <file> ... <file>\n";
 	
 	/**
@@ -53,14 +56,14 @@ public class AccessQRY {
 					}
 					i++;
 				}
-				if (queried.size()%2 != 0) {
+				if (queried.size() == 0 || queried.size()%2 != 0) {
 					System.err.println(help);
 					return;
 				}
 				break;
 			case "help":
 				System.err.println(help);
-				break;
+				return;
 			default:
 				System.err.println("Invalid input. Use the 'help' command for details on usage.");
 				return;

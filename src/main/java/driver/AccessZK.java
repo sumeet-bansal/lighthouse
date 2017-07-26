@@ -27,9 +27,15 @@ public class AccessZK {
 	public static void run(String[] args) {
 		
 		// describes proper usage of 'zk' command
-		if (args.length < 3 || args[0] == "help") {
-				System.err.println(help);
-				return;
+		if (args.length == 0 || args[0].equals("help")) {
+			System.err.println(help);
+			return;
+		} else if (!args[0].equals("generate")) {
+			System.err.println("Invalid input. Use the 'help' command for details on usage.");
+			return;
+		} else if (args.length < 4) {
+			System.err.println(help);
+			return;
 		}
 
 		// initializes and utilizes ZKGenerator, handles specified branch exceptions
