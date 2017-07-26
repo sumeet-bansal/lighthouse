@@ -11,7 +11,7 @@ import cachingLayer.Comparator;
  * @author ActianceEngInterns
  * @version 1.1
  */
-public class AccessUI {
+public class AccessQRY {
 	
 	private static String sep = File.separator;
 	

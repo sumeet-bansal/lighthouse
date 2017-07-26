@@ -27,7 +27,7 @@ public class Access {
 	 */
 	public static void main(String[] args) {
 		
-		// disable mongo logging
+		// disables logging
 		@SuppressWarnings("unchecked")
 		List<Logger> loggers = Collections.<Logger>list(LogManager.getCurrentLoggers());
 		loggers.add(LogManager.getRootLogger());
@@ -58,7 +58,7 @@ public class Access {
 				AccessDB.run(pass);
 				break;
 			case "query":
-				AccessUI.run(pass);
+				AccessQRY.run(pass);
 				break;
 			case "help":
 				System.err.println(help);
