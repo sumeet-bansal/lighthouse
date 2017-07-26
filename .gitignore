@@ -31,6 +31,10 @@ Thumbs.db
 *.yml
 *.config
 *.conf
+*.cfg
 *.properties
 *.prop
+*.xml
+*.info
 hosts
+root/
