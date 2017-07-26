@@ -10,14 +10,18 @@ import parser.*;
 import zookeeperModule.*;
 
 /**
- * Tests the ZkGenerator.
+ * Tests the ZkGenerator. Note: DirectoryParser may pick up files not generated
+ * from ZooKeeper, resulting in an assertion failure.
+ * 
+ * @author ActianceEngInterns
+ * @version 1.1
  */
 public class ZKGeneratorTester {
 
 	private ZKClientManager zkmanager;
 	private ArrayList<AbstractParser> parsedFiles;
 	private String zkpath = "/alcatrazproperties/2.5/";
-	private String root = "C:/Users/sbansal/workspace/diagnosticSuite/root/";
+	private String root = System.getProperty("user.home") + "/workspace/diagnosticSuite/root/";
 	private String host = "127.0.0.1", env = "some_dev/";
 
 	/**

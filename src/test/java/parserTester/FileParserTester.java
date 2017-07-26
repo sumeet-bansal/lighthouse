@@ -17,7 +17,9 @@ public class FileParserTester {
 	 * @param args command-line arguments
 	 */
 	public static void main(String[] args) {
-		File f = new File("src/hosts");
+		String dir = System.getProperty("user.home") + "/workspace/diagnosticSuite/root/";
+		String path = dir + "jeremy/storm/common/server.properties";
+		File f = new File(path);
 		FileParser reader = new FileParser(f);
 		reader.parseFile();
 		System.out.println(reader.getData());

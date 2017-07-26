@@ -19,8 +19,7 @@ public class DbFeederTester {
 	 * @param args command-line arguments
 	 */
 	public static void main(String[] args) {
-		DbFeeder feeder = new DbFeeder();
-		feeder.populate("C:/Users/sbansal/Documents/parserResources");
+		DbFeeder.populate(System.getProperty("user.home") + "/workspace/diagnosticSuite/root/");
 	}
 
 }

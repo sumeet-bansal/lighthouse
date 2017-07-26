@@ -18,7 +18,7 @@ public class DirectoryParserTester {
 	 * @param args command-line arguments
 	 */
 	public static void main(String[] args) {
-		String path = "C:/Users/sbansal/Documents/parserResources";
+		String path = System.getProperty("user.home") + "/workspace/diagnosticSuite/root/";
 		File folder = new File(path);
 		DirectoryParser directory = new DirectoryParser(folder);
 		directory.parseAll();
