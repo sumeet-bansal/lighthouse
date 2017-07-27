@@ -79,7 +79,7 @@ public class AccessQRY {
 
 		// compare files, build CSV file and clear current query
 		c.compare();
-		String writePath = System.getProperty("user.home") + sep + "Desktop" + sep
+		String writePath = System.getProperty("user.home") + sep + "Documents" + sep
 				+ "diagnostic reports";
 		new File(writePath).mkdirs();
 		c.writeToCSV(writePath);
