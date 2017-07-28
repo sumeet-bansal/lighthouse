@@ -68,7 +68,7 @@ public class ZKClientManager {
 			if (stat != null) {
 //				System.out.println("Node exists, version " + stat.getVersion());
 			} else {
-				System.out.println("Node does not exist.");
+//				System.out.println("Node does not exist.");
 			}
 		} catch (KeeperException | InterruptedException e) {
 			e.printStackTrace();
@@ -100,7 +100,7 @@ public class ZKClientManager {
 //				System.out.println(data);
 				return data;
 			} else {
-				System.out.println("Node does not exist.");
+//				System.out.println("Node does not exist.");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -136,12 +136,15 @@ public class ZKClientManager {
 				children = zkeeper.getChildren(path, false);
 			} catch (KeeperException | InterruptedException e) {
 				e.printStackTrace();
+			} catch (NullPointerException e) {
+				System.err.println("ZooKeeper path is invalid. Please check your ZooKeeper configuration.");
+				System.exit(1);;
 			}
 			for (int i = 0; i < children.size(); i++) {
 //				System.out.println(children.get(i));
 			}
 		} else {
-			System.out.println("Node does not exist.");
+//			System.out.println("Node does not exist.");
 		}
 		return children;
 	}

@@ -7,12 +7,12 @@ import java.io.*;
  * Generates .properties files for all fabrics in an environment.
  * 
  * @author ActianceEngInterns
- * @version 1.1
+ * @version 1.2
  */
 public class ZKGenerator {
 	
 	private ZKClientManager zkmanager;
-	private String basepath = "/alcatrazproperties/2.5", fabric;
+	private String zkpath, fabric;
 	private Map<String, String> map;
 	private String root, env;
 	
@@ -25,16 +25,31 @@ public class ZKGenerator {
 	 * @param root the root directory being written to
 	 * @param environment the name of the environment
 	 */
-	public ZKGenerator(String host, String root, String environment) {
+	public ZKGenerator(String host, String zkpath, String root, String environment) {
+		zkmanager = new ZKClientManager(host);
+		
+		this.zkpath = zkpath;
+		if (this.zkpath.equals("/") || this.zkpath.equals("")) {
+			this.zkpath = "";
+			return;
+		}
+		if (this.zkpath.charAt(0) != '/') {
+			this.zkpath = "/" + this.zkpath;
+		}
+		if (this.zkpath.charAt(this.zkpath.length()-1) == '/') {
+			this.zkpath = this.zkpath.substring(0, this.zkpath.length()-1);
+		}
+		
 		this.root = root;
-		if (root.charAt(root.length()-1) != '/') {
+		if (root.equals("") || root.charAt(root.length()-1) != '/') {
 			this.root +="/";
 		}
+		
 		env = environment;
-		if (env.charAt(env.length()-1) != '/') {
+		if (env.equals("") || env.charAt(env.length()-1) != '/') {
 			env +="/";
 		}
-		zkmanager = new ZKClientManager(host);
+		
 		exceptions.put("properties", new ArrayList<>());
 	}
 	
@@ -44,19 +59,19 @@ public class ZKGenerator {
 	public void generate() {
 		
 		// gets all fabrics in environment
-		List<String> fabrics = zkmanager.getZNodeChildren(basepath);
-		
+		List<String> fabrics = zkmanager.getZNodeChildren(zkpath);
 		for (int i = 0; i < fabrics.size(); i++) {
-			
+				
 			// generates directory structure
 			new File(root + env + fabrics.get(i) + "/common").mkdirs();
-			
+				
 			// generates .properties files
 			map = new LinkedHashMap<>();
 			fabric =  fabrics.get(i);
-			recursive(basepath + "/" + fabric);
+			recursive(zkpath + "/" + fabric);
 			write(fabric, map);
 			System.out.println("generated .properties file(s) for " + fabric);
+			
 		}
 	}	
 	
@@ -68,7 +83,7 @@ public class ZKGenerator {
 		
 		// base case: current ZNode is leaf
 		if (zkmanager.getZNodeStats(path).getNumChildren() == 0) {
-			String key = path.substring(basepath.length()+1);
+			String key = path.substring(zkpath.length()+1);
 			String data = (String) zkmanager.getZNodeData(path, false);
 			map.put(key.substring(fabric.length() + 1), data);
 			return;

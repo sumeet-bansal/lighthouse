@@ -30,7 +30,7 @@ public class ZKGeneratorTester {
 	@Before
 	public void setup() {
 		zkmanager = new ZKClientManager(host);
-		ZKGenerator generator = new ZKGenerator(host, root, env);
+		ZKGenerator generator = new ZKGenerator(host, zkpath, root, env);
 		generator.addException("blacklist");
 		generator.generate();
 		DirectoryParser directory = new DirectoryParser(new File(root + env));

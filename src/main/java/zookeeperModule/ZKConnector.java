@@ -1,6 +1,7 @@
 package zookeeperModule;
 
 import java.io.*;
+import java.net.*;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.zookeeper.*;
@@ -37,8 +38,12 @@ public class ZKConnector {
 
 			connectionLatch.await();
 			return zkeeper;
+		} catch (UnknownHostException | SocketException e) {
+			System.err.println("ZooKeeper host is invalid. Please check your ZooKeeper configuration.");
+			System.exit(1);
 		} catch (IOException | InterruptedException e) {
-			e.printStackTrace();
+			System.err.println("ZooKeeper connection interrupted. Try again.");
+			System.exit(1);
 		}
 		
 		return zkeeper;
