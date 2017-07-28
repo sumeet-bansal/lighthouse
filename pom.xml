@@ -132,7 +132,7 @@
 						</goals>
 						<configuration>
 							<outputDirectory>
-								C:/Users/pkelaita/workspace/diagnosticSuite/target/dependency-jars/
+								C:/Users/sbansal/workspace/diagnosticSuite/target/dependency-jars/
 							</outputDirectory>
 						</configuration>
 					</execution>
