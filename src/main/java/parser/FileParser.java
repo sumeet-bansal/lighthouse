@@ -41,6 +41,8 @@ public class FileParser {
 				data = new ParseProp();
 			} else if (input.getName().equalsIgnoreCase("hosts")) {
 				data = new ParseHost();
+			} else if (fileType.equalsIgnoreCase("xml")) {
+				data = new ParseXML();
 			} else {
 				errorDescription = "File " + filename + " was not added because file type " + fileType
 						+ " is currently unsupported.\n";
