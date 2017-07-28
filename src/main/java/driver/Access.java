@@ -17,8 +17,10 @@ public class Access {
 			+ "\tUsage: java -jar <jar> zk <commands>\n"
 			+ "'db'\n\tused for functions related to directly accessing the database\n"
 			+ "\tUsage: java -jar <jar> db <commands>\n"
+			+ "\tmust be used in conjunction with a working Mongo connection (ensure 'mongod.exe' is running)\n"
 			+ "'query'\n\tused for functions related to querying the database for diffs\n"
-			+ "\tUsage: java -jar <jar> query <commands>";
+			+ "\tUsage: java -jar <jar> query <commands>\n"
+			+ "\tmust be used in conjunction with a working Mongo connection (ensure 'mongod.exe' is running)";
 	
 	/**
 	 * Takes command-line arguments and delegates functionality as appropriate.

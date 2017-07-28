@@ -18,33 +18,25 @@ import parser.*;
  * @version 2.0
  */
 public class DbFeeder {
-
+	
 	private static MongoDatabase database;
 	private static MongoCollection<Document> collection;
-	
+
 	/**
 	 * Initializes the cache.
 	 */
 	public static void connectToDatabase() {
-		try {
+		
+		// connects with server
+		@SuppressWarnings("resource")
+		MongoClient mongoClient = new MongoClient("localhost", 27017);
 
-			// connects with server
-			@SuppressWarnings("resource")
-			MongoClient mongoClient = new MongoClient("localhost", 27017);
-			System.out.println("successfully connected to server");
+		// connects with Database
+		database = mongoClient.getDatabase("ADS_DB");
 
-			// connects with Database
-			database = mongoClient.getDatabase("ADS_DB");
-			System.out.println("connected to database " + database.getName());
-
-			// creates Collection
-			String colName = "ADS_COL";
-			collection = database.getCollection(colName);
-			System.out.println("accessed collection " + colName);
-
-		} catch (Exception e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-		}
+		// creates Collection
+		collection = database.getCollection("ADS_COL");
+		
 	}
 
 	/**
@@ -57,13 +49,13 @@ public class DbFeeder {
 		directory.parseAll();
 		ArrayList<AbstractParser> parsedFiles = directory.getParsedData();
 		int count = 0;
-		
+
 		for (AbstractParser s : parsedFiles) {
 
 			// feeds data of parsed file to Document
 			Map<String, Object> data = s.getData();
 			for (Map.Entry<String, Object> property : data.entrySet()) {
-				
+
 				Document doc = new Document(); // represents a single property
 				String key = property.getKey();
 				String value = property.getValue().toString();
@@ -75,7 +67,6 @@ public class DbFeeder {
 				for (Map.Entry<String, String> entry : metadata.entrySet()) {
 					doc.append(entry.getKey(), entry.getValue());
 				}
-
 				collection.insertOne(doc);
 				count++;
 			}
@@ -87,29 +78,29 @@ public class DbFeeder {
 	 * Clears all Documents from database.
 	 */
 	public static void clearDB() {
-		try {
-			BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-			String result;
-			while (true) {
-				System.out.print("Clear entire database? (y/n): ");
+		
+		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
+		String result = "";
+		while (true) {
+			System.out.print("Clear entire database? (y/n): ");
+			try {
 				result = input.readLine();
-				if (result.equalsIgnoreCase("y")) {
-					long num = collection.count();
-					collection.deleteMany(new Document());
-					System.out.println("\nCleared " + num +  " properties from collection " + collection.getNamespace());
-					return;
-				} else if (result.equalsIgnoreCase("n")) {
-					return;
-				} else {
-					continue;
-				}
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			System.err.println("failed to clear data from collection");
-			e.printStackTrace();
+			if (result.equalsIgnoreCase("y")) {
+				long num = collection.count();
+				collection.deleteMany(new Document());
+				System.out.println("\nCleared " + num + " properties from collection " + collection.getNamespace());
+				return;
+			} else if (result.equalsIgnoreCase("n")) {
+				return;
+			} else {
+				continue;
+			}
 		}
 	}
-	
+
 	/**
 	 * Getter method for the MongoDB database.
 	 * @return the MongoDatabase being used
@@ -117,7 +108,7 @@ public class DbFeeder {
 	public static MongoDatabase getDB() {
 		return database;
 	}
-	
+
 	/**
 	 * Getter method for MongoDB collection.
 	 * @return the MongoCollection being used

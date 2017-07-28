@@ -9,9 +9,8 @@ import cachingLayer.DbFeeder;
  * @version 1.1
  */
 public class AccessDB {
-	
-	private static String help = "Usage: java -jar <jar file> db <commands>"
-			+ "\nPOSSIBLE COMMANDS"
+
+	private static String help = "Usage: java -jar <jar file> db <commands>" + "\nPOSSIBLE COMMANDS"
 			+ "\n'help'\n\tgoes to the help page for 'db'"
 			+ "\n\tUsage: java -jar <jar> db help"
 			+ "\n'populate'\n\tpopulates the database with the given files"
@@ -20,7 +19,7 @@ public class AccessDB {
 			+ "\n\tUsage: java -jar <jar> db clear"
 			+ "\n'info'\n\tprovides info about the contents of the database"
 			+ "\n\tUsage: java -jar <jar> db info";
-	
+
 	/**
 	 * Accesses a MongoDB database to clear, populate, or provide info.
 	 * @param args command-line arguments
@@ -32,7 +31,7 @@ public class AccessDB {
 			args = new String[1];
 			args[0] = "help";
 		}
-		
+
 		switch (args[0]) {
 			case "populate":
 				if (args.length > 1) {
@@ -58,7 +57,7 @@ public class AccessDB {
 			default:
 				System.err.println("Invalid input. Use the 'help' command for details on usage.");
 				return;
-		}
+			}
+
 	}
-	
 }
