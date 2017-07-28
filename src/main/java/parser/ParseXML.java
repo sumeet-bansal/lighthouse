@@ -19,41 +19,41 @@ public class ParseXML extends AbstractParser{
 	 * Standardizes input files by calling the recursive method parseXML.
 	 * @param input the File to be standardized 
 	 */
-	public void standardize(File input) {	
+	public void standardize(File input) {
 		try {
 			DocumentBuilder dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 			Document doc = dBuilder.parse(input);
+			ArrayList<String> tag = new ArrayList<String>();
+			doc.getDocumentElement().normalize();
+			tag.add(doc.getDocumentElement().getNodeName());
 			if (doc.hasChildNodes()) {
-				parseXML(doc.getChildNodes());
+				parseXML(doc.getChildNodes(),tag);
 			}
-		} catch (IOException e) {
-			System.err.println("error: file must be in .xml format.");
-			error = true;
-		}catch (ParserConfigurationException | SAXException e) {
-			System.err.println("error: library exception, please check xml for formatting errors.");
-			error = true;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
 		}
 	}
 	
 	/**
 	 * A Recursive method that inserts keys and values into a Map.
 	 * @param nodeList the NodeList from the File to be standardized
+	 * @param tag the ArrayList of all the parents for adding to the key names
 	 */
-	public void parseXML(NodeList nodeList) {
-		ArrayList<String> tag = new ArrayList<String>();
+	public void parseXML(NodeList nodeList,ArrayList<String> tag) {
+		ArrayList<String> tags=tag;
 		for (int count = 0; count < nodeList.getLength(); count++) {
 			Node tempNode = nodeList.item(count);
 			// make sure it's element node.
 			if (tempNode.getNodeType() == Node.ELEMENT_NODE) {
-				// get node name to add to the parent node list for naming the keys
+				// get node name and value
 				if ((((Element) tempNode).getAttribute("name")) != "") {
-					tag.add(tempNode.getNodeName()+"."+((Element) tempNode).getAttribute("name"));
+					tags.add(tempNode.getNodeName()+"."+((Element) tempNode).getAttribute("name"));
 				} else {
-					tag.add(tempNode.getNodeName());
+					tags.add(tempNode.getNodeName());
 				}
 				String parents = "";
-				for (int i = 0; i < tag.size(); i++) {
-					parents += tag.get(i) + ".";
+				for (int i = 0; i < tags.size(); i++) {
+					parents += tags.get(i) + ".";
 				}
 				parents = parents.substring(0, parents.length() - 1);
 				if (tempNode.hasAttributes()) {
@@ -78,9 +78,9 @@ public class ParseXML extends AbstractParser{
 					}
 				}
 				if (tempNode.hasChildNodes()) {
-					parseXML(tempNode.getChildNodes());
+					parseXML(tempNode.getChildNodes(),tags);
 				}
-				tag.remove(tag.size() - 1);
+				tags.remove(tags.size() - 1);
 			}
 		}
 	}
