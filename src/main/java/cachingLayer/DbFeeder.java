@@ -18,7 +18,7 @@ import parser.*;
  * @version 2.0
  */
 public class DbFeeder {
-	
+
 	private static MongoDatabase database;
 	private static MongoCollection<Document> collection;
 
@@ -26,22 +26,26 @@ public class DbFeeder {
 	 * Initializes the cache.
 	 */
 	public static void connectToDatabase() {
-		
+
 		// connects with server
 		@SuppressWarnings("resource")
 		MongoClient mongoClient = new MongoClient("localhost", 27017);
+		System.out.println("[DATABASE MESSAGE] Server connection successful @ localhost:27017");
 
 		// connects with Database
 		database = mongoClient.getDatabase("ADS_DB");
 
 		// creates Collection
 		collection = database.getCollection("ADS_COL");
-		
+		System.out.println("[DATABASE MESSAGE] Database connection successful @ collection ADS_DB.ADS_COL");
+
 	}
 
 	/**
 	 * Feeds parsed Documents into the database.
-	 * @param path the path containing the files to be cached
+	 * 
+	 * @param path
+	 *            the path containing the files to be cached
 	 */
 	public static void populate(String path) {
 		File folder = new File(path);
@@ -78,11 +82,13 @@ public class DbFeeder {
 	 * Clears all Documents from database.
 	 */
 	public static void clearDB() {
-		
+
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 		String result = "";
+		
+		// repeatedly queries in case of invalid input
 		while (true) {
-			System.out.print("Clear entire database? (y/n): ");
+			System.out.print("\nClear entire database? (y/n): ");
 			try {
 				result = input.readLine();
 			} catch (IOException e) {
@@ -103,6 +109,7 @@ public class DbFeeder {
 
 	/**
 	 * Getter method for the MongoDB database.
+	 * 
 	 * @return the MongoDatabase being used
 	 */
 	public static MongoDatabase getDB() {
@@ -111,6 +118,7 @@ public class DbFeeder {
 
 	/**
 	 * Getter method for MongoDB collection.
+	 * 
 	 * @return the MongoCollection being used
 	 */
 	public static MongoCollection<Document> getCol() {
