@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Standardizes hosts files
+ * Standardizes hosts files.
  * 
  * @author ActianceEngInterns
  * @version 1.1

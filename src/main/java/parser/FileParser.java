@@ -59,13 +59,14 @@ public class FileParser {
 
 	/**
 	 * Adds File data to standardized ArrayLists.
+	 * @return true if the File was succesfully parsed, else false
 	 */
-	public int parseFile() {
+	public boolean parseFile() {
 		if (data != null) {
 			data.standardize(input);
-			return 0;
+			return true;
 		}
-		return 1;
+		return false;
 	}
 
 	/**

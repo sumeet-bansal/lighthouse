@@ -29,7 +29,7 @@ public class Comparator {
 	}
 
 	/**
-	 * Getter method for table
+	 * Getter method for table.
 	 * 
 	 * @return 2D representation of CSV
 	 */
@@ -38,7 +38,7 @@ public class Comparator {
 	}
 
 	/**
-	 * Getter method for altData
+	 * Getter method for altData.
 	 * 
 	 * @return the numbers of key and value discrepancies in the query
 	 */
@@ -149,8 +149,7 @@ public class Comparator {
 	}
 
 	/**
-	 * Blocks queried files with certain attributes from being compared. UNDER
-	 * DEVELOPMENT!
+	 * Blocks queried files with certain attributes from being compared.
 	 * 
 	 * @param path
 	 *            the path of the file being blocked
@@ -390,19 +389,19 @@ public class Comparator {
 			// compares and generates diff report
 			if (!(key.equals("path") || key.equals("environment") || key.equals("fabric") || key.equals("node")
 					|| key.equals("filename"))) {
-				if (v1 != "null" && v2 != "null" && !v1.equals(v2)) { // value discrepancy
+				if (v1 != "null" && v2 != "null" && !v1.equals(v2)) {
 					String[] row = { path1, key, v1, path2, key, v2, "Same", "Different" };
 					table.add(row);
 					valAlt++;
-				} else if (v1 == "null") { // key 1 missing
+				} else if (v1 == "null") {
 					String[] row = { "null", "null", "null", path2, key, v2, "Missing in file 1", "Missing in file 1" };
 					table.add(row);
 					keyAlt++;
-				} else if (v2 == "null") { // key 2 missing
+				} else if (v2 == "null") {
 					String[] row = { path1, key, v1, "null", "null", "null", "Missing in file 2", "Missing in file 2" };
 					table.add(row);
 					keyAlt++;
-				} else { // no difference
+				} else {
 					String[] row = { path1, key, v1, path2, key, v2, "Same", "Same" };
 					table.add(row);
 				}

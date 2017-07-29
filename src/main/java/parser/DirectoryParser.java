@@ -59,13 +59,11 @@ public class DirectoryParser {
 		fileFinder(directory);
 		for (String path : filePaths) {
 			FileParser reader = new FileParser(new File(path));
-			switch (reader.parseFile()) {
-			case 0:
+			if (reader.parseFile()) {
 				parsedData.add(reader.getData());
 				String[] fileWithHeader = { path, reader.getData().toString() };
 				headers.add(fileWithHeader);
-				break;
-			default:
+			} else {
 				System.out.println("\n[DATABASE MESSAGE] " + reader.getErrorDescription());
 			}
 		}

@@ -41,7 +41,7 @@ public abstract class AbstractParser {
 
 	/**
 	 * Setter method for file path instance variable.
-	 * @param input the path of the File being standardized
+	 * @param path the path of the File being standardized
 	 */
 	public void setPath(String path) {
 

@@ -22,6 +22,7 @@ public class ZKGenerator {
 	/**
 	 * Constructor.
 	 * @param host the host being connected to
+	 * @param zkpath the ZooKeeper path containing the environment's fabrics
 	 * @param root the root directory being written to
 	 * @param environment the name of the environment
 	 */
