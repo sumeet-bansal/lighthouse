@@ -81,7 +81,7 @@ public class AccessQRY {
 		c.compare();
 
 		// prompt user to either enter a custom CSV name or use default name
-		String writePath = System.getProperty("user.home") + sep + "Documents" + sep + "diagnostic reports";
+		String writePath = System.getProperty("user.home") + sep + "Documents" + sep + "ADS Reports";
 		new File(writePath).mkdirs();
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
@@ -117,7 +117,7 @@ public class AccessQRY {
 		String result = "";
 		System.out.println();
 		while (true) {
-			System.out.print("Use default CSV file name? (y/n): ");
+			System.out.print("Use default CSV file name " + c.getDefaultName() + "? (y/n): ");
 			try {
 				result = input.readLine();
 			} catch (IOException e) {

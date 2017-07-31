@@ -47,7 +47,7 @@ public class Comparator {
 			Integer[] fullAltData = { altData[0], altData[1], (altData[0] + altData[1]) };
 			return fullAltData;
 		} else {
-			Integer[] fullAltData = {-1, -1, -1};
+			Integer[] fullAltData = { -1, -1, -1 };
 			return fullAltData;
 		}
 	}
@@ -472,7 +472,18 @@ public class Comparator {
 	 *            the directory the CSV is being written to
 	 */
 	public void writeToCSV(String directory) {
-		String defaultName = "diffreport";
+		String defaultName = getDefaultName();
+		writeToCSV(defaultName, directory);
+	}
+
+	/**
+	 * Creates a default name for the CSV file based on the lowest-level metadata
+	 * provided in the query
+	 * 
+	 * @return default CSV name
+	 */
+	public String getDefaultName() {
+		String defaultName = "ADS-Report";
 		DateFormat nameFormat = new SimpleDateFormat("_yyyy-MM-dd_HH.mm.ss");
 		Date date = new Date();
 		defaultName += nameFormat.format(date);
@@ -481,6 +492,6 @@ public class Comparator {
 				defaultName += "_" + name;
 			}
 		}
-		writeToCSV(defaultName, directory);
+		return defaultName;
 	}
 }
