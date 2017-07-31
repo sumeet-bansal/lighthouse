@@ -105,7 +105,7 @@ public class Comparator {
 
 			// adds query filters to queryList
 			queryList.add(filters);
-			System.out.println("Looking for files with attributes:");
+			System.out.println("Looking for properties with attributes:");
 			System.out.println("\t" + filters[0].toJson());
 			System.out.println("\t" + filters[1].toJson());
 
@@ -140,7 +140,7 @@ public class Comparator {
 			}
 
 		} catch (Exception e) {
-			System.err.println("Unable to add files with attributes:");
+			System.err.println("Unable to add properties with attributes:");
 			for (Document doc : filters) {
 				System.err.println("\t" + doc.toJson());
 			}
@@ -168,11 +168,11 @@ public class Comparator {
 				}
 			}
 			blockList.add(filter);
-			System.out.println("Blocking files with attributes:");
+			System.out.println("Excluding properties with attributes:");
 			System.out.println("\t" + filter.toJson());
 
 		} catch (Exception e) {
-			System.out.println("Invalid block input!");
+			System.out.println("Invalid 'exclude' input!");
 			e.printStackTrace();
 		}
 		System.out.println();
@@ -207,13 +207,26 @@ public class Comparator {
 		int queried = 0;
 		int blocked = 0;
 
+		// replace null metadata values in blockList with '*'
+		String[] pathFilters = { "environment", "fabric", "node", "filename" };
+		for (int i = 0; i < blockList.size(); i++) {
+			Document doc = blockList.get(i);
+			for (String key : pathFilters) {
+				if (doc.getString(key) == null) {
+					doc.append(key, "*");
+				}
+			}
+			blockList.set(i, doc);
+		}
+		
+		// add files matching both sides of query
 		for (Document[] filter : queryList) {
 
 			// Create iterators for added files
 			MongoCursor<Document> cursor1 = col.find(filter[0]).iterator();
 			MongoCursor<Document> cursor2 = col.find(filter[1]).iterator();
 
-			// finds and compares all unblocked files
+			// finds and compares all unblocked files on left side of query
 			while (cursor1.hasNext()) {
 
 				Document doc = cursor1.next();
@@ -250,6 +263,7 @@ public class Comparator {
 				queried++;
 			}
 
+			// finds and compares all unblocked files on right side of query
 			while (cursor2.hasNext()) {
 
 				Document doc = cursor2.next();
@@ -287,7 +301,7 @@ public class Comparator {
 			}
 
 		}
-		System.out.println("\nFound " + queried + " properties and blocked " + blocked + " properties matching query");
+		System.out.println("\nFound " + queried + " properties and excluded " + blocked + " properties matching query");
 
 		// if single query, sets column names to query comparison
 		String file1 = "File 1";

@@ -21,11 +21,10 @@ public class AccessQRY {
 			// + "\tUsage: java -jar <jar> query find <property> <property> ...
 			// <property>\n"
 			+ "'compare'\n\tcompares the selected root directories and generates appropriate CSVs\n"
-			+ "\tUsage: java -jar <jar> query compare <path1> <path2>\n";
-	// + "'exclude'\n\texcludes selected files from the query\n"
-	// + "\tmust be used in conjunction with the 'compare' command"
-	// + "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file>
-	// <file> ... <file>\n";
+			+ "\tUsage: java -jar <jar> query compare <path1> <path2>\n"
+			+ "'exclude'\n\texcludes selected files from the query\n"
+			+ "\tmust be used in conjunction with the 'compare' command"
+			+ "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file> <file> ... <file>\n";
 
 	/**
 	 * Queries the database and generates CSV files containing comparison data.
@@ -48,12 +47,17 @@ public class AccessQRY {
 		switch (args[0]) {
 		case "compare":
 			int i = 1;
-			ArrayList<String> arr = queried;
+			// ArrayList<String> arr = queried;
+			boolean exclude = false;
 			while (i < args.length) {
 				if (args[i].equals("exclude")) {
-					arr = excluded;
+					exclude = true;
 				} else {
-					arr.add(args[i]);
+					if (!exclude) {
+						queried.add(args[i]);
+					} else {
+						excluded.add(args[i]);
+					}
 				}
 				i++;
 			}
@@ -107,9 +111,9 @@ public class AccessQRY {
 				}
 			}
 		} else if (alt > 0) {
-			System.out.println("\nKey discrepancies:\t" + keyAlt);
-			System.out.println("Value discrepancies:\t" + valAlt);
-			System.out.println("Total discrepancies:\t" + alt);
+			System.out.println("\nKey discrepancies\t" + keyAlt);
+			System.out.println("Value discrepancies\t" + valAlt);
+			System.out.println("Total discrepancies\t" + alt);
 		} else {
 			return;
 		}
