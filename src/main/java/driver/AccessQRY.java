@@ -47,7 +47,6 @@ public class AccessQRY {
 		switch (args[0]) {
 		case "compare":
 			int i = 1;
-			// ArrayList<String> arr = queried;
 			boolean exclude = false;
 			while (i < args.length) {
 				if (args[i].equals("exclude")) {

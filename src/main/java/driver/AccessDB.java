@@ -1,5 +1,7 @@
 package driver;
 
+import java.util.Set;
+
 import cachingLayer.DbFeeder;
 
 /**
@@ -17,8 +19,19 @@ public class AccessDB {
 			+ "\n\tUsage: java -jar <jar> zk populate <root directory>"
 			+ "\n'clear'\n\tclears the database"
 			+ "\n\tUsage: java -jar <jar> db clear"
+			+ "\n'structure'\n\tprints the structure of the database at user-specified level"
+			+ "\n\tUsage: java -jar <jar> db structure <level (1-4)>"
 			+ "\n'info'\n\tprovides info about the contents of the database"
 			+ "\n\tUsage: java -jar <jar> db info";
+	
+	private static String structureHelp = "Invalid structure input!"
+			+ "\nUsage: java -jar <jar> db structure <level>"
+			+ "\nWhere <level> denotes the lowest level to which you would like to see the database structure."
+			+ "\nAccepted level values"
+			+ "\n\t4 - Environment"
+			+ "\n\t3 - Fabric"
+			+ "\n\t2 - Node"
+			+ "\n\t1 - File";
 
 	/**
 	 * Accesses a MongoDB database to clear, populate, or provide info.
@@ -48,8 +61,28 @@ public class AccessDB {
 			case "info":
 				DbFeeder.connectToDatabase();
 				long count = DbFeeder.getCol().count();
+				Set<String> envs = DbFeeder.getEnvironments();
 				System.out.println("\nCount:");
 				System.out.println(count + " properties currently in database");
+				System.out.println("\nEnvironments:");
+				for (String env : envs) {
+					System.out.println("- " + env);
+				}
+				break;
+			case "structure":
+				try {
+					Integer.parseInt(args[1]);
+				} catch (Exception e) {
+					System.err.println(structureHelp);
+					return;
+				}
+				if (Integer.parseInt(args[1]) < 1 || Integer.parseInt(args[1]) > 4) {
+					System.err.println(structureHelp);
+					return;
+				}
+				int level = Integer.parseInt(args[1]);
+				DbFeeder.connectToDatabase();
+				DbFeeder.printStructure(level);
 				break;
 			case "help":
 				System.err.println(help);

@@ -85,7 +85,7 @@ public class DbFeeder {
 
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 		String result = "";
-		
+
 		// repeatedly queries in case of invalid input
 		while (true) {
 			System.out.print("\nClear entire database? (y/n): ");
@@ -103,6 +103,114 @@ public class DbFeeder {
 				return;
 			} else {
 				continue;
+			}
+		}
+	}
+
+	/**
+	 * Adds each unique environment specified in the database properties to a
+	 * HashSet
+	 * 
+	 * @return HashSet with each unique environment
+	 */
+	public static Set<String> getEnvironments() {
+		Set<String> envs = new HashSet<String>();
+		MongoCursor<Document> cursor = collection.find().iterator();
+		while (cursor.hasNext()) {
+			Document doc = cursor.next();
+			String env = doc.getString("environment");
+			if (env != null) {
+				envs.add(env);
+			}
+		}
+		return envs;
+	}
+
+	/**
+	 * Prints the file structure based on each property's metadata in the database
+	 * 
+	 * @param level
+	 *            the lowest level the user would like to print to
+	 */
+	public static void printStructure(int level) {
+		// grab properties from database
+		ArrayList<Document> props = new ArrayList<Document>();
+		MongoCursor<Document> cursor = collection.find().iterator();
+		while (cursor.hasNext()) {
+			props.add(cursor.next());
+		}
+
+		// set up tokens '-' for lowest level directories and '>' for mid level
+		String fabToken = "> ";
+		String nodeToken = "> ";
+		if (level == 3) {
+			fabToken = "- ";
+		}
+		if (level == 2) {
+			nodeToken = "- ";
+		}
+
+		// specify level for CLI output
+		String dir = new String();
+		switch (level) {
+		case 4:
+			dir = "ENVIRONMENT";
+			break;
+		case 3:
+			dir = "FABRIC";
+			break;
+		case 2:
+			dir = "NODE";
+			break;
+		case 1:
+			dir = "FILE";
+			break;
+		}
+
+		// print structure based on level
+		System.out.println("\nDATABASE STRUCTURE @ " + dir + " LEVEL");
+		Set<String> envs = getEnvironments();
+		for (String env : envs) {
+			System.out.println(env);
+			if (level == 4) {
+				continue;
+			}
+			Set<String> fabs = new HashSet<>();
+			for (Document prop : props) {
+				String fab = prop.getString("fabric");
+				if (prop.getString("environment").equals(env)) {
+					fabs.add(fab);
+				}
+			}
+			for (String fab : fabs) {
+				System.out.println("  " + fabToken + fab);
+				if (level == 3) {
+					continue;
+				}
+				Set<String> nodes = new HashSet<>();
+				for (Document prop : props) {
+					String node = prop.getString("node");
+					if (prop.getString("fabric").equals(fab) && prop.getString("environment").equals(env)) {
+						nodes.add(node);
+					}
+				}
+				for (String node : nodes) {
+					System.out.println("    " + nodeToken + node);
+					if (level == 2) {
+						continue;
+					}
+					Set<String> files = new HashSet<>();
+					for (Document prop : props) {
+						String file = prop.getString("filename");
+						if (prop.getString("node").equals(node) && prop.getString("fabric").equals(fab)
+								&& prop.getString("environment").equals(env)) {
+							files.add(file);
+						}
+					}
+					for (String file : files) {
+						System.out.println("      - " + file);
+					}
+				}
 			}
 		}
 	}
