@@ -23,8 +23,8 @@ public class AccessQRY {
 			+ "'compare'\n\tcompares the selected root directories and generates appropriate CSVs\n"
 			+ "\tUsage: java -jar <jar> query compare <path1> <path2>\n"
 			+ "'exclude'\n\texcludes selected files from the query\n"
-			+ "\tmust be used in conjunction with the 'compare' command"
-			+ "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file> <file> ... <file>\n";
+			+ "\tmust be used in conjunction with the 'compare' command\n"
+			+ "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file> <file> ... <file>";
 
 	/**
 	 * Queries the database and generates CSV files containing comparison data.
@@ -43,24 +43,26 @@ public class AccessQRY {
 		ArrayList<String> queried = new ArrayList<String>();
 		ArrayList<String> excluded = new ArrayList<String>();
 
-		// includes future implementation of 'exclude'
 		switch (args[0]) {
 		case "compare":
+			
+			// uses generic 'arr' to populate appropriate List
 			int i = 1;
-			boolean exclude = false;
+			ArrayList<String> arr = queried; // adds all args to 'queried'
 			while (i < args.length) {
+				
+				// if 'exclude' keyword detected, switches refs and adds rest
+				// of args to 'excluded' List, else continues adding to 'queried'
 				if (args[i].equals("exclude")) {
-					exclude = true;
+					arr = excluded;
 				} else {
-					if (!exclude) {
-						queried.add(args[i]);
-					} else {
-						excluded.add(args[i]);
-					}
+					arr.add(args[i]);
 				}
 				i++;
 			}
-			if (queried.size() == 0 || queried.size() % 2 != 0) {
+			
+			// invalid query parameters
+			if (queried.size() == 0 || queried.size() > 1 && queried.size() % 2 != 0) {
 				System.err.println(help);
 				return;
 			}
@@ -73,28 +75,32 @@ public class AccessQRY {
 			return;
 		}
 
-		// add queries and compare
+		// adds queries to Comparator instance and compares
 		Comparator c = new Comparator();
-		for (int i = 0; i < queried.size(); i += 2) {
-			c.addQuery(queried.get(i), queried.get(i + 1));
+		if (queried.size() == 1) {
+			c.internalQuery(queried.get(0));
+		} else {
+			for (int i = 0; i < queried.size(); i += 2) {
+				c.addQuery(queried.get(i), queried.get(i+1));
+			}
 		}
 		for (int i = 0; i < excluded.size(); i++) {
 			c.blockQuery(excluded.get(i));
 		}
 		c.compare();
 
-		// prompt user to either enter a custom CSV name or use default name
+		// prompts user to either enter a custom CSV name or use default name
 		String writePath = System.getProperty("user.home") + sep + "Documents" + sep + "ADS Reports";
 		new File(writePath).mkdirs();
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
-		// check how many differences were found
+		// gives a summary of the discrepancies in the query
 		String writeZero = "";
-		int alt = c.getAltData()[2];
-		int valAlt = c.getAltData()[1];
-		int keyAlt = c.getAltData()[0];
-		if (alt == 0) {
-			System.out.println("\nCongrats! No discrepancies were found in the directories given by your query.");
+		int diffkey = c.getDiscrepancies()[0];
+		int diffval = c.getDiscrepancies()[1];
+		int difftotal = c.getDiscrepancies()[2];
+		if (difftotal == 0) {
+			System.out.println("\nNo discrepancies found in the directories given by the query.");
 			while (true) {
 				System.out.print("Would you still like to write a CSV report? (y/n): ");
 				try {
@@ -109,12 +115,10 @@ public class AccessQRY {
 					break;
 				}
 			}
-		} else if (alt > 0) {
-			System.out.println("\nKey discrepancies\t" + keyAlt);
-			System.out.println("Value discrepancies\t" + valAlt);
-			System.out.println("Total discrepancies\t" + alt);
 		} else {
-			return;
+			System.out.println("\nKey discrepancies\t" + diffkey);
+			System.out.println("Value discrepancies\t" + diffval);
+			System.out.println("Total discrepancies\t" + difftotal);
 		}
 
 		String result = "";
@@ -132,16 +136,16 @@ public class AccessQRY {
 				c.clearQuery();
 				return;
 			} else if (result.equalsIgnoreCase("n")) {
+				// checks if custom filename legal across OSes
 				String customName;
 				try {
-					// check if file name is legal accross all operating systems
 					while (true) {
 						System.out.print("Enter custom CSV file name: ");
 						String test = input.readLine();
 						String legal = test.replaceAll("[^a-zA-Z0-9_ .-]", "~");
 						if (!test.equals(legal)) {
-							System.out.println("\nERROR: Illegal CSV file name!");
-							System.out.println("In order to prevent writing corrupted files, only letters,"
+							System.out.println("\nERROR: illegal CSV file name.");
+							System.out.println("To prevent writing corrupted files, only letters,"
 									+ "\nnumbers, spaces, and the characters . _ - ~ are allowed.\n");
 							continue;
 						} else if (test.equals("")) {
