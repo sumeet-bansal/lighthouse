@@ -85,7 +85,7 @@ public class AccessQRY {
 			}
 		}
 		for (int i = 0; i < excluded.size(); i++) {
-			c.blockQuery(excluded.get(i));
+			c.exclude(excluded.get(i));
 		}
 		c.compare();
 
@@ -127,18 +127,13 @@ public class AccessQRY {
 			System.out.print("Use default CSV file name " + c.getDefaultName() + "? (y/n): ");
 			try {
 				result = input.readLine();
-			} catch (IOException e) {
-				System.out.println("Illegal input!");
-				continue;
-			}
-			if (result.equalsIgnoreCase("y")) {
-				c.writeToCSV(writePath);
-				c.clearQuery();
-				return;
-			} else if (result.equalsIgnoreCase("n")) {
-				// checks if custom filename legal across OSes
-				String customName;
-				try {
+				if (result.equalsIgnoreCase("y")) {
+					c.writeToCSV(writePath);
+					c.clearQuery();
+					return;
+				} else if (result.equalsIgnoreCase("n")) {
+					// checks if custom filename legal across OSes
+					String customName;
 					while (true) {
 						System.out.print("Enter custom CSV file name: ");
 						String test = input.readLine();
@@ -156,11 +151,11 @@ public class AccessQRY {
 							return;
 						}
 					}
-				} catch (IOException e) {
-					System.out.println("Illegal input!");
+				} else {
 					continue;
 				}
-			} else {
+			} catch (IOException e) {
+				System.out.println("Illegal input!");
 				continue;
 			}
 		}
