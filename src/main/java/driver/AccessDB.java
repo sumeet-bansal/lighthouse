@@ -1,5 +1,6 @@
 package driver;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 import cachingLayer.DbFeeder;
@@ -21,11 +22,12 @@ public class AccessDB {
 			+ "\n\tUsage: java -jar <jar> db clear"
 			+ "\n'structure'\n\tprints the structure of the database at user-specified level"
 			+ "\n\tUsage: java -jar <jar> db structure <level (1-4)>"
+			+ "\n'find'\n\tprints the locations and values of a user-given key"
+			+ "\n\tUsage: java -jar <jar> db find <key>"
 			+ "\n'info'\n\tprovides info about the contents of the database"
 			+ "\n\tUsage: java -jar <jar> db info";
 	
-	private static String structureHelp = "Invalid structure input!"
-			+ "\nUsage: java -jar <jar> db structure <level>"
+	private static String structureHelp = "Usage: java -jar <jar> db structure <level>"
 			+ "\nWhere <level> denotes the lowest level to which you would like to see the database structure."
 			+ "\nAccepted level values"
 			+ "\n\t4 - Environment"
@@ -70,19 +72,48 @@ public class AccessDB {
 				}
 				break;
 			case "structure":
-				try {
-					Integer.parseInt(args[1]);
-				} catch (Exception e) {
-					System.err.println(structureHelp);
-					return;
-				}
-				if (Integer.parseInt(args[1]) < 1 || Integer.parseInt(args[1]) > 4) {
-					System.err.println(structureHelp);
-					return;
-				}
-				int level = Integer.parseInt(args[1]);
 				DbFeeder.connectToDatabase();
-				DbFeeder.printStructure(level);
+				if (DbFeeder.getCol().count() == 0) {
+					System.out.println("\nDatabase is empty");
+					return;
+				}
+				if (args.length > 1) {
+					try {
+						Integer.parseInt(args[1]);
+					} catch (Exception e) {
+						System.err.println(structureHelp);
+						return;
+					}
+					if (Integer.parseInt(args[1]) < 1 || Integer.parseInt(args[1]) > 4) {
+						System.err.println(structureHelp);
+						return;
+					}
+					int level = Integer.parseInt(args[1]);
+					DbFeeder.printStructure(level);
+				} else {
+					System.err.println(structureHelp);
+				}
+				break;
+			case "find":
+				DbFeeder.connectToDatabase();
+				if (DbFeeder.getCol().count() == 0) {
+					System.out.println("\nDatabase is empty");
+					return;
+				} else {
+					if (args.length > 1) {
+						ArrayList<String> pathList = DbFeeder.findProp(args[1]);
+						if (pathList.size() == 0) {
+							System.out.println("\nKey " + args[1] + " not found in database");
+							return;
+						}
+						System.out.println("\nLocations of key " + args[1]);
+						for (String path : pathList) {
+							System.out.println(path);
+						}
+					} else {
+						System.err.println(help);
+					}
+				}
 				break;
 			case "help":
 				System.err.println(help);

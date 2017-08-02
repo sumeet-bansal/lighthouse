@@ -48,6 +48,8 @@ public class ParseHost extends AbstractParser {
 			fr.close();
 			
 		} catch (IOException e) {
+			String name = input.getAbsolutePath();
+			System.err.println("\n[DATABASE ERROR] " + name + " is not in correct hosts format.\n");
 			error = true;
 		}
 

@@ -58,7 +58,8 @@ public class ParseConf extends AbstractParser {
 			br.close();
 			
 		} catch (IOException e) {
-			System.err.println("error: file must be in .config format.");
+			String name = input.getAbsolutePath();
+			System.err.println("\n[DATABASE ERROR] " + name + " is not in correct .config format.\n");
 			error = true;
 		}
 	}

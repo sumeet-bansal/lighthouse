@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
  */
 public class Access {
 
-	private static String help = "Usage: java -jar <jar> <commands>\nPOSSIBLE COMMANDS \n"
+	private static String help = "Usage: java -jar <jar> <commands>\n\nPOSSIBLE COMMANDS \n"
 			+ "'help'\n\tgoes to the help page for the general diagnostic tool\n"
 			+ "\tUsage: java jar -jar <jar> help\n" + "'zk'\n\tused for functions related to ZooKeeper\n"
 			+ "\tUsage: java -jar <jar> zk <commands>\n"
@@ -32,6 +32,10 @@ public class Access {
 	 *            command-line arguments
 	 */
 	public static void main(String[] args) {
+		// convert args to lower case
+		for (int i = 0; i < args.length; i++) {
+			args[i] = args[i].toLowerCase();
+		}
 
 		// disable logging - works in parallel with log4j.properties
 		@SuppressWarnings("unchecked")
@@ -41,10 +45,11 @@ public class Access {
 			logger.setLevel(Level.ERROR);
 		}
 
-		// if no args passed, automatically sets arg[0] to "help"
+		// if no args passed, automatically prints welcome and help pages
 		if (args.length == 0) {
-			args = new String[1];
-			args[0] = "help";
+			printWelcome();
+			System.out.println(help);
+			return;
 		}
 
 		// command-specific args
@@ -71,5 +76,48 @@ public class Access {
 			System.err.println("Invalid input. Use the 'help' command for details on usage.");
 			return;
 		}
+	}
+	
+	/**
+	 * Prints a welcome page that runs when the user does not give any input
+	 */
+	public static void printWelcome() {
+		ArrayList<String> lines = new ArrayList<>();
+		for (int i = 0; i < 3; i++) {
+			lines.add("");
+		}
+		lines.add("       db         88888888ba,     ad88888ba ");
+		lines.add("      d88b        88      `\"8b   d8\"     \"8b");
+		lines.add("     d8'`8b       88        `8b  Y8,        ");
+		lines.add("    d8'  `8b      88         88  `Y8aaaaa,  ");
+		lines.add("   d8YaaaaY8b     88         88    `\"\"\"\"\"8b,");
+		lines.add("  d8\"\"\"\"\"\"\"\"8b    88         8P          `8b");
+		lines.add(" d8'        `8b   88      .a8P   Y8a     a8P");
+		lines.add("d8'          `8b  88888888Y\"'     \"Y88888P\" ");
+		
+		for (int i = 0; i < 3; i++) {
+			lines.add("");
+		}
+		lines.add("version 1.1");
+		lines.add("");
+		lines.add("Developed by Pierce Kelaita, Sumeet Bansal, and Gagan Gupta");
+		for (int i = 0; i < 3; i++) {
+			lines.add("");
+		}
+		
+		for (String str : lines) {
+			System.out.println(str);
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
 	}
 }

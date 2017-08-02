@@ -215,6 +215,25 @@ public class DbFeeder {
 		}
 	}
 
+	public static ArrayList<String> findProp(String key) {
+		Document keyFilter = new Document().append("key", key);
+		MongoCursor<Document> cursor = collection.find(keyFilter).iterator();
+		ArrayList<Document> props = new ArrayList<>();
+		while (cursor.hasNext()) {
+			props.add(cursor.next());
+		}
+		ArrayList<String> pathList = new ArrayList<>();
+		for (Document prop : props) {
+			String env = prop.getString("environment");
+			String fab = prop.getString("fabric");
+			String node = prop.getString("node");
+			String file = prop.getString("filename");
+			String value = prop.getString("value");
+			pathList.add("PATH: " + env + "/" + fab + "/" + node + "/" + file + "\tVALUE: " + value);
+		}
+		return pathList;
+	}
+
 	/**
 	 * Getter method for the MongoDB database.
 	 * 

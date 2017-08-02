@@ -29,7 +29,8 @@ public class ParseYaml extends AbstractParser {
 			data = new LinkedHashMap<>(map);
 			
 		} catch (Exception e) {
-			System.err.println("error: file must be in .yaml format.");
+			String name = input.getAbsolutePath();
+			System.err.println("\n[DATABASE ERROR] " + name + " is not in correct .yaml format.\n");
 			error = true;
 		}
 	}
