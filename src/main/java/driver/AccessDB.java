@@ -103,10 +103,10 @@ public class AccessDB {
 					if (args.length > 1) {
 						ArrayList<String> pathList = DbFeeder.findProp(args[1]);
 						if (pathList.size() == 0) {
-							System.out.println("\nKey " + args[1] + " not found in database");
+							System.out.println("\nKey \"" + args[1] + "\" not found in database");
 							return;
 						}
-						System.out.println("\nLocations of key " + args[1]);
+						System.out.println("\nFound " + pathList.size() + " instances of key \"" + args[1] + "\":");
 						for (String path : pathList) {
 							System.out.println(path);
 						}

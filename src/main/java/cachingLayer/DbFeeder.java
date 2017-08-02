@@ -30,14 +30,14 @@ public class DbFeeder {
 		// connects with server
 		@SuppressWarnings("resource")
 		MongoClient mongoClient = new MongoClient("localhost", 27017);
-		System.out.println("[DATABASE MESSAGE] Server connection successful @ localhost:27017");
+		System.out.println("\n[DATABASE MESSAGE] Server connection successful @ localhost:27017");
 
 		// connects with Database
 		database = mongoClient.getDatabase("ADS_DB");
 
 		// creates Collection
 		collection = database.getCollection("ADS_COL");
-		System.out.println("[DATABASE MESSAGE] Database connection successful @ collection ADS_DB.ADS_COL");
+		System.out.println("[DATABASE MESSAGE] Database connection successful @ ADS_DB.ADS_COL");
 
 	}
 

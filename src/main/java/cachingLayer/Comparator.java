@@ -22,6 +22,8 @@ public class Comparator {
 	private ArrayList<ArrayList<String[]>> tables = new ArrayList<>();
 
 	private ArrayList<String> filenames = new ArrayList<>();
+	private String[] genericPath = { "environment", "fabric", "node", "filename" };
+	private String[] reversePath = { "filename", "node", "fabric", "environment" };
 
 	private Integer[] discrepancies = new Integer[2];
 
@@ -83,16 +85,15 @@ public class Comparator {
 		}
 		Document filterL = new Document();
 		Document filterR = new Document();
-		String[] pathFilters = { "environment", "fabric", "node", "filename" };
 		System.out.println();
 		for (int i = 0; i < arrL.length; i++) {
 			if (!arrL[i].equals("*")) {
-				filterL.append(pathFilters[i], arrL[i]);
+				filterL.append(genericPath[i], arrL[i]);
 			}
 		}
 		for (int i = 0; i < arrR.length; i++) {
 			if (!arrR[i].equals("*")) {
-				filterR.append(pathFilters[i], arrR[i]);
+				filterR.append(genericPath[i], arrR[i]);
 			}
 		}
 		Document[] filters = { filterL, filterR };
@@ -121,8 +122,7 @@ public class Comparator {
 			System.out.println("\t" + filters[1].toJson());
 
 			// adds file filenames or lowest filepath specification to CSV name
-			String[] pathFilters = { "filename", "node", "fabric", "environment" };
-			for (String filter : pathFilters) {
+			for (String filter : reversePath) {
 				try {
 					String name1 = filters[0].getString(filter);
 					int end1 = name1.length();
@@ -167,11 +167,10 @@ public class Comparator {
 		try {
 			String[] arr = path.split("/");
 			Document filter = new Document();
-			String[] pathFilters = { "environment", "fabric", "node", "filename" };
 
 			for (int i = 0; i < arr.length; i++) {
 				if (!arr[i].equals("*")) {
-					filter.append(pathFilters[i], arr[i]);
+					filter.append(genericPath[i], arr[i]);
 				}
 			}
 
@@ -254,8 +253,8 @@ public class Comparator {
 			tables.add(table);
 
 		}
-		System.out
-				.println("\nFound " + queried + " properties and excluded " + excluded + " properties matching query");
+		System.out.println("\nFound " + queried + " properties and "
+				+ "excluded " + excluded + " properties matching query.");
 
 		// if single query, sets column filenames to query comparison
 		String left = "root";
@@ -387,6 +386,13 @@ public class Comparator {
 		String path = directory + "/" + filename + ".csv";
 		BufferedWriter bw = null;
 		FileWriter fw = null;
+		
+		int size = 0;
+		for (ArrayList<String[]> table : tables) {
+			size += table.size();
+		}
+		System.out.println(size);
+		
 		try {
 			String content = "";
 			for (ArrayList<String[]> table : tables) {
@@ -471,10 +477,9 @@ public class Comparator {
 		Set<String> dirSet = new HashSet<>();
 		String[] arr = path.split("/");
 		Document filter = new Document();
-		String[] metadata = { "environment", "fabric", "node", "filename" };
 		for (int i = 0; i < arr.length; i++) {
 			if (!arr[i].equals("*")) {
-				filter.append(metadata[i], arr[i]);
+				filter.append(genericPath[i], arr[i]);
 			}
 		}
 		MongoCursor<Document> cursor = col.find(filter).iterator();
@@ -482,7 +487,7 @@ public class Comparator {
 			Document doc = cursor.next();
 			String loc = "";
 			for (int i = 0; i <= arr.length; i++) {
-				loc += doc.getString(metadata[i]) + "/";
+				loc += doc.getString(genericPath[i]) + "/";
 			}
 			dirSet.add(loc.substring(0, loc.length() - 1));
 		}
