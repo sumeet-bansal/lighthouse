@@ -1,6 +1,5 @@
 package driver;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 import cachingLayer.DbFeeder;
@@ -13,21 +12,19 @@ import cachingLayer.DbFeeder;
  */
 public class AccessDB {
 
-	private static String help = "Usage: java -jar <jar file> db <commands>" + "\nPOSSIBLE COMMANDS"
+	private static String help = "\nUsage: java -jar <jar file> db <commands>" + "\nPOSSIBLE COMMANDS"
 			+ "\n'help'\n\tgoes to the help page for 'db'"
 			+ "\n\tUsage: java -jar <jar> db help"
 			+ "\n'populate'\n\tpopulates the database with the given files"
 			+ "\n\tUsage: java -jar <jar> zk populate <root directory>"
 			+ "\n'clear'\n\tclears the database"
 			+ "\n\tUsage: java -jar <jar> db clear"
-			+ "\n'structure'\n\tprints the structure of the database at user-specified level"
-			+ "\n\tUsage: java -jar <jar> db structure <level (1-4)>"
-			+ "\n'find'\n\tprints the locations and values of a user-given key"
-			+ "\n\tUsage: java -jar <jar> db find <key>"
+			+ "\n'list'\n\tprints the structure of the database at user-specified level"
+			+ "\n\tUsage: java -jar <jar> db list <level (1-4)>"
 			+ "\n'info'\n\tprovides info about the contents of the database"
 			+ "\n\tUsage: java -jar <jar> db info";
 	
-	private static String structureHelp = "Usage: java -jar <jar> db structure <level>"
+	private static String structureHelp = "Usage: java -jar <jar> db list <level>"
 			+ "\nWhere <level> denotes the lowest level to which you would like to see the database structure."
 			+ "\nAccepted level values"
 			+ "\n\t4 - Environment"
@@ -71,7 +68,7 @@ public class AccessDB {
 					System.out.println("- " + env);
 				}
 				break;
-			case "structure":
+			case "list":
 				DbFeeder.connectToDatabase();
 				if (DbFeeder.getCol().count() == 0) {
 					System.out.println("\nDatabase is empty");
@@ -94,32 +91,11 @@ public class AccessDB {
 					System.err.println(structureHelp);
 				}
 				break;
-			case "find":
-				DbFeeder.connectToDatabase();
-				if (DbFeeder.getCol().count() == 0) {
-					System.out.println("\nDatabase is empty");
-					return;
-				} else {
-					if (args.length > 1) {
-						ArrayList<String> pathList = DbFeeder.findProp(args[1]);
-						if (pathList.size() == 0) {
-							System.out.println("\nKey \"" + args[1] + "\" not found in database");
-							return;
-						}
-						System.out.println("\nFound " + pathList.size() + " instances of key \"" + args[1] + "\":");
-						for (String path : pathList) {
-							System.out.println(path);
-						}
-					} else {
-						System.err.println(help);
-					}
-				}
-				break;
 			case "help":
 				System.err.println(help);
 				break;
 			default:
-				System.err.println("Invalid input. Use the 'help' command for details on usage.");
+				System.err.println(help);
 				return;
 			}
 

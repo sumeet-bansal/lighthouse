@@ -215,8 +215,33 @@ public class DbFeeder {
 		}
 	}
 
-	public static ArrayList<String> findProp(String key) {
+	/**
+	 * Queries the database for a user-given key and returns the key's location(s)
+	 * and values(s)
+	 * 
+	 * @param key
+	 * @return List of Strings representing each key location and its associated
+	 *         value relative to that location
+	 */
+	public static ArrayList<String> findProp(String key, String location) {
+		// set up filter for given key
 		Document keyFilter = new Document().append("key", key);
+		if (location != null) { // specify filter to location, if given
+			String[] path = location.split("/");
+			ArrayList<String> pathList = new ArrayList<>();
+			for (String str : path) {
+				pathList.add(str);
+			}
+			while (pathList.size() < 4) {
+				pathList.add("*");
+			}
+			String[] metadata = {"environment", "fabric", "node", "filename" };
+			for (int i = 0; i < 4; i++) {
+				if (!pathList.get(i).equals("*")) {
+					keyFilter.append(metadata[i], pathList.get(i));
+				}
+			}
+		}
 		MongoCursor<Document> cursor = collection.find(keyFilter).iterator();
 		ArrayList<Document> props = new ArrayList<>();
 		while (cursor.hasNext()) {
@@ -224,14 +249,56 @@ public class DbFeeder {
 		}
 		ArrayList<String> pathList = new ArrayList<>();
 		for (Document prop : props) {
+			// set up each path from metadata
 			String env = prop.getString("environment");
 			String fab = prop.getString("fabric");
 			String node = prop.getString("node");
 			String file = prop.getString("filename");
 			String value = prop.getString("value");
-			pathList.add("PATH: " + env + "/" + fab + "/" + node + "/" + file + "\tVALUE: " + value);
+			String path = "PATH: " + env + "/" + fab + "/" + node + "/" + file;
+			
+			// line up path with value
+			int numSpaces;
+			if (path.length() < 50) {
+				numSpaces = 50 - path.length();
+			} else {
+				numSpaces = 5;
+			}
+			String spaces = "";
+			for (int i = 0; i < numSpaces; i++) {
+				spaces += " ";
+			}
+			
+			// add value to path output
+			pathList.add(path + spaces +  "VALUE: " + value);
 		}
 		return pathList;
+	}
+
+	/**
+	 * Finds every key in the database that contains a user-given String
+	 * 
+	 * @param element
+	 * @return List of keys cont
+	 */
+	public static ArrayList<String> grepProp(String element) {
+		// populate keyList with every key containing element
+		ArrayList<String> keyList = new ArrayList<String>();
+		MongoCursor<Document> cursor = collection.find().iterator();
+		while (cursor.hasNext()) {
+			Document doc = cursor.next();
+			String key = doc.getString("key");
+			if (key.contains(element)) {
+				keyList.add(key);
+			}
+		}
+		
+		// remove all duplicates from keyList
+		Set<String> keySet = new HashSet<>();
+		keySet.addAll(keyList);
+		keyList.clear();
+		keyList.addAll(keySet);
+		return keyList;
 	}
 
 	/**

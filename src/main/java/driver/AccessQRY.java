@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 
 import cachingLayer.Comparator;
+import cachingLayer.DbFeeder;
 
 /**
  * Runs the Comparator from the command line.
@@ -15,16 +16,17 @@ public class AccessQRY {
 
 	private static String sep = File.separator;
 
-	private static String help = "Usage: java -jar <jar file> query <commands>" + "\nPOSSIBLE COMMANDS \n"
+	private static String help = "\nUsage: java -jar <jar file> query <commands>" + "\nPOSSIBLE COMMANDS \n"
 			+ "'help'\n\tgoes to the help page for 'query'\n" + "\tUsage: java -jar <jar> query help\n"
-			// + "'find'\n\tfinds all instances of a specific property or properties\n"
-			// + "\tUsage: java -jar <jar> query find <property> <property> ...
-			// <property>\n"
 			+ "'compare'\n\tcompares the selected root directories and generates appropriate CSVs\n"
 			+ "\tUsage: java -jar <jar> query compare <path1> <path2>\n"
-			+ "'exclude'\n\texcludes selected files from the query\n"
+			+ "\n'exclude'\n\texcludes selected files from the query\n"
 			+ "\tmust be used in conjunction with the 'compare' command\n"
-			+ "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file> <file> ... <file>";
+			+ "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file> <file> ... <file>"
+			+ "\n'find'\n\tprints the locations and values of a user-given key at a specified location, if given"
+			+ "\n\tUsage: java -jar <jar> query find <key> <location path (optional)>"
+			+ "\n'grep'\n\tprints the locations and values of all keys containing user input at a specified location, if given"
+			+ "\n\tUsage: java -jar <jar> query grep <key> <location path (optional)>";
 
 	/**
 	 * Queries the database and generates CSV files containing comparison data.
@@ -45,12 +47,12 @@ public class AccessQRY {
 
 		switch (args[0]) {
 		case "compare":
-			
+
 			// uses generic 'arr' to populate appropriate List
 			int i = 1;
 			ArrayList<String> arr = queried; // adds all args to 'queried'
 			while (i < args.length) {
-				
+
 				// if 'exclude' keyword detected, switches refs and adds rest
 				// of args to 'excluded' List, else continues adding to 'queried'
 				if (args[i].equals("exclude")) {
@@ -60,13 +62,78 @@ public class AccessQRY {
 				}
 				i++;
 			}
-			
+
 			// invalid query parameters
 			if (queried.size() == 0 || queried.size() > 1 && queried.size() % 2 != 0) {
 				System.err.println(help);
 				return;
 			}
 			break;
+		case "find":
+			DbFeeder.connectToDatabase();
+			if (DbFeeder.getCol().count() == 0) {
+				System.out.println("\nDatabase is empty");
+				return;
+			} else {
+				if (args.length > 1) {
+					String location = null;
+					if (args.length == 3) {
+						location = args[2];
+					}
+					ArrayList<String> pathList = DbFeeder.findProp(args[1], location);
+					if (pathList.size() == 0) {
+						System.out.println("\nKey \"" + args[1] + "\" not found for given query");
+						return;
+					}
+					String s = "s";
+					if (pathList.size() == 1) {
+						s = "";
+					}
+					System.out.println("\nFound " + pathList.size() + " instance" + s + " of key \"" + args[1] + "\":");
+					for (String path : pathList) {
+						System.out.println(path);
+					}
+				} else {
+					System.err.println(help);
+				}
+			}
+			return;
+		case "grep":
+			DbFeeder.connectToDatabase();
+			if (DbFeeder.getCol().count() == 0) {
+				System.out.println("\nDatabase is empty");
+				return;
+			} else {
+				if (args.length > 1) {
+					ArrayList<String> keyList = DbFeeder.grepProp(args[1]);
+					if (keyList.size() == 0) {
+						System.out.println("\nIdentifier \"" + args[1] + "\" not found in database");
+						return;
+					}
+					String location = null;
+					if (args.length == 3) {
+						location = args[2];
+					}
+					int count = 0;
+					for (String key : keyList) {
+						ArrayList<String> pathList = DbFeeder.findProp(key, location);
+						if (pathList.size() > 0) {
+							System.out.println("\nInstances of key \"" + key + "\":");
+							for (String path : pathList) {
+								System.out.println("\t" + path);
+								count++;
+							}
+						}
+					}
+					if (count == 0) {
+						System.out.println("\nNo keys in datbase containing identifier \"" + args[1]
+								+ "\" were found in location \"" + location + "\"");
+					}
+				} else {
+					System.err.println(help);
+				}
+			}
+			return;
 		case "help":
 			System.err.println(help);
 			return;
@@ -81,7 +148,7 @@ public class AccessQRY {
 			c.internalQuery(queried.get(0));
 		} else {
 			for (int i = 0; i < queried.size(); i += 2) {
-				c.addQuery(queried.get(i), queried.get(i+1));
+				c.addQuery(queried.get(i), queried.get(i + 1));
 			}
 		}
 		for (int i = 0; i < excluded.size(); i++) {
