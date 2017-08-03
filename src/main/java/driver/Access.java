@@ -32,12 +32,12 @@ public class Access {
 	 *            command-line arguments
 	 */
 	public static void main(String[] args) {
-		// convert args to lower case
+		// converts args to lower case
 		for (int i = 0; i < args.length; i++) {
 			args[i] = args[i].toLowerCase();
 		}
 
-		// disable logging - works in parallel with log4j.properties
+		// disables logging, works in parallel with log4j.properties
 		@SuppressWarnings("unchecked")
 		List<Logger> loggers = Collections.<Logger>list(LogManager.getCurrentLoggers());
 		loggers.add(LogManager.getRootLogger());
@@ -45,11 +45,11 @@ public class Access {
 			logger.setLevel(Level.ERROR);
 		}
 
-		// if no args passed, automatically prints welcome and help pages
+		// if no args passed, automatically prints welcome and sets args[0] to "help"
 		if (args.length == 0) {
 			printWelcome();
-			System.out.println(help);
-			return;
+			args = new String[1];
+			args[0] = "help";
 		}
 
 		// command-specific args

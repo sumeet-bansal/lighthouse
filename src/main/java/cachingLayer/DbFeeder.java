@@ -127,20 +127,22 @@ public class DbFeeder {
 	}
 
 	/**
-	 * Prints the file structure based on each property's metadata in the database
+	 * Prints the file structure based on each property's metadata in the
+	 * database.
 	 * 
 	 * @param level
 	 *            the lowest level the user would like to print to
 	 */
 	public static void printStructure(int level) {
-		// grab properties from database
+		
+		// grabs properties from database
 		ArrayList<Document> props = new ArrayList<Document>();
 		MongoCursor<Document> cursor = collection.find().iterator();
 		while (cursor.hasNext()) {
 			props.add(cursor.next());
 		}
 
-		// set up tokens '-' for lowest level directories and '>' for mid level
+		// sets up tokens '-' for lowest level directories and '>' for mid level
 		String fabToken = "> ";
 		String nodeToken = "> ";
 		if (level == 3) {
@@ -150,7 +152,7 @@ public class DbFeeder {
 			nodeToken = "- ";
 		}
 
-		// specify level for CLI output
+		// specifies level for CLI output
 		String dir = new String();
 		switch (level) {
 		case 4:
@@ -167,7 +169,7 @@ public class DbFeeder {
 			break;
 		}
 
-		// print structure based on level
+		// prints structure based on level
 		System.out.println("\nDATABASE STRUCTURE @ " + dir + " LEVEL");
 		Set<String> envs = getEnvironments();
 		for (String env : envs) {
@@ -216,47 +218,39 @@ public class DbFeeder {
 	}
 
 	/**
-	 * Queries the database for a user-given key and returns the key's location(s)
-	 * and values(s)
+	 * Queries the database for a user-given key and returns location(s) and
+	 * values(s) of the key.
 	 * 
 	 * @param key
-	 * @return List of Strings representing each key location and its associated
-	 *         value relative to that location
+	 *            the key being found
+	 * @param location
+	 *            a specific path within which to find the key
+	 * @return a List of Strings representing each key location and value
 	 */
 	public static ArrayList<String> findProp(String key, String location) {
+		String[] metadata = { "environment", "fabric", "node", "filename" };
+		
 		// set up filter for given key
-		Document keyFilter = new Document().append("key", key);
-		if (location != null) { // specify filter to location, if given
+		Document filter = new Document().append("key", key);
+		if (location != null) {
 			String[] path = location.split("/");
-			ArrayList<String> pathList = new ArrayList<>();
-			for (String str : path) {
-				pathList.add(str);
-			}
-			while (pathList.size() < 4) {
-				pathList.add("*");
-			}
-			String[] metadata = {"environment", "fabric", "node", "filename" };
-			for (int i = 0; i < 4; i++) {
-				if (!pathList.get(i).equals("*")) {
-					keyFilter.append(metadata[i], pathList.get(i));
+			for (int i = 0; i < path.length; i++) {
+				if (!path[i].equals("*")) {
+					filter.append(metadata[i], path[i]);
 				}
 			}
 		}
-		MongoCursor<Document> cursor = collection.find(keyFilter).iterator();
-		ArrayList<Document> props = new ArrayList<>();
+
+		ArrayList<String> props = new ArrayList<>();
+		MongoCursor<Document> cursor = collection.find(filter).iterator();
 		while (cursor.hasNext()) {
-			props.add(cursor.next());
-		}
-		ArrayList<String> pathList = new ArrayList<>();
-		for (Document prop : props) {
-			// set up each path from metadata
-			String env = prop.getString("environment");
-			String fab = prop.getString("fabric");
-			String node = prop.getString("node");
-			String file = prop.getString("filename");
-			String value = prop.getString("value");
-			String path = "PATH: " + env + "/" + fab + "/" + node + "/" + file;
+			Document prop = cursor.next();
 			
+			String path = "PATH: ";
+			for (int i = 0; i < metadata.length; i++) {
+				path += prop.getString(metadata[i]) + "/";
+			}
+
 			// line up path with value
 			int numSpaces;
 			if (path.length() < 50) {
@@ -268,37 +262,41 @@ public class DbFeeder {
 			for (int i = 0; i < numSpaces; i++) {
 				spaces += " ";
 			}
-			
+
 			// add value to path output
-			pathList.add(path + spaces +  "VALUE: " + value);
+			props.add(path + spaces + "VALUE: " + prop.getString("value"));
 		}
-		return pathList;
+		return props;
 	}
 
 	/**
-	 * Finds every key in the database that contains a user-given String
+	 * Finds every key in the database that contains a user-given String.
 	 * 
-	 * @param element
-	 * @return List of keys cont
+	 * @param pattern substring being searched for
+	 * @return Set of property keys that contain the pattern
 	 */
-	public static ArrayList<String> grepProp(String element) {
-		// populate keyList with every key containing element
-		ArrayList<String> keyList = new ArrayList<String>();
+	public static Set<String> grep(String pattern) {
+		
+		/** TODO advanced grep logic
+		 * if no wildcards, check if property contains elem
+		 * if wildcards present
+		 * 		if charAt(0) != *
+		 * 			check that string starts with 0->1stindexOf(*)
+		 * 		if charAt(legnth-1) != *
+		 * 			check that string ends with last(*)->lastChar
+		 * 		split up by *
+		 * 		for all in split, check if index of each elem in array is greater than the last
+		 */
+		
+		Set<String> keyset = new HashSet<>();
 		MongoCursor<Document> cursor = collection.find().iterator();
 		while (cursor.hasNext()) {
-			Document doc = cursor.next();
-			String key = doc.getString("key");
-			if (key.contains(element)) {
-				keyList.add(key);
+			String key = cursor.next().getString("key");
+			if (key.contains(pattern)) {
+				keyset.add(key);
 			}
 		}
-		
-		// remove all duplicates from keyList
-		Set<String> keySet = new HashSet<>();
-		keySet.addAll(keyList);
-		keyList.clear();
-		keyList.addAll(keySet);
-		return keyList;
+		return keyset;
 	}
 
 	/**

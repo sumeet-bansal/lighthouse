@@ -24,7 +24,7 @@ public class AccessQRY {
 			+ "\tmust be used in conjunction with the 'compare' command\n"
 			+ "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file> <file> ... <file>"
 			+ "\n'find'\n\tprints the locations and values of a user-given key at a specified location, if given"
-			+ "\n\tUsage: java -jar <jar> query find <key> <location path (optional)>"
+			+ "\n\tUsage: java -jar <jar> query find <key> [path]"
 			+ "\n'grep'\n\tprints the locations and values of all keys containing user input at a specified location, if given"
 			+ "\n\tUsage: java -jar <jar> query grep <key> <location path (optional)>";
 
@@ -72,7 +72,7 @@ public class AccessQRY {
 		case "find":
 			DbFeeder.connectToDatabase();
 			if (DbFeeder.getCol().count() == 0) {
-				System.out.println("\nDatabase is empty");
+				System.out.println("\nDatabase is empty.");
 				return;
 			} else {
 				if (args.length > 1) {
@@ -82,14 +82,14 @@ public class AccessQRY {
 					}
 					ArrayList<String> pathList = DbFeeder.findProp(args[1], location);
 					if (pathList.size() == 0) {
-						System.out.println("\nKey \"" + args[1] + "\" not found for given query");
+						System.out.println("\nProperty \"" + args[1] + "\" not found within the database.");
 						return;
 					}
 					String s = "s";
 					if (pathList.size() == 1) {
 						s = "";
 					}
-					System.out.println("\nFound " + pathList.size() + " instance" + s + " of key \"" + args[1] + "\":");
+					System.out.println("\nFound " + pathList.size() + " instance" + s + " of property \"" + args[1] + "\":");
 					for (String path : pathList) {
 						System.out.println(path);
 					}
@@ -101,33 +101,18 @@ public class AccessQRY {
 		case "grep":
 			DbFeeder.connectToDatabase();
 			if (DbFeeder.getCol().count() == 0) {
-				System.out.println("\nDatabase is empty");
+				System.out.println("\nDatabase is empty.");
 				return;
 			} else {
 				if (args.length > 1) {
-					ArrayList<String> keyList = DbFeeder.grepProp(args[1]);
-					if (keyList.size() == 0) {
-						System.out.println("\nIdentifier \"" + args[1] + "\" not found in database");
+					Set<String> keyset = DbFeeder.grep(args[1]);
+					if (keyset.size() == 0) {
+						System.out.println("\nIdentifier \"" + args[1] + "\" not found in database.");
 						return;
 					}
-					String location = null;
-					if (args.length == 3) {
-						location = args[2];
-					}
-					int count = 0;
-					for (String key : keyList) {
-						ArrayList<String> pathList = DbFeeder.findProp(key, location);
-						if (pathList.size() > 0) {
-							System.out.println("\nInstances of key \"" + key + "\":");
-							for (String path : pathList) {
-								System.out.println("\t" + path);
-								count++;
-							}
-						}
-					}
-					if (count == 0) {
-						System.out.println("\nNo keys in datbase containing identifier \"" + args[1]
-								+ "\" were found in location \"" + location + "\"");
+					System.out.println("\nFound " + keyset.size() + " matching property keys:");
+					for (String key : keyset) {
+						System.out.println(key);
 					}
 				} else {
 					System.err.println(help);

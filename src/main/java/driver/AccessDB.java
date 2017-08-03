@@ -1,6 +1,6 @@
 package driver;
 
-import java.util.Set;
+import java.util.*;
 
 import cachingLayer.DbFeeder;
 
@@ -26,11 +26,11 @@ public class AccessDB {
 	
 	private static String structureHelp = "Usage: java -jar <jar> db list <level>"
 			+ "\nWhere <level> denotes the lowest level to which you would like to see the database structure."
-			+ "\nAccepted level values"
-			+ "\n\t4 - Environment"
-			+ "\n\t3 - Fabric"
-			+ "\n\t2 - Node"
-			+ "\n\t1 - File";
+			+ "\nAccepted level values:"
+			+ "\n\t4 - environment"
+			+ "\n\t3 - fabric"
+			+ "\n\t2 - node"
+			+ "\n\t1 - file";
 
 	/**
 	 * Accesses a MongoDB database to clear, populate, or provide info.
@@ -71,21 +71,21 @@ public class AccessDB {
 			case "list":
 				DbFeeder.connectToDatabase();
 				if (DbFeeder.getCol().count() == 0) {
-					System.out.println("\nDatabase is empty");
+					System.out.println("\nDatabase is empty.");
 					return;
 				}
 				if (args.length > 1) {
+					int level;
 					try {
-						Integer.parseInt(args[1]);
+						level = Integer.parseInt(args[1]);
 					} catch (Exception e) {
 						System.err.println(structureHelp);
 						return;
 					}
-					if (Integer.parseInt(args[1]) < 1 || Integer.parseInt(args[1]) > 4) {
+					if (level < 1 || level > 4) {
 						System.err.println(structureHelp);
 						return;
 					}
-					int level = Integer.parseInt(args[1]);
 					DbFeeder.printStructure(level);
 				} else {
 					System.err.println(structureHelp);
