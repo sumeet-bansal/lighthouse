@@ -376,7 +376,7 @@ public class Comparator {
 	 */
 	public void writeToCSV(String filename, String directory) {
 		if (queryPairs.size() == 0) {
-			System.err.println("\nUnable write CSV because query list is empty.\n");
+			System.err.println("\nUnable to write CSV because query list is empty.\n");
 			return;
 		}
 		if (tables.get(0).size() == 1 && tables.size() == 1) {

@@ -57,6 +57,7 @@ public class DirectoryParser {
 	 */
 	public void parseAll() {
 		fileFinder(directory);
+		System.out.println();
 		for (String path : filePaths) {
 			FileParser reader = new FileParser(new File(path));
 			if (reader.parseFile()) {
@@ -64,7 +65,7 @@ public class DirectoryParser {
 				String[] fileWithHeader = { path, reader.getData().toString() };
 				headers.add(fileWithHeader);
 			} else {
-				System.out.println("\n[DATABASE MESSAGE] " + reader.getErrorDescription());
+				System.out.println("[DATABASE MESSAGE] " + reader.getErrorDescription());
 			}
 		}
 	}

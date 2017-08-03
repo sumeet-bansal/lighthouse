@@ -24,13 +24,14 @@ public class ParseConf extends AbstractParser {
 			
 			String str;
 			String grouping = "";
-			
 			while ((str = br.readLine()) != null) {
+				if (str.length() == 0 || str.charAt(0) == '#') {
+					continue;
+				}
 				if ((str.charAt(0) == '[')) {
 					grouping = str.substring(str.indexOf('[') + 1,
 											 str.indexOf(']'));
 				} else {
-					
 					// finds last non-space character of key
 					int keyplace = str.indexOf('=');
 					while (str.charAt(keyplace-1) == ' ') {

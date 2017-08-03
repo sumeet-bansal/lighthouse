@@ -63,7 +63,9 @@ public class AccessDB {
 				Set<String> envs = DbFeeder.getEnvironments();
 				System.out.println("\nCount:");
 				System.out.println(count + " properties currently in database");
-				System.out.println("\nEnvironments:");
+				if (count != 0) {
+					System.out.println("\nEnvironments:");
+				}
 				for (String env : envs) {
 					System.out.println("- " + env);
 				}
@@ -95,7 +97,7 @@ public class AccessDB {
 				System.err.println(help);
 				break;
 			default:
-				System.err.println(help);
+				System.err.println("Invalid input. Use the 'help' command for details on usage.");
 				return;
 			}
 

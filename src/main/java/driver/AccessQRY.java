@@ -18,8 +18,8 @@ public class AccessQRY {
 
 	private static String help = "\nUsage: java -jar <jar file> query <commands>" + "\nPOSSIBLE COMMANDS \n"
 			+ "'help'\n\tgoes to the help page for 'query'\n" + "\tUsage: java -jar <jar> query help\n"
-			+ "'compare'\n\tcompares the selected root directories and generates appropriate CSVs"
-			+ "\tUsage: java -jar <jar> query compare <path1> <path2>\n"
+			+ "'compare'\n\tcompares the selected root directories and generates appropriate CSVs\n"
+			+ "\tUsage: java -jar <jar> query compare <path1> <path2>"
 			+ "\n'exclude'\n\texcludes selected files from the query\n"
 			+ "\tmust be used in conjunction with the 'compare' command\n"
 			+ "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file> <file> ... <file>"
@@ -82,7 +82,11 @@ public class AccessQRY {
 					}
 					ArrayList<String> pathList = DbFeeder.findProp(args[1], location);
 					if (pathList.size() == 0) {
-						System.out.println("\nProperty \"" + args[1] + "\" not found within the database.");
+						System.out.print("\nProperty \"" + args[1] + "\" not found in database");
+						if (location != null) {
+							System.out.print(" at location " + location);
+						}
+						System.out.print(".\n");
 						return;
 					}
 					String s = "s";
@@ -118,8 +122,9 @@ public class AccessQRY {
 				if (keyset != null && keyset.size() == 0) {
 					System.out.print("\nIdentifier \"" + args[1] + "\" not found in database");
 					if (location != null) {
-						System.out.println(" at location " + location);
+						System.out.print(" at location " + location);
 					}
+					System.out.print(".\n");
 					return;
 				}
 				System.out.println("\nFound " + keyset.size() + " matching property keys:");

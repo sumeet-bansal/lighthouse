@@ -44,8 +44,7 @@ public class FileParser {
 			} else if (fileType.equalsIgnoreCase("xml")) {
 				data = new ParseXML();
 			} else {
-				errorDescription = "File " + filename + " was not added because file type " + fileType
-						+ " is currently unsupported.\n";
+				errorDescription = "unsupported: " + filename;
 				data = null;
 			}
 			if (data != null) {

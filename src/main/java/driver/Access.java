@@ -32,10 +32,6 @@ public class Access {
 	 *            command-line arguments
 	 */
 	public static void main(String[] args) {
-		// converts args to lower case
-		for (int i = 0; i < args.length; i++) {
-			args[i] = args[i].toLowerCase();
-		}
 
 		// disables logging, works in parallel with log4j.properties
 		@SuppressWarnings("unchecked")
