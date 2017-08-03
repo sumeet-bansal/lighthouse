@@ -9,8 +9,7 @@ import org.w3c.dom.*;
  * Standardizes hazelcast.xml files and cluster.xml files.
  * 
  * @author ActianceEngInterns
- * @version 1.0
- * @since 2017-07-27
+ * @version 1.1
  */
 public class ParseXML extends AbstractParser{
 	

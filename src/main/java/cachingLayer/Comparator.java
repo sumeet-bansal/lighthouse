@@ -253,8 +253,8 @@ public class Comparator {
 			tables.add(table);
 
 		}
-		System.out.println("\nFound " + queried + " properties and "
-				+ "excluded " + excluded + " properties matching query.");
+		System.out.println(
+				"\nFound " + queried + " properties and " + "excluded " + excluded + " properties matching query.");
 
 		// if single query, sets column filenames to query comparison
 		String left = "root";
@@ -386,12 +386,7 @@ public class Comparator {
 		String path = directory + "/" + filename + ".csv";
 		BufferedWriter bw = null;
 		FileWriter fw = null;
-		
-		int size = 0;
-		for (ArrayList<String[]> table : tables) {
-			size += table.size();
-		}
-		
+
 		try {
 			String content = "";
 			for (ArrayList<String[]> table : tables) {
@@ -439,9 +434,9 @@ public class Comparator {
 
 	/**
 	 * Creates a default name for the CSV file based on the lowest-level
-	 * metadata provided in the query
+	 * metadata provided in the query.
 	 * 
-	 * @return default CSV name
+	 * @return the default CSV name
 	 */
 	public String getDefaultName() {
 		String defaultName = "ADS-Report";
@@ -458,10 +453,11 @@ public class Comparator {
 
 	/**
 	 * Takes in a single path input and generates a filter document to find the
-	 * files to compare within those parameters
+	 * files to compare within those parameters.
 	 * 
 	 * @param path
-	 * @return filters
+	 *            the path containing the subdirectories being compared against
+	 *            each other
 	 */
 	public void internalQuery(String path) {
 

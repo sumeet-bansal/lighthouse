@@ -2,9 +2,7 @@ package driver;
 
 import java.util.*;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.log4j.*;
 
 /**
  * Runs the complete diagnostic tool from the command line.

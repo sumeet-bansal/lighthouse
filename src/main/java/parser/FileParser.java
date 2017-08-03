@@ -31,9 +31,8 @@ public class FileParser {
 		try {
 			String filename = input.getAbsolutePath();
 			String fileType = filename.substring(filename.lastIndexOf('.') + 1);
-			if (fileType.equalsIgnoreCase("config") ||
-				fileType.equalsIgnoreCase("conf") ||
-				fileType.equalsIgnoreCase("cfg")) {
+			if (fileType.equalsIgnoreCase("config") || fileType.equalsIgnoreCase("conf")
+					|| fileType.equalsIgnoreCase("cfg")) {
 				data = new ParseConf();
 			} else if (fileType.equalsIgnoreCase("yaml") || fileType.equalsIgnoreCase("yml")) {
 				data = new ParseYaml();
@@ -51,14 +50,15 @@ public class FileParser {
 				data.setPath(filename);
 			}
 		} catch (Exception e) {
-			errorDescription = "\n" +  e.getMessage();
+			errorDescription = "\n" + e.getMessage();
 			data = null;
 		}
 	}
 
 	/**
 	 * Adds File data to standardized ArrayLists.
-	 * @return true if the File was succesfully parsed, else false
+	 * 
+	 * @return true if the File was successfully parsed, else false
 	 */
 	public boolean parseFile() {
 		if (data != null) {
@@ -76,7 +76,7 @@ public class FileParser {
 	public AbstractParser getData() {
 		if (data != null) {
 			return data;
-		}	 
+		}
 		return null;
 	}
 

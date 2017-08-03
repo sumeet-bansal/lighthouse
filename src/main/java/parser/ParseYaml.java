@@ -10,7 +10,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
  * 
  * @author ActianceEngInterns
  * @version 1.0
- * @since 2017-06-27
  */
 public class ParseYaml extends AbstractParser {
 

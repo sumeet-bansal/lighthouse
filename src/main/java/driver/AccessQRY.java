@@ -3,8 +3,8 @@ package driver;
 import java.io.*;
 import java.util.*;
 
-import cachingLayer.Comparator;
 import cachingLayer.DbFeeder;
+import cachingLayer.Comparator;
 
 /**
  * Runs the Comparator from the command line.

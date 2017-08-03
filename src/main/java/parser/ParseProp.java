@@ -8,7 +8,6 @@ import java.util.*;
  * 
  * @author ActianceEngInterns
  * @version 1.0
- * @since 2017-06-27
  */
 public class ParseProp extends AbstractParser {
 	private Properties prop = new Properties();

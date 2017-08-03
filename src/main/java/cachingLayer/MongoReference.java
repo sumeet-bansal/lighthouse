@@ -11,7 +11,7 @@ import com.mongodb.client.*;
  * @author ActianceEngInterns
  * @version 1.0
  */
-public class MongoMethods {
+public class MongoReference {
 
 	public static void main(String args[]) {
 
