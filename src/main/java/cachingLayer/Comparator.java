@@ -391,7 +391,6 @@ public class Comparator {
 		for (ArrayList<String[]> table : tables) {
 			size += table.size();
 		}
-		System.out.println(size);
 		
 		try {
 			String content = "";

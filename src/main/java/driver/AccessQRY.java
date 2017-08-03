@@ -18,15 +18,15 @@ public class AccessQRY {
 
 	private static String help = "\nUsage: java -jar <jar file> query <commands>" + "\nPOSSIBLE COMMANDS \n"
 			+ "'help'\n\tgoes to the help page for 'query'\n" + "\tUsage: java -jar <jar> query help\n"
-			+ "'compare'\n\tcompares the selected root directories and generates appropriate CSVs\n"
+			+ "'compare'\n\tcompares the selected root directories and generates appropriate CSVs"
 			+ "\tUsage: java -jar <jar> query compare <path1> <path2>\n"
 			+ "\n'exclude'\n\texcludes selected files from the query\n"
 			+ "\tmust be used in conjunction with the 'compare' command\n"
 			+ "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file> <file> ... <file>"
 			+ "\n'find'\n\tprints the locations and values of a user-given key at a specified location, if given"
 			+ "\n\tUsage: java -jar <jar> query find <key> [path]"
-			+ "\n'grep'\n\tprints the locations and values of all keys containing user input at a specified location, if given"
-			+ "\n\tUsage: java -jar <jar> query grep <key> <location path (optional)>";
+			+ "\n'grep'\n\tfinds every property key in the database that contains a given pattern"
+			+ "\n\tUsage: java -jar <jar> query grep <key> [path]";
 
 	/**
 	 * Queries the database and generates CSV files containing comparison data.
@@ -104,18 +104,27 @@ public class AccessQRY {
 				System.out.println("\nDatabase is empty.");
 				return;
 			} else {
+				String location = null;
+				if (args.length > 2) {
+					location = args[2];
+				}
+				Set<String> keyset = null;
 				if (args.length > 1) {
-					Set<String> keyset = DbFeeder.grep(args[1]);
-					if (keyset.size() == 0) {
-						System.out.println("\nIdentifier \"" + args[1] + "\" not found in database.");
-						return;
-					}
-					System.out.println("\nFound " + keyset.size() + " matching property keys:");
-					for (String key : keyset) {
-						System.out.println(key);
-					}
+					keyset = DbFeeder.grep(args[1], location);
 				} else {
 					System.err.println(help);
+					return;
+				}
+				if (keyset != null && keyset.size() == 0) {
+					System.out.print("\nIdentifier \"" + args[1] + "\" not found in database");
+					if (location != null) {
+						System.out.println(" at location " + location);
+					}
+					return;
+				}
+				System.out.println("\nFound " + keyset.size() + " matching property keys:");
+				for (String key : keyset) {
+					System.out.println(key);
 				}
 			}
 			return;

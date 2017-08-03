@@ -21,6 +21,8 @@ public class DbFeeder {
 
 	private static MongoDatabase database;
 	private static MongoCollection<Document> collection;
+	
+	private static String[] metadata = { "environment", "fabric", "node", "filename" };
 
 	/**
 	 * Initializes the cache.
@@ -109,7 +111,7 @@ public class DbFeeder {
 
 	/**
 	 * Adds each unique environment specified in the database properties to a
-	 * HashSet
+	 * HashSet.
 	 * 
 	 * @return HashSet with each unique environment
 	 */
@@ -228,7 +230,6 @@ public class DbFeeder {
 	 * @return a List of Strings representing each key location and value
 	 */
 	public static ArrayList<String> findProp(String key, String location) {
-		String[] metadata = { "environment", "fabric", "node", "filename" };
 		
 		// set up filter for given key
 		Document filter = new Document().append("key", key);
@@ -275,7 +276,18 @@ public class DbFeeder {
 	 * @param pattern substring being searched for
 	 * @return Set of property keys that contain the pattern
 	 */
-	public static Set<String> grep(String pattern) {
+	public static Set<String> grep(String pattern, String location) {
+		
+		// set up filter for given key
+		Document filter = new Document();
+		if (location != null) {
+			String[] path = location.split("/");
+			for (int i = 0; i < path.length; i++) {
+				if (!path[i].equals("*")) {
+					filter.append(metadata[i], path[i]);
+				}
+			}
+		}
 		
 		/** TODO advanced grep logic
 		 * if no wildcards, check if property contains elem
@@ -289,7 +301,7 @@ public class DbFeeder {
 		 */
 		
 		Set<String> keyset = new HashSet<>();
-		MongoCursor<Document> cursor = collection.find().iterator();
+		MongoCursor<Document> cursor = collection.find(filter).iterator();
 		while (cursor.hasNext()) {
 			String key = cursor.next().getString("key");
 			if (key.contains(pattern)) {
