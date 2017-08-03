@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.*;
 import javax.xml.parsers.*;
 import org.w3c.dom.*;
-import org.xml.sax.SAXException;
 
 /**
  * Standardizes hazelcast.xml files and cluster.xml files.
