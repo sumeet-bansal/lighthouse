@@ -21,7 +21,9 @@ public class DirectoryParser {
 
 	/**
 	 * Constructor.
-	 * @param directory the root directory being parsed
+	 * 
+	 * @param directory
+	 *            the root directory being parsed
 	 */
 	public DirectoryParser(File directory) {
 		this.directory = directory;
@@ -29,6 +31,7 @@ public class DirectoryParser {
 
 	/**
 	 * Getter method for the parsed data of the files in the directory.
+	 * 
 	 * @return the parsed data
 	 */
 	public ArrayList<AbstractParser> getParsedData() {
@@ -39,15 +42,21 @@ public class DirectoryParser {
 	 * Recursively searches for all files in a directory and adds their respective
 	 * file paths to the appropriate internal ArrayList.
 	 * 
-	 * @param directory the directory being searched
+	 * @param directory
+	 *            the directory being searched
 	 */
 	private void fileFinder(File directory) {
-		for (File file : directory.listFiles()) {
-			if (file.isDirectory()) {
-				fileFinder(file);
-			} else {
-				filePaths.add(file.getPath());
+		try {
+			for (File file : directory.listFiles()) {
+				if (file.isDirectory()) {
+					fileFinder(file);
+				} else {
+					filePaths.add(file.getPath());
+				}
 			}
+		} catch (NullPointerException e) {
+			System.err.println("\n[DATABASE ERROR] Directory " + directory + " not found");
+			return;
 		}
 	}
 
@@ -72,6 +81,7 @@ public class DirectoryParser {
 
 	/**
 	 * Prints each valid file in Standardizer format and lists all invalid files.
+	 * 
 	 * @return a String representation of DirectoryParser instance
 	 */
 	public String toString() {

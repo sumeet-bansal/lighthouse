@@ -42,6 +42,10 @@ public class FileParser {
 				data = new ParseHost();
 			} else if (fileType.equalsIgnoreCase("xml")) {
 				data = new ParseXML();
+			} else if (fileType.equalsIgnoreCase("info")) {
+				data = new ParseInfo();
+			} else if (fileType.equalsIgnoreCase("whitelist") || fileType.equalsIgnoreCase("blacklist")) {
+				data = new ParseList();
 			} else {
 				errorDescription = "unsupported: " + filename;
 				data = null;
