@@ -67,8 +67,8 @@ public class Comparator {
 	}
 
 	/**
-	 * Private helper method. Given path inputs, verifies the validity of the
-	 * inputs and generates filters for the inputs.
+	 * Private helper method. Given path inputs, verifies the validity of the inputs
+	 * and generates filters for the inputs.
 	 * 
 	 * @param pathL
 	 *            the first path being compared
@@ -101,6 +101,55 @@ public class Comparator {
 	}
 
 	/**
+	 * Gets all the files matching a given extension.
+	 * 
+	 * @param env
+	 * @param fabric
+	 * @param node
+	 * @param wildcard
+	 * @return Matching files
+	 */
+	private ArrayList<Document> getFiles(String env, String fabric, String node, String extension) {
+		ArrayList<Document> files = new ArrayList<>();
+		
+		// set up filter with given metadata
+		Document filter = new Document();
+		String[] keys = { env, fabric, node };
+		for (int i = 0; i < 3; i++) {
+			if (!(keys[i] == null)) {
+				filter.append(genericPath[i], keys[i]);
+			}
+		}
+
+		// query database for files with extension equal to given extension
+		Set<String> names = new TreeSet<>();
+		MongoCursor<Document> cursor = col.find(filter).iterator();
+		while (cursor.hasNext()) {
+			Document doc = cursor.next();
+			String filename = doc.getString("filename");
+			String colExt = filename.substring(filename.indexOf('.') + 1);
+			if (extension.equalsIgnoreCase(colExt)) {
+				names.add(filename);
+			}
+		}
+
+		// copy data to new document and add to files list
+		for (String name : names) {
+			Document element = new Document();
+			for (int i = 0; i < 3; i++) {
+				if (!(keys[i] == null)) {
+					element.append(genericPath[i], keys[i]);
+				}
+			}
+			element.append("filename", name);
+			files.add(element);
+			filter.remove("filename");
+		}
+
+		return files;
+	}
+
+	/**
 	 * Adds path inputs to the internal queryPairs List.
 	 * 
 	 * @param pathL
@@ -115,16 +164,101 @@ public class Comparator {
 		}
 		try {
 
+			// if filenames are wildcard/extension, find all files with specified extension
+			boolean isWildcard = false;
+			ArrayList<Document> left = new ArrayList<>();
+			ArrayList<Document> right = new ArrayList<>();
+			ArrayList<Document[]> pairs = new ArrayList<>();
+
+			for (int i = 0; i < filters.length; i++) {
+				Document doc = filters[i];
+				if (doc.getString("filename") != null && doc.getString("filename").startsWith("*.")) {
+					isWildcard = true;
+					String env = doc.getString("environment");
+					String fabric = doc.getString("fabric");
+					String node = doc.getString("node");
+					String extension = doc.getString("filename").substring(2);
+
+					if (i == 0) {
+						left = getFiles(env, fabric, node, extension);
+					} else {
+						right = getFiles(env, fabric, node, extension);
+					}
+				}
+			}
+
 			// adds query filters to queryPairs
-			queryPairs.add(filters);
 			System.out.println("Looking for properties with attributes:");
-			System.out.println("\t" + filters[0].toJson());
-			System.out.println("\t" + filters[1].toJson());
+			if (!isWildcard) {
+				queryPairs.add(filters);
+				System.out.println("\t" + filters[0].toJson());
+				System.out.println("\t" + filters[1].toJson());
+			} else {
+				// pair up matching filenames
+				ArrayList<String> usedL = new ArrayList<>();
+				ArrayList<String> usedR = new ArrayList<>();
+				for (Document docL : left) {
+					for (Document docR : right) {
+						Document[] pair = new Document[2];
+						if (docL.getString("filename").equals(docR.getString("filename"))) {
+							pair[0] = docL;
+							pair[1] = docR;
+						}
+						if (pair[0] != null && pair[1] != null) {
+							pairs.add(pair);
+							usedL.add(docL.getString("filename"));
+							usedR.add(docR.getString("filename"));
+						}
+					}
+				}
+				
+				// print matches to CLI
+				for (Document[] pair : pairs) {
+					System.out.println("\t" + pair[0].toJson());
+					System.out.println("\t" + pair[1].toJson());
+					System.out.println();
+				}
+
+				// pair the leftovers to a null document holding no properties
+				Document nullDoc = new Document();
+				for (String str : genericPath) {
+					nullDoc.append(str, null);
+				}
+				
+				outerloop: for (Document docL : left) {
+					for (String used : usedL) {
+						if (docL.getString("filename").equals(used)) {
+							continue outerloop;
+						}
+					}
+					Document[] pair = { docL, nullDoc };
+					System.out.println("\t" + docL.toJson());
+					pairs.add(pair);
+				}
+				outerloop: for (Document docR : right) {
+					for (String used : usedR) {
+						if (docR.getString("filename").equals(used)) {
+							continue outerloop;
+						}
+					}
+					Document[] pair = { nullDoc, docR };
+					System.out.println("\t" + docR.toJson());
+					pairs.add(pair);
+				}
+
+				// add all pairs to query
+				for (Document[] pair : pairs) {
+					queryPairs.add(pair);
+				}
+			}
 
 			// adds file filenames or lowest filepath specification to CSV name
 			for (String filter : reversePath) {
 				try {
 					String name1 = filters[0].getString(filter);
+					if (name1.startsWith("*.")) {
+						continue;
+					}
 					int end1 = name1.length();
 					if (name1.contains(".")) {
 						end1 = name1.lastIndexOf(".");
@@ -135,6 +269,9 @@ public class Comparator {
 					}
 
 					String name2 = filters[1].getString(filter);
+					if (name2.startsWith("*.")) {
+						continue;
+					}
 					int end2 = name2.length();
 					if (name2.contains(".")) {
 						end2 = name2.lastIndexOf(".");
@@ -154,6 +291,7 @@ public class Comparator {
 			for (Document doc : filters) {
 				System.err.println("\t" + doc.toJson());
 			}
+			e.printStackTrace();
 		}
 	}
 
@@ -204,8 +342,8 @@ public class Comparator {
 
 	/**
 	 * Retrieves filtered files from the MongoDB database, excludes files as
-	 * appropriate, compares the remaining queried files, and adds the results
-	 * to a CSV file.
+	 * appropriate, compares the remaining queried files, and adds the results to a
+	 * CSV file.
 	 */
 	public void compare() {
 		if (queryPairs.isEmpty()) {
@@ -286,11 +424,11 @@ public class Comparator {
 	 * Compares Documents and adds the comparison outcomes to the table.
 	 * 
 	 * @param propsL
-	 *            a List of Documents representing every property in the left
-	 *            side of the query
+	 *            a List of Documents representing every property in the left side
+	 *            of the query
 	 * @param propsR
-	 *            a List of Documents representing every property in the right
-	 *            side of the query
+	 *            a List of Documents representing every property in the right side
+	 *            of the query
 	 * @return the table
 	 */
 	private ArrayList<String[]> createTable(ArrayList<Document> propsL, ArrayList<Document> propsR) {
@@ -366,8 +504,7 @@ public class Comparator {
 	}
 
 	/**
-	 * Writes stored data to a CSV file with a user-specified name and
-	 * directory.
+	 * Writes stored data to a CSV file with a user-specified name and directory.
 	 * 
 	 * @param filename
 	 *            the user-specified filename
@@ -433,8 +570,8 @@ public class Comparator {
 	}
 
 	/**
-	 * Creates a default name for the CSV file based on the lowest-level
-	 * metadata provided in the query.
+	 * Creates a default name for the CSV file based on the lowest-level metadata
+	 * provided in the query.
 	 * 
 	 * @return the default CSV name
 	 */
@@ -456,8 +593,8 @@ public class Comparator {
 	 * files to compare within those parameters.
 	 * 
 	 * @param path
-	 *            the path containing the subdirectories being compared against
-	 *            each other
+	 *            the path containing the subdirectories being compared against each
+	 *            other
 	 */
 	public void internalQuery(String path) {
 
