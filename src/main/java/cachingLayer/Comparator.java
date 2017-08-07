@@ -111,7 +111,7 @@ public class Comparator {
 	 */
 	private ArrayList<Document> getFiles(String env, String fabric, String node, String extension) {
 		ArrayList<Document> files = new ArrayList<>();
-		
+
 		// set up filter with given metadata
 		Document filter = new Document();
 		String[] keys = { env, fabric, node };
@@ -203,15 +203,13 @@ public class Comparator {
 						if (docL.getString("filename").equals(docR.getString("filename"))) {
 							pair[0] = docL;
 							pair[1] = docR;
-						}
-						if (pair[0] != null && pair[1] != null) {
 							pairs.add(pair);
 							usedL.add(docL.getString("filename"));
 							usedR.add(docR.getString("filename"));
 						}
 					}
 				}
-				
+
 				// print matches to CLI
 				for (Document[] pair : pairs) {
 					System.out.println("\t" + pair[0].toJson());
@@ -224,7 +222,11 @@ public class Comparator {
 				for (String str : genericPath) {
 					nullDoc.append(str, null);
 				}
-				
+
+				if (left.size() != 0 && right.size() != 0) {
+					System.out.println("  ----- The following attributes exist on only one side of the query -----\n");
+				}
+
 				outerloop: for (Document docL : left) {
 					for (String used : usedL) {
 						if (docL.getString("filename").equals(used)) {

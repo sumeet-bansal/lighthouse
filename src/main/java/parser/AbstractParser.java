@@ -31,11 +31,14 @@ public abstract class AbstractParser {
 	public Map<String, String> getMetadata() {
 		String[] delimitedPath = path.split("/");
 		String[] predictedPath = { "filename", "node", "fabric", "environment" };
+		String relativePath = "";
 		Map<String, String> metadata = new LinkedHashMap<>();
 		for (int i = 0; i < predictedPath.length; i++) {
 			metadata.put(predictedPath[i], delimitedPath[delimitedPath.length - 1 - i]);
+			relativePath = delimitedPath[delimitedPath.length - 1 - i] + "/" + relativePath;
 		}
-		metadata.put("path", path);
+		relativePath = relativePath.substring(0, relativePath.length() - 1);
+		metadata.put("path", relativePath);
 		return metadata;
 	}
 

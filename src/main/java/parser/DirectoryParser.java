@@ -73,7 +73,7 @@ public class DirectoryParser {
 				parsedData.add(reader.getData());
 				String[] fileWithHeader = { path, reader.getData().toString() };
 				headers.add(fileWithHeader);
-			} else {
+			} else if (reader.getErrorDescription() != null){
 				System.out.println("[DATABASE MESSAGE] " + reader.getErrorDescription());
 			}
 		}

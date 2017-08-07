@@ -29,8 +29,8 @@ public class FileParser {
 	 */
 	public void instantiateParser() {
 		try {
-			String filename = input.getAbsolutePath();
-			String fileType = filename.substring(filename.lastIndexOf('.') + 1);
+			String filepath = input.getAbsolutePath();
+			String fileType = filepath.substring(filepath.lastIndexOf('.') + 1);
 			if (fileType.equalsIgnoreCase("config") || fileType.equalsIgnoreCase("conf")
 					|| fileType.equalsIgnoreCase("cfg")) {
 				data = new ParseConf();
@@ -47,14 +47,21 @@ public class FileParser {
 			} else if (fileType.equalsIgnoreCase("whitelist") || fileType.equalsIgnoreCase("blacklist")) {
 				data = new ParseList();
 			} else {
-				errorDescription = "unsupported: " + filename;
+				// TODO talk to Manoj about showing backups and working copies on CLI
+				String[] arr = filepath.split("\\.");
+				String backup = arr[arr.length - 1];
+				String end = backup.substring(backup.length() - 2, backup.length());
+				if (!((backup.charAt(0) == 'b' && end.equals("up")) || backup.equals("debug")
+						|| backup.equals("workingCopy") || backup.equals("mp"))) {
+					errorDescription = "unsupported: " + filepath;
+				}
 				data = null;
 			}
 			if (data != null) {
-				data.setPath(filename);
+				data.setPath(filepath);
 			}
 		} catch (Exception e) {
-			errorDescription = "\n" + e.getMessage();
+			errorDescription = e.getMessage();
 			data = null;
 		}
 	}

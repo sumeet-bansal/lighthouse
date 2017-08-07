@@ -25,19 +25,14 @@ public class ParseList extends AbstractParser {
 		try {
 			FileReader fr = new FileReader(input);
 			BufferedReader br = new BufferedReader(fr);
-
-			int item = 0;
-			String str;
-			while ((str = br.readLine()) != null) {
-				if (str.length() == 0 || str.charAt(0) == '#') {
+			
+			String key;
+			while ((key = br.readLine()) != null) {
+				if (key.length() == 0 || key.charAt(0) == '#') {
 					continue;
-				} else {
-					item++;
 				}
-				String key = "Item " + item;
-				String val = str;
 				
-				data.put(key, val);
+				data.put(key, "true");
 			}
 
 			br.close();
