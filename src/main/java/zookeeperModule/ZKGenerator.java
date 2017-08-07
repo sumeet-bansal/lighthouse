@@ -30,16 +30,6 @@ public class ZKGenerator {
 		zkmanager = new ZKClientManager(host);
 		
 		this.zkpath = zkpath;
-		if (this.zkpath.equals("/") || this.zkpath.equals("")) {
-			this.zkpath = "";
-			return;
-		}
-		if (this.zkpath.charAt(0) != '/') {
-			this.zkpath = "/" + this.zkpath;
-		}
-		if (this.zkpath.charAt(this.zkpath.length()-1) == '/') {
-			this.zkpath = this.zkpath.substring(0, this.zkpath.length()-1);
-		}
 		
 		this.root = root;
 		if (root.equals("") || root.charAt(root.length()-1) != '/') {
@@ -68,7 +58,7 @@ public class ZKGenerator {
 				
 			// generates .properties files
 			map = new LinkedHashMap<>();
-			fabric =  fabrics.get(i);
+			fabric = fabrics.get(i);
 			recursive(zkpath + "/" + fabric);
 			write(fabric, map);
 			System.out.println("generated .properties file(s) for " + fabric);
