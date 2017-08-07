@@ -2,10 +2,10 @@ package driver;
 
 import java.util.*;
 
-import cachingLayer.DbFeeder;
+import databaseModule.*;
 
 /**
- * Runs DbFeeder from the command line.
+ * Runs DbFunctions from the command line.
  * 
  * @author ActianceEngInterns
  * @version 1.1
@@ -44,23 +44,21 @@ public class AccessDB {
 			args[0] = "help";
 		}
 
+		MongoManager.connectToDatabase();
 		switch (args[0]) {
 			case "populate":
 				if (args.length > 1) {
-					DbFeeder.connectToDatabase();
-					DbFeeder.populate(args[1]);
+					DbFunctions.populate(args[1]);
 				} else {
 					System.err.println(help);
 				}
 				break;
 			case "clear":
-				DbFeeder.connectToDatabase();
-				DbFeeder.clearDB();
+				MongoManager.clearDB();
 				break;
 			case "info":
-				DbFeeder.connectToDatabase();
-				long count = DbFeeder.getCol().count();
-				Set<String> envs = DbFeeder.getEnvironments();
+				long count = MongoManager.getCol().count();
+				Set<String> envs = MongoManager.getEnvironments();
 				System.out.println("\nCount:");
 				System.out.println(count + " properties currently in database");
 				if (count != 0) {
@@ -71,8 +69,7 @@ public class AccessDB {
 				}
 				break;
 			case "list":
-				DbFeeder.connectToDatabase();
-				if (DbFeeder.getCol().count() == 0) {
+				if (MongoManager.getCol().count() == 0) {
 					System.out.println("\nDatabase is empty.");
 					return;
 				}
@@ -88,7 +85,7 @@ public class AccessDB {
 						System.err.println(structureHelp);
 						return;
 					}
-					DbFeeder.printStructure(level);
+					DbFunctions.printStructure(level);
 				} else {
 					System.err.println(structureHelp);
 				}

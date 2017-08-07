@@ -1,9 +1,9 @@
 package parserTester;
 
-import cachingLayer.*;
+import databaseModule.*;
 
 /**
- * Tests the DbFeeder.
+ * Tests the DbFunctions.
  * 
  * @author ActianceEngInterns
  * @version 1.1
@@ -19,7 +19,7 @@ public class DbFeederTester {
 	 * @param args command-line arguments
 	 */
 	public static void main(String[] args) {
-		DbFeeder.populate(System.getProperty("user.home") + "/workspace/diagnosticSuite/root/");
+		DbFunctions.populate(System.getProperty("user.home") + "/workspace/diagnosticSuite/root/");
 	}
 
 }

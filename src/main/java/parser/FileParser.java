@@ -47,7 +47,6 @@ public class FileParser {
 			} else if (fileType.equalsIgnoreCase("whitelist") || fileType.equalsIgnoreCase("blacklist")) {
 				data = new ParseList();
 			} else {
-				// TODO talk to Manoj about showing backups and working copies on CLI
 				String[] arr = filepath.split("\\.");
 				String backup = arr[arr.length - 1];
 				String end = backup.substring(backup.length() - 2, backup.length());

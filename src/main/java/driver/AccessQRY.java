@@ -3,11 +3,10 @@ package driver;
 import java.io.*;
 import java.util.*;
 
-import cachingLayer.DbFeeder;
-import cachingLayer.Comparator;
+import databaseModule.*;
 
 /**
- * Runs the Comparator from the command line.
+ * Runs the QueryFunctions from the command line.
  * 
  * @author ActianceEngInterns
  * @version 1.1
@@ -23,10 +22,10 @@ public class AccessQRY {
 			+ "\n'exclude'\n\texcludes selected files from the query\n"
 			+ "\tmust be used in conjunction with the 'compare' command\n"
 			+ "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file> <file> ... <file>"
-			+ "\n'find'\n\tprints the locations and values of a user-given key at a specified location, if given"
-			+ "\n\tUsage: java -jar <jar> query find <key> [path]"
 			+ "\n'grep'\n\tfinds every property key in the database that contains a given pattern"
-			+ "\n\tUsage: java -jar <jar> query grep <key> [path]";
+			+ "\n\tUsage: java -jar <jar> query grep <key> [path]"
+			+ "\n'find'\n\tprints the locations and values of a user-given key at a specified location, if given"
+			+ "\n\tUsage: java -jar <jar> query find <key> [path]";
 
 	/**
 	 * Queries the database and generates CSV files containing comparison data.
@@ -70,8 +69,8 @@ public class AccessQRY {
 			}
 			break;
 		case "find":
-			DbFeeder.connectToDatabase();
-			if (DbFeeder.getCol().count() == 0) {
+			MongoManager.connectToDatabase();
+			if (MongoManager.getCol().count() == 0) {
 				System.out.println("\nDatabase is empty.");
 				return;
 			} else {
@@ -80,7 +79,7 @@ public class AccessQRY {
 					if (args.length == 3) {
 						location = args[2];
 					}
-					ArrayList<String> pathList = DbFeeder.findProp(args[1], location);
+					ArrayList<String> pathList = QueryFunctions.findProp(args[1], location);
 					if (pathList.size() == 0) {
 						System.out.print("\nProperty \"" + args[1] + "\" not found in database");
 						if (location != null) {
@@ -103,8 +102,8 @@ public class AccessQRY {
 			}
 			return;
 		case "grep":
-			DbFeeder.connectToDatabase();
-			if (DbFeeder.getCol().count() == 0) {
+			MongoManager.connectToDatabase();
+			if (MongoManager.getCol().count() == 0) {
 				System.out.println("\nDatabase is empty.");
 				return;
 			} else {
@@ -114,7 +113,7 @@ public class AccessQRY {
 				}
 				Set<String> keyset = null;
 				if (args.length > 1) {
-					keyset = DbFeeder.grep(args[1], location);
+					keyset = QueryFunctions.grep(args[1], location);
 				} else {
 					System.err.println(help);
 					return;
@@ -141,8 +140,8 @@ public class AccessQRY {
 			return;
 		}
 
-		// adds queries to Comparator instance and compares
-		Comparator c = new Comparator();
+		// adds queries to QueryFunctions instance and compares
+		QueryFunctions c = new QueryFunctions();
 		if (queried.size() == 1) {
 			c.internalQuery(queried.get(0));
 		} else {

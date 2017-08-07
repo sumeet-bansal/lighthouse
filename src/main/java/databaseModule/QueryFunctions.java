@@ -1,4 +1,4 @@
-package cachingLayer;
+package databaseModule;
 
 import java.io.*;
 import java.text.*;
@@ -6,7 +6,6 @@ import java.util.*;
 
 import org.bson.Document;
 
-import com.mongodb.MongoClient;
 import com.mongodb.client.*;
 
 /**
@@ -15,26 +14,21 @@ import com.mongodb.client.*;
  * @author ActianceEngInterns
  * @version 1.0
  */
-public class Comparator {
+public class QueryFunctions extends MongoManager {
 
 	private ArrayList<Document[]> queryPairs = new ArrayList<>();
 	private Set<Document> excludedProps = new HashSet<>();
 	private ArrayList<ArrayList<String[]>> tables = new ArrayList<>();
 
 	private ArrayList<String> filenames = new ArrayList<>();
-	private String[] genericPath = { "environment", "fabric", "node", "filename" };
-	private String[] reversePath = { "filename", "node", "fabric", "environment" };
 
 	private Integer[] discrepancies = new Integer[2];
-
-	private MongoCollection<Document> col;
 
 	/**
 	 * Constructor.
 	 */
-	@SuppressWarnings("resource")
-	public Comparator() {
-		col = new MongoClient("localhost", 27017).getDatabase("ADS_DB").getCollection("ADS_COL");
+	public QueryFunctions() {
+		MongoManager.connectToDatabase();
 		for (int i = 0; i < discrepancies.length; i++) {
 			discrepancies[i] = 0;
 		}
@@ -123,7 +117,7 @@ public class Comparator {
 
 		// query database for files with extension equal to given extension
 		Set<String> names = new TreeSet<>();
-		MongoCursor<Document> cursor = col.find(filter).iterator();
+		MongoCursor<Document> cursor = collection.find(filter).iterator();
 		while (cursor.hasNext()) {
 			Document doc = cursor.next();
 			String filename = doc.getString("filename");
@@ -317,7 +311,7 @@ public class Comparator {
 			System.out.println("\nExcluding properties with attributes:");
 			System.out.println("\t" + filter.toJson());
 
-			MongoCursor<Document> cursor = col.find(filter).iterator();
+			MongoCursor<Document> cursor = collection.find(filter).iterator();
 			while (cursor.hasNext()) {
 				excludedProps.add(cursor.next());
 			}
@@ -364,7 +358,7 @@ public class Comparator {
 			MongoCursor<Document> cursor;
 
 			// finds all unblocked properties on left side of query
-			cursor = col.find(queryPair[0]).iterator();
+			cursor = collection.find(queryPair[0]).iterator();
 			while (cursor.hasNext()) {
 				Document doc = cursor.next();
 				if (excludedProps.contains(doc)) {
@@ -376,7 +370,7 @@ public class Comparator {
 			}
 
 			// finds all unblocked properties on right side of query
-			cursor = col.find(queryPair[1]).iterator();
+			cursor = collection.find(queryPair[1]).iterator();
 			while (cursor.hasNext()) {
 				Document doc = cursor.next();
 				if (excludedProps.contains(doc)) {
@@ -616,7 +610,7 @@ public class Comparator {
 				filter.append(genericPath[i], arr[i]);
 			}
 		}
-		MongoCursor<Document> cursor = col.find(filter).iterator();
+		MongoCursor<Document> cursor = collection.find(filter).iterator();
 		while (cursor.hasNext()) {
 			Document doc = cursor.next();
 			String loc = "";
@@ -636,6 +630,97 @@ public class Comparator {
 				addQuery(subdirs.get(i), subdirs.get(j));
 			}
 		}
+	}
+
+	/**
+	 * Queries the database for a user-given key and returns location(s) and
+	 * values(s) of the key.
+	 * 
+	 * @param key
+	 *            the key being found
+	 * @param location
+	 *            a specific path within which to find the key
+	 * @return a List of Strings representing each key location and value
+	 */
+	public static ArrayList<String> findProp(String key, String location) {
+
+		// sets up filter for given key
+		Document filter = new Document().append("key", key);
+		if (location != null) {
+			filter = generatePathFilter(location);
+		}
+
+		ArrayList<String> props = new ArrayList<>();
+		MongoCursor<Document> cursor = collection.find(filter).iterator();
+		while (cursor.hasNext()) {
+			Document prop = cursor.next();
+
+			String path = "PATH: ";
+			for (int i = 0; i < genericPath.length; i++) {
+				path += prop.getString(genericPath[i]) + "/";
+			}
+
+			// lines up path with value
+			int numSpaces;
+			if (path.length() < 50) {
+				numSpaces = 50 - path.length();
+			} else {
+				numSpaces = 5;
+			}
+			String spaces = "";
+			for (int i = 0; i < numSpaces; i++) {
+				spaces += " ";
+			}
+
+			// adds value to path output
+			props.add(path + spaces + "VALUE: " + prop.getString("value"));
+		}
+		return props;
+	}
+
+	/**
+	 * Finds every key in the database that contains a user-given pattern.
+	 * 
+	 * @param pattern
+	 *            substring being searched for
+	 * @return a Set of property keys that contain the pattern
+	 */
+	public static Set<String> grep(String pattern, String location) {
+
+		// set up filter for given key
+		Document filter = new Document();
+		if (location != null) {
+			filter = generatePathFilter(location);
+		}
+
+		/**
+		 * TODO advanced grep logic if no wildcards, check if property contains
+		 * elem if wildcards present if charAt(0) != * check that string starts
+		 * with 0->1stindexOf(*) if charAt(legnth-1) != * check that string ends
+		 * with last(*)->lastChar split up by * for all in split, check if index
+		 * of each elem in array is greater than the last
+		 */
+
+		Set<String> keyset = new HashSet<>();
+		MongoCursor<Document> cursor = collection.find(filter).iterator();
+		while (cursor.hasNext()) {
+			String key = cursor.next().getString("key");
+			if (key.contains(pattern)) {
+				keyset.add(key);
+			}
+		}
+		return keyset;
+	}
+
+	private static Document generatePathFilter(String path) {
+		Document filter = new Document();
+		String[] metadata = path.split("/");
+		for (int i = 0; i < metadata.length; i++) {
+			if (!metadata[i].equals("*")) {
+				filter.append(genericPath[i], metadata[i]);
+			}
+		}
+		return filter;
 	}
 
 }
