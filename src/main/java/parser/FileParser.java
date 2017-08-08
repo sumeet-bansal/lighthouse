@@ -46,6 +46,8 @@ public class FileParser {
 				data = new ParseInfo();
 			} else if (fileType.equalsIgnoreCase("whitelist") || fileType.equalsIgnoreCase("blacklist")) {
 				data = new ParseList();
+			} else if (fileType.equalsIgnoreCase("keyring") || fileType.equalsIgnoreCase("gateway")) {
+				data = new ParseCephData();
 			} else {
 				String[] arr = filepath.split("\\.");
 				String backup = arr[arr.length - 1];

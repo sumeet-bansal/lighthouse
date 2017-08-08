@@ -95,6 +95,54 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
+	 * Takes in a single path input and generates a filter document to find the
+	 * files to compare within those parameters.
+	 * 
+	 * @param path
+	 *            the path containing the subdirectories being compared against each
+	 *            other
+	 */
+	public void internalQuery(String path) {
+
+		if (path.charAt(0) == '/') {
+			path = path.substring(1);
+		}
+		if (path.charAt(path.length() - 1) == '/') {
+			path = path.substring(0, path.length() - 1);
+		}
+
+		// given directory, populates List with all sub-directories
+		Set<String> dirSet = new HashSet<>();
+		String[] arr = path.split("/");
+		Document filter = new Document();
+		for (int i = 0; i < arr.length; i++) {
+			if (!arr[i].equals("*")) {
+				filter.append(genericPath[i], arr[i]);
+			}
+		}
+		MongoCursor<Document> cursor = collection.find(filter).iterator();
+		while (cursor.hasNext()) {
+			Document doc = cursor.next();
+			String loc = "";
+			for (int i = 0; i <= arr.length; i++) {
+				loc += doc.getString(genericPath[i]) + "/";
+			}
+			dirSet.add(loc.substring(0, loc.length() - 1));
+		}
+		ArrayList<String> subdirs = new ArrayList<>();
+		for (String subdir : dirSet) {
+			subdirs.add(subdir);
+		}
+
+		// query each unique pair of files within List
+		for (int i = 0; i < subdirs.size() - 1; i++) {
+			for (int j = i + 1; j < subdirs.size(); j++) {
+				addQuery(subdirs.get(i), subdirs.get(j));
+			}
+		}
+	}
+
+	/**
 	 * Gets all the files matching a given extension.
 	 * 
 	 * @param env
@@ -121,7 +169,7 @@ public class QueryFunctions extends MongoManager {
 		while (cursor.hasNext()) {
 			Document doc = cursor.next();
 			String filename = doc.getString("filename");
-			String colExt = filename.substring(filename.indexOf('.') + 1);
+			String colExt = filename.substring(filename.lastIndexOf('.') + 1);
 			if (extension.equalsIgnoreCase(colExt)) {
 				names.add(filename);
 			}
@@ -216,8 +264,8 @@ public class QueryFunctions extends MongoManager {
 				for (String str : genericPath) {
 					nullDoc.append(str, null);
 				}
-
-				if (left.size() != 0 && right.size() != 0) {
+				
+				if (!(left.size() == usedL.size() && right.size() == usedR.size())) {
 					System.out.println("  ----- The following attributes exist on only one side of the query -----\n");
 				}
 
@@ -585,67 +633,19 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Takes in a single path input and generates a filter document to find the
-	 * files to compare within those parameters.
-	 * 
-	 * @param path
-	 *            the path containing the subdirectories being compared against each
-	 *            other
-	 */
-	public void internalQuery(String path) {
-
-		if (path.charAt(0) == '/') {
-			path = path.substring(1);
-		}
-		if (path.charAt(path.length() - 1) == '/') {
-			path = path.substring(0, path.length() - 1);
-		}
-
-		// given directory, populates List with all sub-directories
-		Set<String> dirSet = new HashSet<>();
-		String[] arr = path.split("/");
-		Document filter = new Document();
-		for (int i = 0; i < arr.length; i++) {
-			if (!arr[i].equals("*")) {
-				filter.append(genericPath[i], arr[i]);
-			}
-		}
-		MongoCursor<Document> cursor = collection.find(filter).iterator();
-		while (cursor.hasNext()) {
-			Document doc = cursor.next();
-			String loc = "";
-			for (int i = 0; i <= arr.length; i++) {
-				loc += doc.getString(genericPath[i]) + "/";
-			}
-			dirSet.add(loc.substring(0, loc.length() - 1));
-		}
-		ArrayList<String> subdirs = new ArrayList<>();
-		for (String subdir : dirSet) {
-			subdirs.add(subdir);
-		}
-
-		// query each unique pair of files within List
-		for (int i = 0; i < subdirs.size() - 1; i++) {
-			for (int j = i + 1; j < subdirs.size(); j++) {
-				addQuery(subdirs.get(i), subdirs.get(j));
-			}
-		}
-	}
-
-	/**
 	 * Queries the database for a user-given key and returns location(s) and
 	 * values(s) of the key.
 	 * 
-	 * @param key
-	 *            the key being found
+	 * @param input
+	 *            the key or value being found
 	 * @param location
 	 *            a specific path within which to find the key
 	 * @return a List of Strings representing each key location and value
 	 */
-	public static ArrayList<String> findProp(String key, String location) {
+	public static ArrayList<String> findProp(String input, String location) {
 
-		// sets up filter for given key
-		Document filter = new Document().append("key", key);
+		// sets up filter for given property
+		Document filter = new Document().append("key", input);
 		if (location != null) {
 			filter = generatePathFilter(location);
 		}
@@ -661,9 +661,10 @@ public class QueryFunctions extends MongoManager {
 			}
 
 			// lines up path with value
+			final int GENERAL_MAX_LENGTH = 64;
 			int numSpaces;
-			if (path.length() < 50) {
-				numSpaces = 50 - path.length();
+			if (path.length() < GENERAL_MAX_LENGTH) {
+				numSpaces = GENERAL_MAX_LENGTH - path.length();
 			} else {
 				numSpaces = 5;
 			}
@@ -683,7 +684,7 @@ public class QueryFunctions extends MongoManager {
 	 * 
 	 * @param pattern
 	 *            substring being searched for
-	 * @return a Set of property keys that contain the pattern
+	 * @return a Set of property keys or values that contain the pattern
 	 */
 	public static Set<String> grep(String pattern, String location) {
 
@@ -701,15 +702,15 @@ public class QueryFunctions extends MongoManager {
 		 * of each elem in array is greater than the last
 		 */
 
-		Set<String> keyset = new HashSet<>();
+		Set<String> dataset = new HashSet<>();
 		MongoCursor<Document> cursor = collection.find(filter).iterator();
 		while (cursor.hasNext()) {
-			String key = cursor.next().getString("key");
-			if (key.contains(pattern)) {
-				keyset.add(key);
+			String data = cursor.next().getString("key");
+			if (data.contains(pattern)) {
+				dataset.add(data);
 			}
 		}
-		return keyset;
+		return dataset;
 	}
 
 	private static Document generatePathFilter(String path) {
