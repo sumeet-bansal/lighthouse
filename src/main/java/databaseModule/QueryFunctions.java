@@ -21,7 +21,6 @@ public class QueryFunctions extends MongoManager {
 	private ArrayList<ArrayList<String[]>> tables = new ArrayList<>();
 
 	private ArrayList<String> filenames = new ArrayList<>();
-
 	private Integer[] discrepancies = new Integer[2];
 
 	/**
@@ -264,7 +263,7 @@ public class QueryFunctions extends MongoManager {
 				for (String str : genericPath) {
 					nullDoc.append(str, null);
 				}
-				
+
 				if (!(left.size() == usedL.size() && right.size() == usedR.size())) {
 					System.out.println("  ----- The following attributes exist on only one side of the query -----\n");
 				}
@@ -642,51 +641,82 @@ public class QueryFunctions extends MongoManager {
 	 *            a specific path within which to find the key
 	 * @return a List of Strings representing each key location and value
 	 */
-	public static ArrayList<String> findProp(String input, String location) {
+	public static ArrayList<String> findProp(String input, String location, int type) {
+		// determine search type (key or value)
+		String searchFor;
+		if (type == 0) {
+			searchFor = "key";
+		} else {
+			searchFor = "value";
+		}
 
 		// sets up filter for given property
-		Document filter = new Document().append("key", input);
+		Document filter = new Document();
 		if (location != null) {
 			filter = generatePathFilter(location);
 		}
+		filter.append(searchFor, input);
 
 		ArrayList<String> props = new ArrayList<>();
 		MongoCursor<Document> cursor = collection.find(filter).iterator();
 		while (cursor.hasNext()) {
 			Document prop = cursor.next();
-
 			String path = "PATH: ";
 			for (int i = 0; i < genericPath.length; i++) {
 				path += prop.getString(genericPath[i]) + "/";
 			}
 
-			// lines up path with value
-			final int GENERAL_MAX_LENGTH = 64;
-			int numSpaces;
-			if (path.length() < GENERAL_MAX_LENGTH) {
-				numSpaces = GENERAL_MAX_LENGTH - path.length();
+			// set up spacing for CLI output
+			String key = prop.getString("key");
+			String value = prop.getString("value");
+			final int KEY_MAX_SPACING = 38;
+			final int PATH_MAX_SPACING = 64;
+			
+			// lines up path with key
+			int numSpaces1;
+			if (path.length() < PATH_MAX_SPACING) {
+				numSpaces1 = PATH_MAX_SPACING - path.length();
 			} else {
-				numSpaces = 5;
+				numSpaces1 = 5;
 			}
-			String spaces = "";
-			for (int i = 0; i < numSpaces; i++) {
-				spaces += " ";
+			String spaces1 = "";
+			for (int i = 0; i < numSpaces1; i++) {
+				spaces1 += " ";
 			}
 
-			// adds value to path output
-			props.add(path + spaces + "VALUE: " + prop.getString("value"));
+			// lines up key with value
+			int numSpaces2;
+			if (key.length() < KEY_MAX_SPACING) {
+				numSpaces2 = KEY_MAX_SPACING - key.length();
+			} else {
+				numSpaces2 = 5;
+			}
+			String spaces2 = "";
+			for (int i = 0; i < numSpaces2; i++) {
+				spaces2 += " ";
+			}
+
+			// output line with path, key, and value
+			props.add(path + spaces1 + "Key: " + key + spaces2 + "Value: " + value);
 		}
 		return props;
 	}
 
 	/**
-	 * Finds every key in the database that contains a user-given pattern.
+	 * Finds every key or value in the database that contains a user-given pattern.
 	 * 
 	 * @param pattern
 	 *            substring being searched for
 	 * @return a Set of property keys or values that contain the pattern
 	 */
-	public static Set<String> grep(String pattern, String location) {
+	public static Set<String> grep(String pattern, String location, int type) {
+		// determine search type (key or value)
+		String searchFor;
+		if (type == 0) {
+			searchFor = "key";
+		} else {
+			searchFor = "value";
+		}
 
 		// set up filter for given key
 		Document filter = new Document();
@@ -695,17 +725,17 @@ public class QueryFunctions extends MongoManager {
 		}
 
 		/**
-		 * TODO advanced grep logic if no wildcards, check if property contains
-		 * elem if wildcards present if charAt(0) != * check that string starts
-		 * with 0->1stindexOf(*) if charAt(legnth-1) != * check that string ends
-		 * with last(*)->lastChar split up by * for all in split, check if index
-		 * of each elem in array is greater than the last
+		 * TODO advanced grep logic if no wildcards, check if property contains elem if
+		 * wildcards present if charAt(0) != * check that string starts with
+		 * 0->1stindexOf(*) if charAt(legnth-1) != * check that string ends with
+		 * last(*)->lastChar split up by * for all in split, check if index of each elem
+		 * in array is greater than the last
 		 */
 
 		Set<String> dataset = new HashSet<>();
 		MongoCursor<Document> cursor = collection.find(filter).iterator();
 		while (cursor.hasNext()) {
-			String data = cursor.next().getString("key");
+			String data = cursor.next().getString(searchFor);
 			if (data.contains(pattern)) {
 				dataset.add(data);
 			}
@@ -713,6 +743,12 @@ public class QueryFunctions extends MongoManager {
 		return dataset;
 	}
 
+	/**
+	 * Private helper method. Generates mongo filters for a given path
+	 * 
+	 * @param path
+	 * @return
+	 */
 	private static Document generatePathFilter(String path) {
 		Document filter = new Document();
 		String[] metadata = path.split("/");

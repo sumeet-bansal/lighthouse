@@ -44,6 +44,7 @@ public class AccessQRY {
 		ArrayList<String> queried = new ArrayList<String>();
 		ArrayList<String> excluded = new ArrayList<String>();
 
+		// switch statement to handle command line input
 		switch (args[0]) {
 		case "compare":
 
@@ -75,27 +76,56 @@ public class AccessQRY {
 				return;
 			} else {
 				if (args.length > 1) {
+					
+					// Determine user-specified location, if given
 					String location = null;
-					if (args.length == 3) {
+					if (args.length > 2) {
 						location = args[2];
+						System.out.println("\nLocation: " + location);
 					}
-					ArrayList<String> pathList = QueryFunctions.findProp(args[1], location);
-					if (pathList.size() == 0) {
-						System.out.print("\nProperty \"" + args[1] + "\" not found in database");
+
+					// Print matching keys
+					System.out.println("\n------- MATCHING KEYS -------");
+					ArrayList<String> keyList = QueryFunctions.findProp(args[1], location, 0);
+					if (keyList.size() == 0) {
+						System.out.print("Key \"" + args[1] + "\" not found in database");
 						if (location != null) {
 							System.out.print(" at location " + location);
 						}
 						System.out.print(".\n");
-						return;
+					} else {
+						String s = "s";
+						if (keyList.size() == 1) {
+							s = "";
+						}
+						System.out
+								.println("Found " + keyList.size() + " instance" + s + " of key \"" + args[1] + "\":");
+						for (String path : keyList) {
+							System.out.println(" - " + path);
+						}
 					}
-					String s = "s";
-					if (pathList.size() == 1) {
-						s = "";
+
+					// Print matching values
+					System.out.println("\n\n------- MATCHING VALUES -------");
+					ArrayList<String> valueList = QueryFunctions.findProp(args[1], location, 1);
+					if (valueList.size() == 0) {
+						System.out.print("Value \"" + args[1] + "\" not found in database");
+						if (location != null) {
+							System.out.print(" at location " + location);
+						}
+						System.out.print(".\n");
+					} else {
+						String s = "s";
+						if (valueList.size() == 1) {
+							s = "";
+						}
+						System.out.println(
+								"Found " + valueList.size() + " instance" + s + " of value \"" + args[1] + "\":");
+						for (String path : valueList) {
+							System.out.println(" - " + path);
+						}
 					}
-					System.out.println("\nFound " + pathList.size() + " instance" + s + " of property \"" + args[1] + "\":");
-					for (String path : pathList) {
-						System.out.println(path);
-					}
+
 				} else {
 					System.err.println(help);
 				}
@@ -107,29 +137,58 @@ public class AccessQRY {
 				System.out.println("\nDatabase is empty.");
 				return;
 			} else {
+				
+				// Determine user-specified location, if given
 				String location = null;
 				if (args.length > 2) {
 					location = args[2];
+					System.out.println("\nLocation: " + location);
 				}
+				
+				// Print matching keys
+				System.out.println("\n------- MATCHING KEYS -------");
 				Set<String> keyset = null;
 				if (args.length > 1) {
-					keyset = QueryFunctions.grep(args[1], location);
+					keyset = QueryFunctions.grep(args[1], location, 0);
 				} else {
 					System.err.println(help);
 					return;
 				}
 				if (keyset != null && keyset.size() == 0) {
-					System.out.print("\nIdentifier \"" + args[1] + "\" not found in database");
+					System.out.print("No keys containing \"" + args[1] + "\" found in database");
 					if (location != null) {
 						System.out.print(" at location " + location);
 					}
 					System.out.print(".\n");
+				} else {
+					System.out.println("Found " + keyset.size() + " matching keys:");
+					for (String key : keyset) {
+						System.out.println(" - " + key);
+					}
+				}
+				
+				// Print matching values
+				System.out.println("\n------- MATCHING VALUES -------");
+				Set<String> valset = null;
+				if (args.length > 1) {
+					valset = QueryFunctions.grep(args[1], location, 1);
+				} else {
+					System.err.println(help);
 					return;
 				}
-				System.out.println("\nFound " + keyset.size() + " matching property keys:");
-				for (String key : keyset) {
-					System.out.println(key);
+				if (valset != null && valset.size() == 0) {
+					System.out.print("No values containing \"" + args[1] + "\" found in database");
+					if (location != null) {
+						System.out.print(" at location " + location);
+					}
+					System.out.print(".\n");
+				} else {
+					System.out.println("Found " + valset.size() + " matching values:");
+					for (String value : valset) {
+						System.out.println(" - " + value);
+					}
 				}
+
 			}
 			return;
 		case "help":

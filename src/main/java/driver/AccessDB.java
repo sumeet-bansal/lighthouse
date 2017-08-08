@@ -2,6 +2,10 @@ package driver;
 
 import java.util.*;
 
+import org.bson.Document;
+
+import com.mongodb.client.MongoCursor;
+
 import databaseModule.*;
 
 /**
@@ -57,16 +61,56 @@ public class AccessDB {
 				MongoManager.clearDB();
 				break;
 			case "info":
-				long count = MongoManager.getCol().count();
+				System.out.println("\nDatabase Info:");
+				
+				// count each type of metadata tag in database
+				long propCount = MongoManager.getCol().count();
+				int fileCount = 0;
+				int nodeCount = 0;
+				int fabCount = 0;
 				Set<String> envs = MongoManager.getEnvironments();
-				System.out.println("\nCount:");
-				System.out.println(count + " properties currently in database");
-				if (count != 0) {
+				ArrayList<Document> props = new ArrayList<Document>();
+				MongoCursor<Document> cursor = MongoManager.getCol().find().iterator();
+				while (cursor.hasNext()) {
+					props.add(cursor.next());
+				}
+				for (int i = 0; i < envs.size(); i++) {
+					Set<String> fabs = new HashSet<>();
+					for (Document prop : props) {
+						String fab = prop.getString("fabric");
+						fabs.add(fab);
+					}
+					fabCount += fabs.size();
+					for (int j = 0; j < fabs.size(); j++) {
+						Set<String> nodes = new HashSet<>();
+						for (Document prop : props) {
+							String node = prop.getString("node");
+							nodes.add(node);
+						}
+						nodeCount += nodes.size();
+						for (int k = 0; k < nodes.size(); k++) {
+							Set<String> files = new HashSet<>();
+							for (Document prop : props) {
+								String file = prop.getString("filename");
+								files.add(file);
+							}
+							fileCount += files.size();
+						}
+					}
+				}
+				System.out.println("\nProperties\t" + propCount);
+				System.out.println("Files\t\t" + fileCount);
+				System.out.println("Nodes\t\t" + nodeCount);
+				System.out.println("Fabrics\t\t" + fabCount);
+				
+				// print environments
+				if (propCount != 0) {
 					System.out.println("\nEnvironments:");
 				}
 				for (String env : envs) {
 					System.out.println("- " + env);
 				}
+				System.out.println("\nUse the 'list' command to see a detailed database structure.");
 				break;
 			case "list":
 				if (MongoManager.getCol().count() == 0) {
