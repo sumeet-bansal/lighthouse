@@ -44,7 +44,7 @@ public class ParseCephData extends AbstractParser {
 				String[] arr = line.split("=");
 				String key = arr[0].replace("\t", "");
 				String val = arr[1];
-				
+
 				data.put(key, val);
 
 			}
@@ -54,14 +54,5 @@ public class ParseCephData extends AbstractParser {
 			System.err.println("\n[DATABASE ERROR] " + name + " is not in correct .keyring/.gateway format.\n");
 			error = true;
 		}
-
 	}
-	
-	// test method delete later
-	public static void main(String[] args) {
-		File f = new File("C:/users/pkelaita/Desktop/root/jeremy/ceph/node1/ceph.client.admin.keyring");
-		ParseCephData pcd = new ParseCephData();
-		pcd.standardize(f);
-	}
-
 }

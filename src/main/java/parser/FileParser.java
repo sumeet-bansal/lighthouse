@@ -36,7 +36,8 @@ public class FileParser {
 				data = new ParseConf();
 			} else if (fileType.equalsIgnoreCase("yaml") || fileType.equalsIgnoreCase("yml")) {
 				data = new ParseYaml();
-			} else if (fileType.equalsIgnoreCase("properties") || fileType.equalsIgnoreCase("prop")) {
+			} else if (fileType.equalsIgnoreCase("properties") || fileType.equalsIgnoreCase("prop")
+					|| fileType.equalsIgnoreCase("env")) {
 				data = new ParseProp();
 			} else if (input.getName().equalsIgnoreCase("hosts")) {
 				data = new ParseHost();
