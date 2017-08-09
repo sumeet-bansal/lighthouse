@@ -130,7 +130,7 @@ public class AccessZK {
 		if (path.charAt(0) != '/') {
 			path = "/" + path;
 		}
-		if (path.length() != 1 && path.charAt(path.length() - 1) == '/') {
+		while (path.length() != 1 && path.charAt(path.length() - 1) == '/') {
 			path = path.substring(0, path.length() - 1);
 		}
 		return path;

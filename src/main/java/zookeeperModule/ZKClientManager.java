@@ -73,6 +73,10 @@ public class ZKClientManager {
 		} catch (KeeperException | InterruptedException e) {
 			e.printStackTrace();
 		}
+		if (stat == null) {
+			System.err.println("Invalid ZooKeeper path.");
+			System.exit(1);
+		}
 		return stat;
 	}
 
