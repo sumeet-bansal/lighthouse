@@ -3,20 +3,23 @@
 set timeout 1
 set pass
 
-spawn sh -c "ssh sysops@10.0.113.33 bash < test.sh"
-expect "assword:"
-send "$pass\r"
-expect eof
-spawn sh -c "sftp sysops@10.0.113.33"
-expect "assword:"
-send "$pass\r"
-expect "$"
-send "get *.jars\r"
-expect "$"
-send "rm *.jars\r"
-expect "$"
-send "exit\r"
-spawn sh -c "mkdir ~/target"
-spawn sh -c "mv *.jars ~/target/"
-interact
+spawn sh -c "mkdir target"
+
+set baseIP 10.0.113.
+for {set VMIP 33} {$VMIP <= 43} {incr VMIP} {
+	spawn sh -c "ssh sysops@$baseIP$VMIP bash < jar-generator.sh"
+	expect "assword:"
+	send "$pass\r"
+	expect eof
+	spawn sh -c "sftp sysops@$baseIP$VMIP"
+	expect "assword:"
+	send "$pass\r"
+	expect "$"
+	send "get *.jars\r"
+	expect "$"
+	send "rm *.jars\r"
+	expect "$"
+	send "exit\r"
+	spawn sh -c "mv *.jars target/"
+	interact
 }
