@@ -1,0 +1,22 @@
+#!/usr/bin/expect -f
+
+set timeout 1
+set pass
+
+spawn sh -c "ssh sysops@10.0.113.33 bash < test.sh"
+expect "assword:"
+send "$pass\r"
+expect eof
+spawn sh -c "sftp sysops@10.0.113.33"
+expect "assword:"
+send "$pass\r"
+expect "$"
+send "get *.jars\r"
+expect "$"
+send "rm *.jars\r"
+expect "$"
+send "exit\r"
+spawn sh -c "mkdir ~/target"
+spawn sh -c "mv *.jars ~/target/"
+interact
+}
