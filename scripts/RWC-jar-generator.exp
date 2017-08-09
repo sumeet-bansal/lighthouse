@@ -3,7 +3,8 @@
 set timeout 1
 set pass
 
-spawn sh -c "mkdir target"
+set root target/RWC-Dev
+spawn sh -c "mkdir -p $root"
 
 set baseIP 10.0.113.
 for {set VMIP 33} {$VMIP <= 43} {incr VMIP} {
@@ -20,6 +21,7 @@ for {set VMIP 33} {$VMIP <= 43} {incr VMIP} {
 	send "rm *.jars\r"
 	expect "$"
 	send "exit\r"
-	spawn sh -c "mv *.jars target/"
+	spawn sh -c "mv *.jars $root"
+	spawn sh -c "./jar-organizer.sh $root"
 	interact
 }
