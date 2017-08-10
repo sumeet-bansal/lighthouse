@@ -100,7 +100,7 @@ public class QueryFunctions extends MongoManager {
 	 *            the path containing the subdirectories being compared against each
 	 *            other
 	 */
-	public void internalQuery(String path) {
+	public void generateInternalFilters(String path) {
 
 		if (path.charAt(0) == '/') {
 			path = path.substring(1);
@@ -130,6 +130,11 @@ public class QueryFunctions extends MongoManager {
 		ArrayList<String> subdirs = new ArrayList<>();
 		for (String subdir : dirSet) {
 			subdirs.add(subdir);
+		}
+		if (subdirs.size() < 2) {
+			System.err.println("\nError: Insufficient directories for internal query.");
+			System.err.println("Make sure your given directory contains at least 2 files or subdirectories\n");
+			return;
 		}
 
 		// query each unique pair of files within List
@@ -379,17 +384,19 @@ public class QueryFunctions extends MongoManager {
 		for (int i = 0; i < discrepancies.length; i++) {
 			discrepancies[i] = 0;
 		}
-		System.out.println("Cleared " + size + " entries from query.");
+		System.out.println("Cleared " + size + " entries from query.\n");
 	}
 
 	/**
 	 * Retrieves filtered files from the MongoDB database, excludes files as
 	 * appropriate, compares the remaining queried files, and adds the results to a
 	 * CSV file.
+	 * 
+	 * @return true if query is valid, false if not
 	 */
-	public void compare() {
+	public boolean compare() {
 		if (queryPairs.isEmpty()) {
-			return;
+			return false;
 		}
 
 		int queried = 0;
@@ -460,6 +467,7 @@ public class QueryFunctions extends MongoManager {
 		ArrayList<String[]> tableHeader = new ArrayList<>();
 		tableHeader.add(header);
 		tables.add(0, tableHeader);
+		return true;
 	}
 
 	/**
@@ -618,7 +626,7 @@ public class QueryFunctions extends MongoManager {
 	 * @return the default CSV name
 	 */
 	public String getDefaultName() {
-		String defaultName = "ADS-Report";
+		String defaultName = "ADS-report";
 		DateFormat nameFormat = new SimpleDateFormat("_yyyy-MM-dd_HH.mm.ss");
 		Date date = new Date();
 		defaultName += nameFormat.format(date);
@@ -668,9 +676,8 @@ public class QueryFunctions extends MongoManager {
 			// set up spacing for CLI output
 			String key = prop.getString("key");
 			String value = prop.getString("value");
-			final int KEY_MAX_SPACING = 38;
 			final int PATH_MAX_SPACING = 64;
-			
+
 			// lines up path with key
 			int numSpaces1;
 			if (path.length() < PATH_MAX_SPACING) {
@@ -683,20 +690,14 @@ public class QueryFunctions extends MongoManager {
 				spaces1 += " ";
 			}
 
-			// lines up key with value
-			int numSpaces2;
-			if (key.length() < KEY_MAX_SPACING) {
-				numSpaces2 = KEY_MAX_SPACING - key.length();
-			} else {
-				numSpaces2 = 5;
-			}
-			String spaces2 = "";
-			for (int i = 0; i < numSpaces2; i++) {
-				spaces2 += " ";
-			}
-
 			// output line with path, key, and value
-			props.add(path + spaces1 + "Key: " + key + spaces2 + "Value: " + value);
+			String line = path + spaces1;
+			if (type == 1) {
+				line += "Key: " + key;
+			} else {
+				line += "Value: " + value;
+			}
+			props.add(line);
 		}
 		return props;
 	}
@@ -708,7 +709,7 @@ public class QueryFunctions extends MongoManager {
 	 *            substring being searched for
 	 * @return a Set of property keys or values that contain the pattern
 	 */
-	public static Set<String> grep(String pattern, String location, int type) {
+	public static Set<String> grep(String pattern, int type) {
 		// determine search type (key or value)
 		String searchFor;
 		if (type == 0) {
@@ -719,9 +720,6 @@ public class QueryFunctions extends MongoManager {
 
 		// set up filter for given key
 		Document filter = new Document();
-		if (location != null) {
-			filter = generatePathFilter(location);
-		}
 
 		/**
 		 * TODO advanced grep logic if no wildcards, check if property contains elem if
