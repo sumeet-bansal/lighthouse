@@ -27,11 +27,12 @@ public class MongoManager {
 	 * Initializes the cache.
 	 */
 	public static void connectToDatabase() {
+		System.out.println("\n[DATABASE MESSAGE] Connecting to database...");
 
 		// connects with server
 		@SuppressWarnings("resource")
 		MongoClient mongoClient = new MongoClient("localhost", 27017);
-		System.out.println("\n[DATABASE MESSAGE] Server connection successful @ localhost:27017");
+		System.out.println("[DATABASE MESSAGE] Server connection successful @ localhost:27017");
 
 		// connects with Database
 		database = mongoClient.getDatabase("ADS_DB");

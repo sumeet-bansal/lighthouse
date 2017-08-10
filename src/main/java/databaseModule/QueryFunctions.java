@@ -27,7 +27,6 @@ public class QueryFunctions extends MongoManager {
 	 * Constructor.
 	 */
 	public QueryFunctions() {
-		MongoManager.connectToDatabase();
 		for (int i = 0; i < discrepancies.length; i++) {
 			discrepancies[i] = 0;
 		}

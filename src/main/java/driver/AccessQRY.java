@@ -13,19 +13,22 @@ import databaseModule.*;
  */
 public class AccessQRY {
 
+	private static String version = Access.version;
 	private static String sep = File.separator;
 
-	private static String help = "\nUsage: java -jar <jar file> query <commands>" + "\nPOSSIBLE COMMANDS \n"
-			+ "'help'\n\tgoes to the help page for 'query'\n" + "\tUsage: java -jar <jar> query help\n"
-			+ "'compare'\n\tcompares the selected root directories and generates appropriate CSVs\n"
-			+ "\tUsage: java -jar <jar> query compare <path1> <path2>"
-			+ "\n'exclude'\n\texcludes selected files from the query\n"
-			+ "\tmust be used in conjunction with the 'compare' command\n"
-			+ "\tUsage: java -jar <jar> query compare <path1> <path2> exclude <file> <file> ... <file>"
-			+ "\n'grep'\n\tfinds every property key in the database that contains a given pattern"
-			+ "\n\tUsage: java -jar <jar> query grep <key> [path]"
-			+ "\n'find'\n\tprints the locations and values of a user-given key at a specified location, if given"
-			+ "\n\tUsage: java -jar <jar> query find <key> [path]";
+	private static String help = "\nQUERY MODULE -- POSSIBLE COMMANDS\n"
+			+ "\n'help'\n\tgoes to the help page for 'query'" + "\n\tUsage: ADS-" + version + " # Query $ help"
+			+ "\n'compare'\n\tcompares the selected root directories and generates appropriate CSVs"
+			+ "\n\tUsage: ADS-v" + version + " # Query $ compare <path1> <path2>"
+			+ "\n'exclude'\n\texcludes selected files or directories from the query"
+			+ "\n\tmust be used in conjunction with the 'compare' command" + "\n\tUsage: ADS-v" + version
+			+ " # Query $ compare <path1> <path2> exclude <path> <path> ... <path>"
+			+ "\n'grep'\n\tfinds every property key and value in the database that contains a given pattern"
+			+ "\n\tUsage: ADS-v" + version + " # Query $ grep <flag -k/-v> <pattern> [path]"
+			+ "\n'find'\n\tprints the locations and values of a user-given key or value at a specified location, if given"
+			+ "\n\tUsage: ADS-v" + version + " # Query $ find <flag -k/-v> <key/value> [path]\n"
+			+ "\nType the command for another module ('db', 'home') to go to that module"
+			+ "\nType 'exit' at any time to exit the program\n";
 
 	/**
 	 * Queries the database and generates CSV files containing comparison data.
@@ -47,6 +50,10 @@ public class AccessQRY {
 		// switch statement to handle command line input
 		switch (args[0]) {
 		case "compare":
+			if (MongoManager.getCol().count() == 0) {
+				System.out.println("\nDatabase is empty.\n");
+				return;
+			}
 
 			// uses generic 'arr' to populate appropriate List
 			int i = 1;
@@ -70,61 +77,58 @@ public class AccessQRY {
 			}
 			break;
 		case "find":
-			MongoManager.connectToDatabase();
 			if (MongoManager.getCol().count() == 0) {
-				System.out.println("\nDatabase is empty.");
+				System.out.println("\nDatabase is empty.\n");
 				return;
 			} else {
 				if (args.length > 1) {
-					
+
+					// Check user given flag to see if user wants to search for keys or values
+					int searchFor = -1;
+					String propType = "";
+					if (!(args[1].equals("-k") || args[1].equals("-v"))) {
+						System.err.println(
+								"\nPlease specify whether to search for keys or values using the flag -k for keys or -v for values");
+						System.err.println("Usage: ADS-v" + version + " # Query $ find <(-k / -v)> <key/value name> [path]\n");
+						return;
+					} else if (args[1].equals("-k")) {
+						searchFor = 0; // search for keys
+						propType = "key";
+					} else {
+						searchFor = 1; // search for values
+						propType = "value";
+					}
+
 					// Determine user-specified location, if given
 					String location = null;
-					if (args.length > 2) {
-						location = args[2];
+					if (args.length > 3) {
+						location = args[3];
 						System.out.println("\nLocation: " + location);
+					} else if (args.length < 3) {
+						System.err.println(help);
+						return;
 					}
 
-					// Print matching keys
-					System.out.println("\n------- MATCHING KEYS -------");
-					ArrayList<String> keyList = QueryFunctions.findProp(args[1], location, 0);
-					if (keyList.size() == 0) {
-						System.out.print("Key \"" + args[1] + "\" not found in database");
+					// Print matching properties
+					ArrayList<String> pathList = QueryFunctions.findProp(args[2], location, searchFor);
+					if (pathList.size() == 0) {
+						System.out.print("\n" + propType + " \"" + args[2] + "\" not found in database");
 						if (location != null) {
 							System.out.print(" at location " + location);
 						}
 						System.out.print(".\n");
 					} else {
 						String s = "s";
-						if (keyList.size() == 1) {
+						if (pathList.size() == 1) {
 							s = "";
 						}
-						System.out
-								.println("Found " + keyList.size() + " instance" + s + " of key \"" + args[1] + "\":");
-						for (String path : keyList) {
+						System.out.println("\nFound " + pathList.size() + " instance" + s + " of " + propType + " \""
+								+ args[2] + "\":");
+						for (String path : pathList) {
 							System.out.println(" - " + path);
 						}
 					}
-
-					// Print matching values
-					System.out.println("\n\n------- MATCHING VALUES -------");
-					ArrayList<String> valueList = QueryFunctions.findProp(args[1], location, 1);
-					if (valueList.size() == 0) {
-						System.out.print("Value \"" + args[1] + "\" not found in database");
-						if (location != null) {
-							System.out.print(" at location " + location);
-						}
-						System.out.print(".\n");
-					} else {
-						String s = "s";
-						if (valueList.size() == 1) {
-							s = "";
-						}
-						System.out.println(
-								"Found " + valueList.size() + " instance" + s + " of value \"" + args[1] + "\":");
-						for (String path : valueList) {
-							System.out.println(" - " + path);
-						}
-					}
+					System.out.println();
 
 				} else {
 					System.err.println(help);
@@ -132,62 +136,54 @@ public class AccessQRY {
 			}
 			return;
 		case "grep":
-			MongoManager.connectToDatabase();
 			if (MongoManager.getCol().count() == 0) {
-				System.out.println("\nDatabase is empty.");
+				System.out.println("\nDatabase is empty.\n");
 				return;
 			} else {
-				
+
+				// Check user given flag to see if user wants to search for keys or values
+				int searchFor = -1;
+				String propType = "";
+				if (!(args[1].equals("-k") || args[1].equals("-v"))) {
+					System.err.println(
+							"\nPlease specify whether to search for keys or values using the flag -k for keys or -v for values");
+					System.err.println("Usage: ADS-v" + version + " # Query $ grep <(-k / -v)> <pattern> [path]\n");
+					return;
+				} else if (args[1].equals("-k")) {
+					searchFor = 0; // search for keys
+					propType = "keys";
+				} else {
+					searchFor = 1; // search for values
+					propType = "values";
+				}
+
 				// Determine user-specified location, if given
 				String location = null;
-				if (args.length > 2) {
-					location = args[2];
+				if (args.length > 3) {
+					location = args[3];
 					System.out.println("\nLocation: " + location);
-				}
-				
-				// Print matching keys
-				System.out.println("\n------- MATCHING KEYS -------");
-				Set<String> keyset = null;
-				if (args.length > 1) {
-					keyset = QueryFunctions.grep(args[1], location, 0);
-				} else {
+				} else if (args.length < 3) {
 					System.err.println(help);
 					return;
 				}
-				if (keyset != null && keyset.size() == 0) {
-					System.out.print("No keys containing \"" + args[1] + "\" found in database");
+
+				// Print matching properties
+				Set<String> propSet = null;
+				propSet = QueryFunctions.grep(args[2], location, searchFor);
+
+				if (propSet != null && propSet.size() == 0) {
+					System.out.print("\nNo " + propType + " containing \"" + args[2] + "\" found in database");
 					if (location != null) {
 						System.out.print(" at location " + location);
 					}
 					System.out.print(".\n");
 				} else {
-					System.out.println("Found " + keyset.size() + " matching keys:");
-					for (String key : keyset) {
-						System.out.println(" - " + key);
+					System.out.println("\nFound " + propSet.size() + " matching " + propType + ":");
+					for (String prop : propSet) {
+						System.out.println(" - " + prop);
 					}
 				}
-				
-				// Print matching values
-				System.out.println("\n------- MATCHING VALUES -------");
-				Set<String> valset = null;
-				if (args.length > 1) {
-					valset = QueryFunctions.grep(args[1], location, 1);
-				} else {
-					System.err.println(help);
-					return;
-				}
-				if (valset != null && valset.size() == 0) {
-					System.out.print("No values containing \"" + args[1] + "\" found in database");
-					if (location != null) {
-						System.out.print(" at location " + location);
-					}
-					System.out.print(".\n");
-				} else {
-					System.out.println("Found " + valset.size() + " matching values:");
-					for (String value : valset) {
-						System.out.println(" - " + value);
-					}
-				}
+				System.out.println();
 
 			}
 			return;
@@ -195,7 +191,7 @@ public class AccessQRY {
 			System.err.println(help);
 			return;
 		default:
-			System.err.println("Invalid input. Use the 'help' command for details on usage.");
+			System.err.println("\nInvalid input. Use the 'help' command for details on usage.");
 			return;
 		}
 

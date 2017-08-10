@@ -28,23 +28,19 @@ public class ParseCephData extends AbstractParser {
 			BufferedReader br = new BufferedReader(fr);
 
 			String line;
+			String header = null;
 			while ((line = br.readLine()) != null) {
 				if (line.length() == 0 || line.charAt(0) == '#') {
 					continue;
 				}
-
+				
 				if (line.charAt(0) == '[' && line.charAt(line.length() - 1) == ']') {
-					String header = line.substring(1, line.length() - 1);
-					data.put("Header", header);
+					header = line.substring(1, line.length() - 1) + ".";
 					continue;
-				} else if (line.endsWith("==")) {
-					line = line.substring(0, line.length() - 2);
 				}
 
-				String[] arr = line.split("=");
-				String key = arr[0].replace("\t", "");
-				String val = arr[1];
-
+				String key = header + line.substring(1, line.indexOf('='));
+				String val = line.substring(line.indexOf('=') + 1, line.length());
 				data.put(key, val);
 
 			}

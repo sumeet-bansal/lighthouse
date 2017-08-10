@@ -15,26 +15,30 @@ import databaseModule.*;
  * @version 1.1
  */
 public class AccessDB {
-
-	private static String help = "\nUsage: java -jar <jar file> db <commands>" + "\nPOSSIBLE COMMANDS"
-			+ "\n'help'\n\tgoes to the help page for 'db'"
-			+ "\n\tUsage: java -jar <jar> db help"
-			+ "\n'populate'\n\tpopulates the database with the given files"
-			+ "\n\tUsage: java -jar <jar> zk populate <root directory>"
-			+ "\n'clear'\n\tclears the database"
-			+ "\n\tUsage: java -jar <jar> db clear"
-			+ "\n'list'\n\tprints the structure of the database at user-specified level"
-			+ "\n\tUsage: java -jar <jar> db list <level (1-4)>"
-			+ "\n'info'\n\tprovides info about the contents of the database"
-			+ "\n\tUsage: java -jar <jar> db info";
 	
-	private static String structureHelp = "Usage: java -jar <jar> db list <level>"
+	private static String version = Access.version;
+
+	private static String help = "\nDATABASE MODULE -- POSSIBLE COMMANDS\n"
+			+ "\n'help'\n\tgoes to the help page for 'db'"
+			+ "\n\tUsage: ADS-v" + version + " # Database $ help"
+			+ "\n'populate'\n\tpopulates the database with the given files"
+			+ "\n\tUsage: ADS-v" + version + " # Database $ populate <root directory>"
+			+ "\n'clear'\n\tclears the database"
+			+ "\n\tUsage: ADS-v" + version + " # Database $ clear"
+			+ "\n'list'\n\tprints the structure of the database at user-specified level"
+			+ "\n\tUsage: ADS-v" + version + " # Database $ <level (1-4)>"
+			+ "\n'info'\n\tprovides info about the contents of the database"
+			+ "\n\tUsage: ADS-v" + version + " # Database $ info\n"
+			+ "\nType the command for another module ('query', 'home') to go to that module"
+			+ "\nType 'exit' at any time to exit the program\n";
+	
+	private static String listHelp = "\nUsage: ADS-v" + version + " # Database $ list <level>"
 			+ "\nWhere <level> denotes the lowest level to which you would like to see the database structure."
 			+ "\nAccepted level values:"
 			+ "\n\t4 - environment"
 			+ "\n\t3 - fabric"
 			+ "\n\t2 - node"
-			+ "\n\t1 - file";
+			+ "\n\t1 - file\n";
 
 	/**
 	 * Accesses a MongoDB database to clear, populate, or provide info.
@@ -48,17 +52,18 @@ public class AccessDB {
 			args[0] = "help";
 		}
 
-		MongoManager.connectToDatabase();
 		switch (args[0]) {
 			case "populate":
 				if (args.length > 1) {
 					DbFunctions.populate(args[1]);
+					System.out.println();
 				} else {
 					System.err.println(help);
 				}
 				break;
 			case "clear":
 				MongoManager.clearDB();
+				System.out.println();
 				break;
 			case "info":
 				System.out.println("\nDatabase Info:");
@@ -110,11 +115,11 @@ public class AccessDB {
 				for (String env : envs) {
 					System.out.println("- " + env);
 				}
-				System.out.println("\nUse the 'list' command to see a detailed database structure.");
+				System.out.println("\nUse the 'list' command to see a detailed database structure.\n");
 				break;
 			case "list":
 				if (MongoManager.getCol().count() == 0) {
-					System.out.println("\nDatabase is empty.");
+					System.out.println("\nDatabase is empty.\n");
 					return;
 				}
 				if (args.length > 1) {
@@ -122,23 +127,24 @@ public class AccessDB {
 					try {
 						level = Integer.parseInt(args[1]);
 					} catch (Exception e) {
-						System.err.println(structureHelp);
+						System.err.println(listHelp);
 						return;
 					}
 					if (level < 1 || level > 4) {
-						System.err.println(structureHelp);
+						System.err.println(listHelp);
 						return;
 					}
 					DbFunctions.printStructure(level);
+					System.out.println();
 				} else {
-					System.err.println(structureHelp);
+					System.err.println(listHelp);
 				}
 				break;
 			case "help":
-				System.err.println(help);
+				System.out.println(help);
 				break;
 			default:
-				System.err.println("Invalid input. Use the 'help' command for details on usage.");
+				System.err.println("\nInvalid input. Use the 'help' command for details on usage.");
 				return;
 			}
 

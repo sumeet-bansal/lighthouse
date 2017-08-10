@@ -1,31 +1,41 @@
 package driver;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Scanner;
 
 import org.apache.log4j.*;
+
+import databaseModule.MongoManager;
 
 /**
  * Runs the complete diagnostic tool from the command line.
  * 
  * @author ActianceEngInterns
- * @version 1.0
+ * @version 1.2
  */
 public class Access {
 
-	private static String help = "Usage: java -jar <jar> <commands>\n\nPOSSIBLE COMMANDS \n"
-			+ "'help'\n\tgoes to the help page for the general diagnostic tool\n"
-			+ "\tUsage: java jar -jar <jar> help\n"
-			+ "'db'\n\tused for functions related to directly accessing the database\n"
-			+ "\tUsage: java -jar <jar> db <commands>\n"
-			+ "\tmust be used in conjunction with a working Mongo connection (ensure 'mongod.exe' is running)\n"
-			+ "'query'\n\tused for functions related to querying the database for diffs\n"
-			+ "\tUsage: java -jar <jar> query <commands>\n"
-			+ "\tmust be used in conjunction with a working Mongo connection (ensure 'mongod.exe' is running)";
+	static String version = "1.2"; // displayed on CLI in every module
+	static Scanner s = new Scanner(System.in);
+
+	private static String help = "\nHOME PAGE -- POSSIBLE COMMANDS \n\n"
+			+ "'help'\n\tgoes to the help page for the general diagnostic tool\n" + "\tUsage: ADS-v" + version
+			+ " # Home $ help\n"
+			+ "'db'\n\tswitches to the database module to access functions that directly edit the database\n"
+			+ "\tUsage: ADS-v" + version + " # Home $ db\n"
+			+ "'query'\n\tswitches to the query module to access functions that analyze the contents of the databse\n"
+			+ "\tUsage: ADS-v" + version + " # Home $ query\n"
+			+ "\nType 'exit' at any time to exit the program\n";
+	
+	private static String note = "\nNote: ADS must be used in conjuntion with a working MongoDB connection"
+			+ "\nTo ensure a working connection to the database, ensure 'mongod' executable is running.\n";
 
 	/**
 	 * Takes command-line arguments and delegates functionality as appropriate.
 	 * 
-	 * @param args
+	 * @param arr
 	 *            command-line arguments
 	 */
 	public static void main(String[] args) {
@@ -35,41 +45,101 @@ public class Access {
 		List<Logger> loggers = Collections.<Logger>list(LogManager.getCurrentLoggers());
 		loggers.add(LogManager.getRootLogger());
 		for (Logger logger : loggers) {
-			logger.setLevel(Level.ERROR);
+			logger.setLevel(Level.OFF);
 		}
 
-		// if no args passed, automatically prints welcome and sets args[0] to "help"
-		if (args.length == 0) {
-			printWelcome();
-			args = new String[1];
-			args[0] = "help";
-		}
+		// startup
+		printWelcome();
+		System.out.println(help);
+		System.out.println(note);
+		MongoManager.connectToDatabase();
+		System.out.println();
 
-		// command-specific args
-		String[] pass = { "help" };
-		if (args.length > 1) {
-			pass = Arrays.copyOfRange(args, 1, args.length);
-		}
+		while (true) {
+			System.out.print("ADS-v" + version + " # Home $ ");
+			String result = s.nextLine();
+			if (result.equals("")) {
+				continue;
+			}
 
-		// delegates functionality as appropriate
-		switch (args[0]) {
-		case "db":
-			AccessDB.run(pass);
-			break;
-		case "query":
-			AccessQRY.run(pass);
-			break;
-		case "help":
-			System.err.println(help);
-			break;
-		default:
-			System.err.println("Invalid input. Use the 'help' command for details on usage.");
-			return;
+			// delegates functionality as appropriate
+			switch (result) {
+			case "help":
+				System.out.println(help);
+				break;
+			case "home":
+				break;
+			case "exit":
+				s.close();
+				System.exit(0);
+			default:
+				runModule(result);
+				break;
+			}
+
 		}
 	}
-	
+
 	/**
-	 * Prints a welcome page that runs when the user does not give any input
+	 * Runs the user-specified module and takes user input via scanner
+	 * 
+	 * @param branch
+	 *            command corresponding to module
+	 */
+	public static void runModule(String branch) {
+
+		String branchName = new String();
+		while (true) {
+
+			// checks input and sets branch name for prompt
+			switch (branch) {
+			case "db":
+				branchName = "Database";
+				break;
+			case "query":
+				branchName = "Query";
+				break;
+			default:
+				System.err.println("\nInvalid input. Use the 'help' command for details on usage.");
+				return;
+
+			}
+
+			// prints prompt to CLI and takes in user input
+			System.out.print("ADS-v" + version + " # " + branchName + " $ ");
+			String result = s.nextLine();
+			String[] args = result.split(" ");
+			switch (args[0]) {
+			case "":
+				continue;
+			case "home":
+				return;
+			case "exit":
+				s.close();
+				System.exit(0);
+			}
+
+			// check to see if user wants to switch module
+			if (!args[0].equals(branch) && (args[0].equals("db") || args[0].equals("query"))) {
+				branch = args[0];
+				continue;
+			}
+
+			// runs user-specified module
+			switch (branch) {
+			case "db":
+				AccessDB.run(args);
+				break;
+			case "query":
+				AccessQRY.run(args);
+				break;
+			}
+
+		}
+	}
+
+	/**
+	 * Prints a welcome page that runs when the user first starts up the jar
 	 */
 	public static void printWelcome() {
 		ArrayList<String> lines = new ArrayList<>();
@@ -84,17 +154,17 @@ public class Access {
 		lines.add("  d8\"\"\"\"\"\"\"\"8b    88         8P          `8b");
 		lines.add(" d8'        `8b   88      .a8P   Y8a     a8P");
 		lines.add("d8'          `8b  88888888Y\"'     \"Y88888P\" ");
-		
+
 		for (int i = 0; i < 3; i++) {
 			lines.add("");
 		}
-		lines.add("version 1.1");
+		lines.add("version " + version);
 		lines.add("");
 		lines.add("Developed by Pierce Kelaita, Sumeet Bansal, and Gagan Gupta");
 		for (int i = 0; i < 3; i++) {
 			lines.add("");
 		}
-		
+
 		for (String str : lines) {
 			System.out.println(str);
 			try {
@@ -108,6 +178,6 @@ public class Access {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 }
