@@ -14,8 +14,7 @@ public class Access {
 
 	private static String help = "Usage: java -jar <jar> <commands>\n\nPOSSIBLE COMMANDS \n"
 			+ "'help'\n\tgoes to the help page for the general diagnostic tool\n"
-			+ "\tUsage: java jar -jar <jar> help\n" + "'zk'\n\tused for functions related to ZooKeeper\n"
-			+ "\tUsage: java -jar <jar> zk <commands>\n"
+			+ "\tUsage: java jar -jar <jar> help\n"
 			+ "'db'\n\tused for functions related to directly accessing the database\n"
 			+ "\tUsage: java -jar <jar> db <commands>\n"
 			+ "\tmust be used in conjunction with a working Mongo connection (ensure 'mongod.exe' is running)\n"
@@ -54,9 +53,6 @@ public class Access {
 
 		// delegates functionality as appropriate
 		switch (args[0]) {
-		case "zk":
-			AccessZK.run(pass);
-			break;
 		case "db":
 			AccessDB.run(pass);
 			break;

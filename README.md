@@ -9,22 +9,10 @@ ADS can be run as a command-line executable:
 3. Run the following command: `java -jar ADS_v1.1.jar`. From here, the application help pages are sufficiently detailed to run ADS.
 
 # Functionality (as of v1.1)
-ADS retrieves various server configuration files (e.g. .properties, .config, .yaml) from individual dev environments, populates user-specified root directories, standardizes and parses each file, and caches everything in a MongoDB database. The database cache can then be queried for files that can be directly compared for configuration differences via the command line. ADS has flexible queries that allow for comparisons between different directories, comparisons within the same directory (e.g. all nodes within a single fabric against each other), exclusions for specific files and directories (e.g. system information files or irrelevant nodes), and  property searches within the database to see the locations and values of that property. The command-line application features full-fledged help pages with detailed information about each individual command (e.g. purpose, usage). More specific information on the usage of each modular component of ADS can be found within the help pages of the command-line application or [the v1.1 demo presentation](https://docs.google.com/presentation/d/1711yUaoKp8omFTRhEUGPJnlApA5UuHwN2WRJ2gde3c0/pub?start=true&loop=false&delayms=3000). More specific information on the architecture and modular program design can be found below.
+ADS standardizes and parses various server configuration files (e.g. .properties, .config, .yaml) from development environments and caches everything in a MongoDB database. The database cache can then be queried for files that can be directly compared for configuration differences via the command line. ADS has flexible queries that allow for comparisons between different directories, comparisons within the same directory (e.g. all nodes within a single fabric against each other), exclusions for specific files and directories (e.g. system information files or irrelevant nodes), and  property searches within the database to see the locations and values of that property. The command-line application features full-fledged help pages with detailed information about each individual command (e.g. purpose, usage). More specific information on the usage of each modular component of ADS can be found within the help pages of the command-line application or [the v1.1 demo presentation](https://docs.google.com/presentation/d/1711yUaoKp8omFTRhEUGPJnlApA5UuHwN2WRJ2gde3c0/pub?start=true&loop=false&delayms=3000). More specific information on the architecture and modular program design can be found below.
 
 # Architecture and Pipeline
-ADS was developed entirely within Java and utilizes the ZooKeeper and MongoDB APIs significantly.
-
-### Generating Directories
-ADS works with the ZooKeeper API to generate full .properties files for all fabrics within a given dev environment. It generates a directory for the given dev environment within the root directory, and then, given a path within ZooKeeper to follow, it creates nested directories for each fabric within that ZooKeeper path. Within those fabric directories, it creates another directory named `common`, under which the .properties files can be found for each fabric. Furthermore, certain branches can be excepted from the general `server.properties` file for readability--these excepted branches are then given their own file named `server.<branch>.properties`. Detailed usage statements can be found in the application help pages, but as an example, this command creates a directory `dev` within `C:/Users/user/root` and populates it with the fabrics found within `/alcatrazproperties/2.5` of the host IP `127.0.0.1`:
-
-```
-~$ java -jar ADS_v1.1.jar zk generate 127.0.0.1 /alcatrazproperties/2.5 C:/Users/user/root dev blacklist purge
-generated .properties file(s) for fabric1
-generated .properties file(s) for fabric2
-generated .properties file(s) for fabric3
-``` 
-
-For each fabric within that environment, the command will then create some file `root/dev/fabric/server.properties` and, if there is a `blacklist` branch but no `purge` branches within the fabric, the command will additionally create a file `root/dev/fabric/server.blacklist.properties`.
+ADS was developed entirely within Java and utilizes the MongoDB API significantly.
 
 ### Parsing Files
 The modular design philosophy behind ADS also shapes how the file parsing system works. Just as ADS serves as a framework into which diagnostic tools can be plugged into, the file parsing system serves as a framework into which different types of file parsers can be plugged into. As of v1.1, ADS currently supports .properties, .yaml, .config, .xml, and hosts files, as well as any variations of those (e.g. .prop, .yml).
@@ -190,9 +178,6 @@ PATH: dev1/karaf/h2/server.properties/         VALUE: .kibanaold
 - more support for file types
 	- .info
 	- .erb
-- more options for directory generation
-	- automated directory population directly from dev VMs
-	- greater ZooKeeper support
 - more options for database modification
 	- advanced property editing
 	- auto-updating database cache
