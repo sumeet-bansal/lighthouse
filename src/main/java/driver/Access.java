@@ -75,7 +75,6 @@ public class Access {
 				System.exit(0);
 			default:
 				runModule(result);
-				break;
 			}
 
 		}
@@ -143,7 +142,7 @@ public class Access {
 	/**
 	 * Prints a welcome page that runs when the user first starts up the jar
 	 */
-	public static void printWelcome() {
+	public static void printWelcome() { // TODO string builder
 		ArrayList<String> lines = new ArrayList<>();
 		for (int i = 0; i < 2; i++) {
 			lines.add("");

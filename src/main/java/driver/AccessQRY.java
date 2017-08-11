@@ -31,203 +31,218 @@ public class AccessQRY {
 			+ "\n      - Type 'exit' at any time to exit the program\n";
 
 	/**
-	 * Queries the database and generates CSV files containing comparison data.
+	 * Prints an error message that help users with 'find' and 'grep' commands
+	 * 
+	 * @param term
+	 *            find or grep
+	 */
+	private static String searchHelp(String term) {
+		String str = "\n - Use the flag -k to search for keys or the flag -v for values";
+		if (term.equals("grep")) {
+			str += ("\n\n - Usage: lighthouse-v" + version + " # Query $ grep (-k / -v) <pattern>\n");
+		} else {
+			str += ("\n - Use flag -l for location parameter to find results only in a certain location (optional)"
+					+ "\n\n - Usage: lighthouse-v" + version
+					+ " # Query $ find (-k / -v) <key or value name> [-l (location path)]\n");
+		}
+		return str;
+	}
+
+	/**
+	 * Handles user input and delegates functionality based on first command
 	 * 
 	 * @param args
 	 *            command-line arguments
 	 */
 	public static void run(String[] args) {
 
-		ArrayList<String> queried = new ArrayList<String>();
-		ArrayList<String> excluded = new ArrayList<String>();
-
-		/*
-		 * consolidates arguments past the 3rd argument into a single argument so 'find'
-		 * and 'grep' can search for a string with spaces. If location given, handles
-		 * location args
-		 */
-		if ((args[0].equals("grep") || args[0].equals("find"))) {
-			if (args.length > 3) {
-				String findWithSpaces = "";
-				String location = "";
-				boolean hasLocation = false;
-				for (int i = 2; i < args.length; i++) {
-					if (args[0].equals("find")) {
-						if (args[i - 1].equals("-l")) {
-							location = args[i];
-							hasLocation = true;
-							break;
-						} else if (!args[i].equals("-l")) {
-							findWithSpaces += args[i] + " ";
-						}
-					} else {
-						findWithSpaces += args[i] + " ";
-					}
-				}
-				findWithSpaces = findWithSpaces.substring(0, findWithSpaces.length() - 1);
-				args[2] = findWithSpaces;
-				for (int i = 3; i < args.length; i++) {
-					args[i] = null;
-				}
-				if (hasLocation) {
-					args[3] = "-l";
-					args[4] = location;
-				}
+		// let user know if database is empty
+		boolean searchCommand = args[0].equals("grep") || args[0].equals("find");
+		if (searchCommand || args[0].equals("compare")) {
+			if (MongoManager.getCol().count() == 0) {
+				System.out.println("Database is empty. Switch to the database module using 'db' and use"
+						+ "\nthe 'populate' command to feed files to the database.\n");
+				return;
 			}
 		}
 
-		// switch statement to handle command line input
+		// consolidate 'find' and 'grep' input into search query
+		ArrayList<String> searchQuery = new ArrayList<String>();
+		if (searchCommand) {
+			searchQuery = generateSearchQuery(args);
+			if (searchQuery == null) {
+				System.err.println(searchHelp(args[0]));
+				return;
+			}
+		}
+
+		// handle command line input
 		switch (args[0]) {
 		case "compare":
-			if (MongoManager.getCol().count() == 0) {
-				System.out.println("\nDatabase is empty.\n");
-				return;
-			}
-
-			// uses generic 'arr' to populate appropriate List
-			int i = 1;
-			ArrayList<String> arr = queried; // adds all args to 'queried'
-			while (i < args.length) {
-
-				/*
-				 * if 'exclude' keyword detected, switches refs and adds rest of args to
-				 * 'excluded' List, else continues adding to 'queried'
-				 */
-				if (args[i].equals("exclude")) {
-					arr = excluded;
-				} else {
-					arr.add(args[i]);
-				}
-				i++;
-			}
-
-			// invalid query parameters
-			if (queried.size() == 0 || queried.size() > 1 && queried.size() % 2 != 0) {
-				System.err.println(help);
-				return;
-			}
+			runComparison(args);
 			break;
 		case "find":
-			if (MongoManager.getCol().count() == 0) {
-				System.out.println("\nDatabase is empty.\n");
-				return;
-			} else {
-				if (args.length < 2) {
-					System.err.println(help);
-					return;
-				}
-
-				// Check user given flag to see if user wants to search for keys or values
-				int searchFor = -1;
-				String propType = "";
-				if (!(args[1].equals("-k") || args[1].equals("-v"))) {
-					System.err.println(
-							"\nPlease specify whether to search for keys or values using the flag -k for keys or -v for values");
-					System.err.println("Usage: lighthouse-v" + version
-							+ " # Query $ find -k / -v <key or value name> [-l (location path)]\n");
-					return;
-				} else if (args[1].equals("-k")) {
-					searchFor = 0; // search for keys
-					propType = "key";
-				} else {
-					searchFor = 1; // search for values
-					propType = "value";
-				}
-
-				// Determine user-specified location, if given
-				String location = null;
-				if (args.length > 4) {
-					if (args[3] != null && args[4] != null) {
-						if (!args[3].equals("-l")) {
-							System.err.println("\nPlease use the -l flag to specify location" + "\nUsage: lighthouse-v"
-									+ version + "# Query $ grep -k / -v <pattern> -l <location path>");
-							return;
-						} else {
-							location = args[4];
-							System.out.println("\nLocation: " + location);
-						}
-					}
-				} else if (args.length < 3) {
-					System.err.println(help);
-					return;
-				}
-
-				// Print matching properties
-				ArrayList<String> pathList = QueryFunctions.findProp(args[2], location, searchFor);
-				if (pathList.size() == 0) {
-					System.out.print("\n" + propType + " \"" + args[2] + "\" not found in database");
-					if (location != null) {
-						System.out.print(" at location " + location);
-					}
-					System.out.print(".\n");
-				} else {
-					String s = "s";
-					if (pathList.size() == 1) {
-						s = "";
-					}
-					System.out.println("\nFound " + pathList.size() + " instance" + s + " of " + propType + " \""
-							+ args[2] + "\":");
-					for (String path : pathList) {
-						System.out.println(" - " + path);
-					}
-				}
-				System.out.println();
-			}
-			return;
+			printSearchResults(searchQuery, "find");
+			break;
 		case "grep":
-			if (MongoManager.getCol().count() == 0) {
-				System.out.println("\nDatabase is empty.\n");
-				return;
-			} else {
-				if (args.length < 2) {
-					System.err.println(help);
-					return;
-				}
-
-				// Check user given flag to see if user wants to search for keys or values
-				int searchFor = -1;
-				String propType = "";
-				if (!(args[1].equals("-k") || args[1].equals("-v"))) {
-					System.err.println(
-							"\nPlease specify whether to search for keys or values using the flag -k for keys or -v for values");
-					System.err.println("Usage: lighthouse-v" + version + " # Query $ grep -k / -v <pattern>\n");
-					return;
-				} else if (args[1].equals("-k")) {
-					searchFor = 0; // search for keys
-					propType = "keys";
-				} else {
-					searchFor = 1; // search for values
-					propType = "values";
-				}
-
-				// Print matching properties
-				Set<String> propSet = null;
-				if (args.length > 2) {
-					propSet = QueryFunctions.grep(args[2], searchFor);
-				} else {
-					System.err.println(help);
-					return;
-				}
-
-				if (propSet != null && propSet.size() == 0) {
-					System.out.print("\nNo " + propType + " containing \"" + args[2] + "\" found in database");
-					System.out.print(".\n");
-				} else {
-					System.out.println("\nFound " + propSet.size() + " matching " + propType + ":");
-					for (String prop : propSet) {
-						System.out.println(" - " + prop);
-					}
-				}
-				System.out.println();
-
-			}
-			return;
+			printSearchResults(searchQuery, "grep");
+			break;
 		case "help":
 			System.out.println(help);
-			return;
+			break;
 		default:
 			System.err.println(
 					"Command '" + args[0] + "' not recognized. Use the 'help' command for details on usage.\n");
+		}
+
+	}
+
+	/**
+	 * Checks if input for 'find' and 'grep' commands is valid and consolidates the
+	 * input into an ArrayList that can be used by printSearchResults()
+	 * 
+	 * @param args
+	 *            command-line arguments
+	 * @return command-line arguments parsed into an ArrayList by type
+	 */
+	private static ArrayList<String> generateSearchQuery(String[] args) {
+		ArrayList<String> searchQuery = new ArrayList<String>();
+
+		if (args.length < 3) {
+			return null;
+		}
+
+		// make sure user flags for keys or values
+		if (!(args[1].equals("-k") || args[1].equals("-v"))) {
+			return null;
+		} else {
+			searchQuery.add(args[1]);
+		}
+
+		// iterate through user input to determine search term and location, if given
+		String searchTerm = "";
+		String location = "";
+		boolean hasLocation = false;
+
+		for (int i = 2; i < args.length; i++) { // TODO javadoc
+			if (args[0].equals("find")) {
+				if (!hasLocation) {
+					if (args[i].equals("-l") && args.length > i + 1) {
+						hasLocation = true;
+						continue;
+					} else {
+						searchTerm += args[i] + " ";
+					}
+				} else {
+					location += args[i];
+				}
+			} else {
+				searchTerm += args[i] + " ";
+			}
+		}
+		searchTerm = searchTerm.substring(0, searchTerm.length() - 1);
+		searchQuery.add(searchTerm);
+		if (hasLocation) {
+			searchQuery.add(location);
+		}
+		return searchQuery;
+	}
+
+	/**
+	 * Handles user input for 'find' / 'grep' commands and prints the results of
+	 * their search
+	 * 
+	 * @param searchQuery
+	 *            parsed command-line arguemtns
+	 * @param function
+	 *            "find" or "grep"
+	 */
+	private static void printSearchResults(ArrayList<String> searchQuery, String function) {
+
+		// Parse search query specifications
+		String flag = searchQuery.get(0);
+		String searchTerm = searchQuery.get(1);
+		String location = null;
+		if (function.equals("find") && searchQuery.size() > 2) {
+			location = searchQuery.get(2);
+		}
+
+		// Check user given flag to see if user wants to search for keys or values
+		int searchType = -1;
+		String propType = "";
+		if (flag.equals("-k")) {
+			searchType = 0; // search for keys
+			propType = "key";
+		} else {
+			searchType = 1; // search for values
+			propType = "value";
+		}
+
+		// Print matching properties based on function specification
+		if (function.equals("find")) {
+			ArrayList<String> pathList = QueryFunctions.findProp(searchTerm, location, searchType);
+			if (pathList.size() == 0) {
+				System.out.print("\n" + propType + " \"" + searchTerm + "\" not found in database");
+				if (location != null) {
+					System.out.print(" at location " + location);
+				}
+				System.out.print(".\n");
+			} else {
+				String s = "s";
+				if (pathList.size() == 1) {
+					s = "";
+				}
+				System.out.println("\nFound " + pathList.size() + " instance" + s + " of " + propType + " \""
+						+ searchTerm + "\":");
+				for (String path : pathList) {
+					System.out.println(" - " + path);
+				}
+			}
+		} else if (function.equals("grep")) {
+			Set<String> propSet = QueryFunctions.grep(searchTerm, searchType);
+			if (propSet != null && propSet.size() == 0) {
+				System.out.print("\nNo " + propType + " containing \"" + searchTerm + "\" found in database");
+				System.out.print(".\n");
+			} else {
+				System.out.println("\nFound " + propSet.size() + " matching " + propType + ":");
+				for (String prop : propSet) {
+					System.out.println(" - " + prop);
+				}
+			}
+		}
+		System.out.println();
+	}
+
+	/**
+	 * Handles user input for 'compare' command, prints the results of the
+	 * comparison, and writes them to a CSV file as appropriate
+	 * 
+	 * @param args
+	 *            command-line arguments
+	 */
+	private static void runComparison(String[] args) {
+		ArrayList<String> queried = new ArrayList<String>();
+		ArrayList<String> excluded = new ArrayList<String>();
+		// uses generic 'arr' to populate appropriate List
+		int i = 1;
+		ArrayList<String> arr = queried; // adds all args to 'queried'
+		while (i < args.length) {
+
+			/*
+			 * if 'exclude' keyword detected, switches refs and adds rest of args to
+			 * 'excluded' List, else continues adding to 'queried'
+			 */
+			if (args[i].equals("exclude")) {
+				arr = excluded;
+			} else {
+				arr.add(args[i]);
+			}
+			i++;
+		}
+
+		// invalid query parameters
+		if (queried.size() == 0 || queried.size() > 1 && queried.size() % 2 != 0) {
+			System.err.println(help);
 			return;
 		}
 
@@ -236,20 +251,20 @@ public class AccessQRY {
 		if (queried.size() == 1) {
 			c.generateInternalFilters(queried.get(0));
 		} else {
-			for (int i = 0; i < queried.size(); i += 2) {
-				c.addQuery(queried.get(i), queried.get(i + 1));
+			for (int q = 0; q < queried.size(); q += 2) {
+				c.addQuery(queried.get(q), queried.get(q + 1));
 			}
 		}
-		for (int i = 0; i < excluded.size(); i++) {
-			c.exclude(excluded.get(i));
+		for (int e = 0; e < excluded.size(); e++) {
+			c.exclude(excluded.get(e));
 		}
 		if (!c.compare()) {
 			return;
 		}
 
 		// prompts user to either enter a custom CSV name or use default name
-		String writePath = System.getProperty("user.home") + sep + "Documents" + sep + "lighthouse reports";
-		new File(writePath).mkdirs();
+		String writePath = System.getProperty("user.home") + sep + "Documents" + sep + "lighthouse-reports";
+		new File(writePath).mkdirs(); // TODO user - workingdir/reports
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
 		// gives a summary of the discrepancies in the query
