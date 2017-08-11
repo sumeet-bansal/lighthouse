@@ -33,24 +33,29 @@ public class DbFunctions extends MongoManager {
 
 		for (AbstractParser s : parsedFiles) {
 
+			LinkedList<Document> docs = new LinkedList<>();
+			Map<String, String> metadata = s.getMetadata();
+			
 			// feeds data of parsed file to Document
 			Map<String, Object> data = s.getData();
 			for (Map.Entry<String, Object> property : data.entrySet()) {
 
 				Document doc = new Document(); // represents a single property
-				String key = property.getKey();
-				String value = property.getValue().toString();
-				doc.append("key", key);
-				doc.append("value", value);
+				doc.append("key", property.getKey());
+				doc.append("value", property.getValue().toString());
 
-				// gets genericPath of parsed file and tags Document accordingly
-				Map<String, String> metadata = s.getMetadata();
+				// gets metadata of parsed file and tags Document accordingly
 				for (Map.Entry<String, String> entry : metadata.entrySet()) {
 					doc.append(entry.getKey(), entry.getValue());
 				}
-				collection.insertOne(doc);
+				docs.add(doc);
 				count++;
 			}
+
+			for (Document doc : docs) {
+				collection.insertOne(doc);
+			}
+			
 		}
 		System.out.println("\nAdded " + count + " properties to database");
 	}
