@@ -17,16 +17,16 @@ public class AccessQRY {
 	private static String sep = File.separator;
 
 	private static String help = "\nQUERY MODULE -- POSSIBLE COMMANDS\n"
-			+ "\n'help'\n\tgoes to the help page for 'query'" + "\n\tUsage: ADS-" + version + " # Query $ help"
+			+ "\n'help'\n\tgoes to the help page for 'query'" + "\n\tUsage: lighthouse-" + version + " # Query $ help"
 			+ "\n'compare'\n\tcompares the selected root directories and generates appropriate CSVs"
-			+ "\n\tUsage: ADS-v" + version + " # Query $ compare <path1> <path2>"
+			+ "\n\tUsage: lighthouse-v" + version + " # Query $ compare <path1> <path2>"
 			+ "\n'exclude'\n\texcludes selected files or directories from the query"
-			+ "\n\tmust be used in conjunction with the 'compare' command" + "\n\tUsage: ADS-v" + version
+			+ "\n\tmust be used in conjunction with the 'compare' command" + "\n\tUsage: lighthouse-v" + version
 			+ " # Query $ compare <path1> <path2> exclude <path> <path> ... <path>"
 			+ "\n'grep'\n\tfinds every property key and value in the database that contains a given pattern"
-			+ "\n\tUsage: ADS-v" + version + " # Query $ grep -k / -v <pattern>"
+			+ "\n\tUsage: lighthouse-v" + version + " # Query $ grep -k / -v <pattern>"
 			+ "\n'find'\n\tprints the locations and values of a user-given key or value at a specified location, if given"
-			+ "\n\tUsage: ADS-v" + version + " # Query $ find -k / -v <key or value name> [-l (location path)]\n"
+			+ "\n\tUsage: lighthouse-v" + version + " # Query $ find -k / -v <key or value name> [-l (location path)]\n"
 			+ "\n      - Type the command for another module ('db', 'home') to go to that module"
 			+ "\n      - Type 'exit' at any time to exit the program\n";
 
@@ -123,7 +123,7 @@ public class AccessQRY {
 				if (!(args[1].equals("-k") || args[1].equals("-v"))) {
 					System.err.println(
 							"\nPlease specify whether to search for keys or values using the flag -k for keys or -v for values");
-					System.err.println("Usage: ADS-v" + version
+					System.err.println("Usage: lighthouse-v" + version
 							+ " # Query $ find -k / -v <key or value name> [-l (location path)]\n");
 					return;
 				} else if (args[1].equals("-k")) {
@@ -139,7 +139,7 @@ public class AccessQRY {
 				if (args.length > 4) {
 					if (args[3] != null && args[4] != null) {
 						if (!args[3].equals("-l")) {
-							System.err.println("\nPlease use the -l flag to specify location" + "\nUsage: ADS-v"
+							System.err.println("\nPlease use the -l flag to specify location" + "\nUsage: lighthouse-v"
 									+ version + "# Query $ grep -k / -v <pattern> -l <location path>");
 							return;
 						} else {
@@ -190,7 +190,7 @@ public class AccessQRY {
 				if (!(args[1].equals("-k") || args[1].equals("-v"))) {
 					System.err.println(
 							"\nPlease specify whether to search for keys or values using the flag -k for keys or -v for values");
-					System.err.println("Usage: ADS-v" + version + " # Query $ grep -k / -v <pattern>\n");
+					System.err.println("Usage: lighthouse-v" + version + " # Query $ grep -k / -v <pattern>\n");
 					return;
 				} else if (args[1].equals("-k")) {
 					searchFor = 0; // search for keys
@@ -248,7 +248,7 @@ public class AccessQRY {
 		}
 
 		// prompts user to either enter a custom CSV name or use default name
-		String writePath = System.getProperty("user.home") + sep + "Documents" + sep + "ADS Reports";
+		String writePath = System.getProperty("user.home") + sep + "Documents" + sep + "lighthouse reports";
 		new File(writePath).mkdirs();
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 

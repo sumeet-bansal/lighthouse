@@ -592,7 +592,7 @@ public class QueryFunctions extends MongoManager {
 			fw = new FileWriter(path, true);
 			bw = new BufferedWriter(fw);
 			bw.write(content);
-			System.out.println("\nSuccessfully wrote CSV file " + filename + ".csv to " + directory + "\n");
+			System.out.println("\nSuccessfully wrote " + filename + ".csv to " + directory + "\n");
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -626,7 +626,7 @@ public class QueryFunctions extends MongoManager {
 	 * @return the default CSV name
 	 */
 	public String getDefaultName() {
-		String defaultName = "ADS-report";
+		String defaultName = "lighthouse-report";
 		DateFormat nameFormat = new SimpleDateFormat("_yyyy-MM-dd_HH.mm.ss");
 		Date date = new Date();
 		defaultName += nameFormat.format(date);

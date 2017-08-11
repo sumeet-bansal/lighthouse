@@ -98,7 +98,7 @@ public class DbFunctions extends MongoManager {
 		}
 
 		// prints structure based on level
-		System.out.println("\nDATABASE STRUCTURE @ " + dir + " LEVEL");
+		System.out.println("\nDATABASE STRUCTURE @ " + dir + " LEVEL\n");
 		Set<String> envs = getEnvironments();
 		for (String env : envs) {
 			System.out.println(env);

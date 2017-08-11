@@ -50,10 +50,11 @@ public class MongoManager {
 
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 		String result = "";
+		System.out.println();
 
 		// repeatedly queries in case of invalid input
 		while (true) {
-			System.out.print("\nClear entire database? (y/n): ");
+			System.out.print("Clear entire database? (y/n): ");
 			try {
 				result = input.readLine();
 			} catch (IOException e) {

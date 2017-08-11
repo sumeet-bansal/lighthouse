@@ -21,16 +21,16 @@ public class Access {
 	static Scanner s = new Scanner(System.in);
 
 	private static String help = "\nHOME PAGE -- POSSIBLE COMMANDS \n\n"
-			+ "'help'\n\tgoes to the help page for the general diagnostic tool\n" + "\tUsage: ADS-v" + version
+			+ "'help'\n\tgoes to the help page for the general diagnostic tool\n" + "\tUsage: lighthouse-v" + version
 			+ " # Home $ help\n"
 			+ "'db'\n\tswitches to the database module to access functions that directly edit the database\n"
-			+ "\tUsage: ADS-v" + version + " # Home $ db\n"
+			+ "\tUsage: lighthouse-v" + version + " # Home $ db\n"
 			+ "'query'\n\tswitches to the query module to access functions that analyze the contents of the databse\n"
-			+ "\tUsage: ADS-v" + version + " # Home $ query\n"
-			+ "\nType 'exit' at any time to exit the program\n";
-	
-	private static String note = "\nNote: ADS must be used in conjuntion with a working MongoDB connection"
-			+ "\nTo ensure a working connection to the database, ensure 'mongod' executable is running.\n";
+			+ "\tUsage: lighthouse-v" + version + " # Home $ query\n"
+			+ "\n      - Type 'exit' at any time to exit the program\n";
+
+	private static String note = "\nNote: lighthouse must be used in conjuntion with a working MongoDB connection."
+			+ "\nTo ensure a working connection to the database, ensure the executable 'mongod' is running.\n";
 
 	/**
 	 * Takes command-line arguments and delegates functionality as appropriate.
@@ -55,8 +55,9 @@ public class Access {
 		MongoManager.connectToDatabase();
 		System.out.println();
 
+		// main loop
 		while (true) {
-			System.out.print("ADS-v" + version + " # Home $ ");
+			System.out.print("lighthouse-v" + version + " # Home $ ");
 			String result = s.nextLine();
 			if (result.equals("")) {
 				continue;
@@ -100,13 +101,14 @@ public class Access {
 				branchName = "Query";
 				break;
 			default:
-				System.err.println("\nInvalid input. Use the 'help' command for details on usage.");
+				System.err.println(
+						"Command '" + branch + "' not recognized. Use the 'help' command for details on usage.\n");
 				return;
 
 			}
 
 			// prints prompt to CLI and takes in user input
-			System.out.print("ADS-v" + version + " # " + branchName + " $ ");
+			System.out.print("lighthouse-v" + version + " # " + branchName + " $ ");
 			String result = s.nextLine();
 			String[] args = result.split(" ");
 			switch (args[0]) {
@@ -143,24 +145,27 @@ public class Access {
 	 */
 	public static void printWelcome() {
 		ArrayList<String> lines = new ArrayList<>();
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 2; i++) {
 			lines.add("");
 		}
-		lines.add("       db         88888888ba,     ad88888ba ");
-		lines.add("      d88b        88      `\"8b   d8\"     \"8b");
-		lines.add("     d8'`8b       88        `8b  Y8,        ");
-		lines.add("    d8'  `8b      88         88  `Y8aaaaa,  ");
-		lines.add("   d8YaaaaY8b     88         88    `\"\"\"\"\"8b,");
-		lines.add("  d8\"\"\"\"\"\"\"\"8b    88         8P          `8b");
-		lines.add(" d8'        `8b   88      .a8P   Y8a     a8P");
-		lines.add("d8'          `8b  88888888Y\"'     \"Y88888P\" ");
+
+		lines.add("                                                         " + "         _-^-_");
+		lines.add("                                            -            " + "-    --   |@|   --    -            -");
+		lines.add(" _  _         _      _    _                              " + "         =====");
+		lines.add("| |(_)  __ _ | |__  | |_ | |__    ___   _   _  ___   ___ " + "          |\\|");
+		lines.add("| || | / _` || '_ \\ | __|| '_ \\  / _ \\ | | | |/ __| / _ \\" + "          |\\|");
+		lines.add("| || || (_| || | | || |_ | | | || (_) || |_| |\\__ \\|  __/" + "          |\\|");
+		lines.add("|_||_| \\__, ||_| |_| \\__||_| |_| \\___/  \\__,_||___/ \\___|"
+				+ "        ,/::|.._               ___");
+		lines.add("       |___/                                             "
+				+ "     __,./::: ...^ ~ ~~ ~ ~~~ /  ~`~");
 
 		for (int i = 0; i < 3; i++) {
 			lines.add("");
 		}
 		lines.add("version " + version);
 		lines.add("");
-		lines.add("Developed by Pierce Kelaita, Sumeet Bansal, and Gagan Gupta");
+		lines.add("developed by Pierce Kelaita, Sumeet Bansal, and Gagan Gupta");
 		for (int i = 0; i < 3; i++) {
 			lines.add("");
 		}

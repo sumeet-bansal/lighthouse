@@ -20,19 +20,19 @@ public class AccessDB {
 
 	private static String help = "\nDATABASE MODULE -- POSSIBLE COMMANDS\n"
 			+ "\n'help'\n\tgoes to the help page for 'db'"
-			+ "\n\tUsage: ADS-v" + version + " # Database $ help"
+			+ "\n\tUsage: lighthouse-v" + version + " # Database $ help"
 			+ "\n'populate'\n\tpopulates the database with the given files"
-			+ "\n\tUsage: ADS-v" + version + " # Database $ populate <root directory>"
+			+ "\n\tUsage: lighthouse-v" + version + " # Database $ populate <root directory>"
 			+ "\n'clear'\n\tclears the database"
-			+ "\n\tUsage: ADS-v" + version + " # Database $ clear"
+			+ "\n\tUsage: lighthouse-v" + version + " # Database $ clear"
 			+ "\n'list'\n\tprints the structure of the database at user-specified level"
-			+ "\n\tUsage: ADS-v" + version + " # Database $ <level (1-4)>"
+			+ "\n\tUsage: lighthouse-v" + version + " # Database $ <level (1-4)>"
 			+ "\n'info'\n\tprovides info about the contents of the database"
-			+ "\n\tUsage: ADS-v" + version + " # Database $ info\n"
-			+ "\nType the command for another module ('query', 'home') to go to that module"
-			+ "\nType 'exit' at any time to exit the program\n";
+			+ "\n\tUsage: lighthouse-v" + version + " # Database $ info\n"
+			+ "\n      - Type the command for another module ('query', 'home') to go to that module"
+			+ "\n      - Type 'exit' at any time to exit the program\n";
 	
-	private static String listHelp = "\nUsage: ADS-v" + version + " # Database $ list <level>"
+	private static String listHelp = "\nUsage: lighthouse-v" + version + " # Database $ list <level>"
 			+ "\nWhere <level> denotes the lowest level to which you would like to see the database structure."
 			+ "\nAccepted level values:"
 			+ "\n\t4 - environment"
@@ -144,7 +144,7 @@ public class AccessDB {
 				System.out.println(help);
 				break;
 			default:
-				System.err.println("\nInvalid input. Use the 'help' command for details on usage.");
+				System.err.println("Command '" + args[0] + "' not recognized. Use the 'help' command for details on usage.\n");
 				return;
 			}
 
