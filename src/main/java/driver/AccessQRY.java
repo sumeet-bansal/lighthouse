@@ -249,7 +249,7 @@ public class AccessQRY {
 		// adds queries to QueryFunctions instance and compares
 		QueryFunctions c = new QueryFunctions();
 		if (queried.size() == 1) {
-			c.generateInternalFilters(queried.get(0));
+			c.generateInternalQueries(queried.get(0));
 		} else {
 			for (int q = 0; q < queried.size(); q += 2) {
 				c.addQuery(queried.get(q), queried.get(q + 1));

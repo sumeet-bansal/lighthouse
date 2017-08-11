@@ -10,6 +10,7 @@ import com.mongodb.client.*;
  * 
  * @author ActianceEngInterns
  * @version 1.0
+ * @deprecated
  */
 public class MongoReference {
 

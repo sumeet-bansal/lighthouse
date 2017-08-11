@@ -16,11 +16,26 @@ import com.mongodb.client.*;
  */
 public class QueryFunctions extends MongoManager {
 
+	// ArrayList of Document pairs {left BSON filter, right BSON filter}
 	private ArrayList<Document[]> queryPairs = new ArrayList<>();
+
+	// Set of properties excluded from query--generated in excludeQuery()
 	private Set<Document> excludedProps = new HashSet<>();
+
+	/*
+	 * String[]: CSV row, formatted {file, key, value, file, key, value, key
+	 * diff, value diff}
+	 * 
+	 * ArrayList<String>: a single table containing the entirety of a comparison
+	 * between queries
+	 * 
+	 * ArrayList<ArrayList<String>>: multiple tables, necessary due to how
+	 * internal queries generate several tables for each comparison between
+	 * fabrics/nodes
+	 */
 	private ArrayList<ArrayList<String[]>> tables = new ArrayList<>();
 
-	private ArrayList<String> filenames = new ArrayList<>();
+	private Set<String> filenames = new TreeSet<>();
 	private Integer[] discrepancies = new Integer[2];
 
 	/**
@@ -35,19 +50,23 @@ public class QueryFunctions extends MongoManager {
 	/**
 	 * Getter method for table.
 	 * 
-	 * @return 2D representation of CSV
+	 * @return a 2D representation of CSV as a series of tables, with each table
+	 *         representing a single comparison
 	 */
 	public List<ArrayList<String[]>> getTables() {
 		return tables;
 	}
 
 	/**
-	 * Getter method for discrepancies.
+	 * Getter method for the discrepancy statistics of a query.
 	 * 
-	 * @return the discrepancy statistics of a query
+	 * @return the discrepancy statistics as an Integer[] where Integer[0] is
+	 *         the total number of differences in the keys of a query and
+	 *         Integer[1] is the total number of differences in the values of a
+	 *         query
 	 */
 	public Integer[] getDiscrepancies() {
-		if (!(discrepancies[0] == null && discrepancies[1] == null)) {
+		if (discrepancies[0] != null && discrepancies[1] != null) {
 			Integer diffkey = discrepancies[0];
 			Integer diffval = discrepancies[1];
 			Integer[] report = { diffkey, diffval, diffkey + diffval };
@@ -59,48 +78,33 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Private helper method. Given path inputs, verifies the validity of the inputs
-	 * and generates filters for the inputs.
-	 * 
-	 * @param pathL
-	 *            the first path being compared
-	 * @param pathR
-	 *            the other path being compared
-	 * @return the generated filters
-	 */
-	private Document[] generateFilters(String pathL, String pathR) {
-		String[] arrL = pathL.split("/");
-		String[] arrR = pathR.split("/");
-		if (arrL.length != arrR.length) {
-			System.err.println("ERROR: Paths must be at the same specified level.");
-			return null;
-		}
-		Document filterL = new Document();
-		Document filterR = new Document();
-		System.out.println();
-		for (int i = 0; i < arrL.length; i++) {
-			if (!arrL[i].equals("*")) {
-				filterL.append(genericPath[i], arrL[i]);
-			}
-		}
-		for (int i = 0; i < arrR.length; i++) {
-			if (!arrR[i].equals("*")) {
-				filterR.append(genericPath[i], arrR[i]);
-			}
-		}
-		Document[] filters = { filterL, filterR };
-		return filters;
-	}
-
-	/**
 	 * Takes in a single path input and generates a filter document to find the
 	 * files to compare within those parameters.
+	 * <p>
+	 * <dl>
+	 * <dt>example path parameters:
+	 * <dd>dev1/fabric2
+	 * </dl>
+	 * </p>
+	 * <p>
+	 * <dl>
+	 * <dt>example queries:<p>
+	 * <dd>dev1/fabric2/node1
+	 * <dd>dev1/fabric2/node2
+	 * </p><p>
+	 * <dd>dev1/fabric2/node1
+	 * <dd>dev1/fabric2/node3
+	 * </p><p>
+	 * <dd>dev1/fabric2/node2
+	 * <dd>dev1/fabric2/node3
+	 * </dl>
+	 * </p>
 	 * 
 	 * @param path
-	 *            the path containing the subdirectories being compared against each
-	 *            other
+	 *            the path containing the subdirectories being compared against
+	 *            each other
 	 */
-	public void generateInternalFilters(String path) {
+	public void generateInternalQueries(String path) {
 
 		if (path.charAt(0) == '/') {
 			path = path.substring(1);
@@ -132,8 +136,7 @@ public class QueryFunctions extends MongoManager {
 			subdirs.add(subdir);
 		}
 		if (subdirs.size() < 2) {
-			System.err.println("\nError: Insufficient directories for internal query.");
-			System.err.println("Make sure your given directory contains at least 2 files or subdirectories\n");
+			System.err.println("\n[ERROR] Directory must contain at least 2 files or subdirectories.\n");
 			return;
 		}
 
@@ -143,55 +146,6 @@ public class QueryFunctions extends MongoManager {
 				addQuery(subdirs.get(i), subdirs.get(j));
 			}
 		}
-	}
-
-	/**
-	 * Gets all the files matching a given extension.
-	 * 
-	 * @param env
-	 * @param fabric
-	 * @param node
-	 * @param wildcard
-	 * @return Matching files
-	 */
-	private ArrayList<Document> getFiles(String env, String fabric, String node, String extension) {
-		ArrayList<Document> files = new ArrayList<>();
-
-		// set up filter with given metadata
-		Document filter = new Document();
-		String[] keys = { env, fabric, node };
-		for (int i = 0; i < 3; i++) {
-			if (!(keys[i] == null)) {
-				filter.append(genericPath[i], keys[i]);
-			}
-		}
-
-		// query database for files with extension equal to given extension
-		Set<String> names = new TreeSet<>();
-		MongoCursor<Document> cursor = collection.find(filter).iterator();
-		while (cursor.hasNext()) {
-			Document doc = cursor.next();
-			String filename = doc.getString("filename");
-			String colExt = filename.substring(filename.lastIndexOf('.') + 1);
-			if (extension.equalsIgnoreCase(colExt)) {
-				names.add(filename);
-			}
-		}
-
-		// copy data to new document and add to files list
-		for (String name : names) {
-			Document element = new Document();
-			for (int i = 0; i < 3; i++) {
-				if (!(keys[i] == null)) {
-					element.append(genericPath[i], keys[i]);
-				}
-			}
-			element.append("filename", name);
-			files.add(element);
-			filter.remove("filename");
-		}
-
-		return files;
 	}
 
 	/**
@@ -209,128 +163,21 @@ public class QueryFunctions extends MongoManager {
 		}
 		try {
 
-			// if filenames are wildcard/extension, find all files with specified extension
-			boolean isWildcard = false;
-			ArrayList<Document> left = new ArrayList<>();
-			ArrayList<Document> right = new ArrayList<>();
-			ArrayList<Document[]> pairs = new ArrayList<>();
-
-			for (int i = 0; i < filters.length; i++) {
-				Document doc = filters[i];
-				if (doc.getString("filename") != null && doc.getString("filename").startsWith("*.")) {
-					isWildcard = true;
-					String env = doc.getString("environment");
-					String fabric = doc.getString("fabric");
-					String node = doc.getString("node");
-					String extension = doc.getString("filename").substring(2);
-
-					if (i == 0) {
-						left = getFiles(env, fabric, node, extension);
-					} else {
-						right = getFiles(env, fabric, node, extension);
-					}
-				}
-			}
-
 			// adds query filters to queryPairs
 			System.out.println("Looking for properties with attributes:");
-			if (!isWildcard) {
-				queryPairs.add(filters);
-				System.out.println("\t" + filters[0].toJson());
-				System.out.println("\t" + filters[1].toJson());
-			} else {
-				// pair up matching filenames
-				ArrayList<String> usedL = new ArrayList<>();
-				ArrayList<String> usedR = new ArrayList<>();
-				for (Document docL : left) {
-					for (Document docR : right) {
-						Document[] pair = new Document[2];
-						if (docL.getString("filename").equals(docR.getString("filename"))) {
-							pair[0] = docL;
-							pair[1] = docR;
-							pairs.add(pair);
-							usedL.add(docL.getString("filename"));
-							usedR.add(docR.getString("filename"));
-						}
-					}
-				}
+			queryPairs.add(filters);
+			System.out.println("\t" + filters[0].toJson());
+			System.out.println("\t" + filters[1].toJson());
 
-				// print matches to CLI
-				for (Document[] pair : pairs) {
-					System.out.println("\t" + pair[0].toJson());
-					System.out.println("\t" + pair[1].toJson());
-					System.out.println();
+			// adds lowest-level path difference to CSV header
+			String[] splitL = pathL.split("/");
+			String[] splitR = pathR.split("/");
+			for (int i = splitL.length-1; i >= 0; i--) {
+				if (!splitL[i].equals(splitR[i])) {
+					filenames.add(splitL[i]);
+					filenames.add(splitR[i]);
+					break;
 				}
-
-				// pair the leftovers to a null document holding no properties
-				Document nullDoc = new Document();
-				for (String str : genericPath) {
-					nullDoc.append(str, null);
-				}
-
-				if (!(left.size() == usedL.size() && right.size() == usedR.size())) {
-					System.out.println("  ----- The following attributes exist on only one side of the query -----\n");
-				}
-
-				outerloop: for (Document docL : left) {
-					for (String used : usedL) {
-						if (docL.getString("filename").equals(used)) {
-							continue outerloop;
-						}
-					}
-					Document[] pair = { docL, nullDoc };
-					System.out.println("\t" + docL.toJson());
-					pairs.add(pair);
-				}
-				outerloop: for (Document docR : right) {
-					for (String used : usedR) {
-						if (docR.getString("filename").equals(used)) {
-							continue outerloop;
-						}
-					}
-					Document[] pair = { nullDoc, docR };
-					System.out.println("\t" + docR.toJson());
-					pairs.add(pair);
-				}
-
-				// add all pairs to query
-				for (Document[] pair : pairs) {
-					queryPairs.add(pair);
-				}
-			}
-
-			// adds file filenames or lowest filepath specification to CSV name
-			for (String filter : reversePath) {
-				try {
-					String name1 = filters[0].getString(filter);
-					if (name1.startsWith("*.")) {
-						continue;
-					}
-					int end1 = name1.length();
-					if (name1.contains(".")) {
-						end1 = name1.lastIndexOf(".");
-					}
-					String add1 = name1.substring(0, end1);
-					if (!filenames.contains(add1)) {
-						filenames.add(add1);
-					}
-
-					String name2 = filters[1].getString(filter);
-					if (name2.startsWith("*.")) {
-						continue;
-					}
-					int end2 = name2.length();
-					if (name2.contains(".")) {
-						end2 = name2.lastIndexOf(".");
-					}
-					String add2 = name2.substring(0, end2);
-					if (!filenames.contains(add2)) {
-						filenames.add(add2);
-					}
-				} catch (NullPointerException e) {
-					continue;
-				}
-				break;
 			}
 
 		} catch (Exception e) {
@@ -340,6 +187,58 @@ public class QueryFunctions extends MongoManager {
 			}
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Private helper method. Given path inputs, verifies the validity of the
+	 * inputs and generates filters for the inputs.
+	 * <p>
+	 * <dl>
+	 * <dt>example path parameters:
+	 * <dd>dev1/fabric2
+	 * <dd>dev2/fabric2
+	 * </dl>
+	 * </p>
+	 * <p>
+	 * <dl>
+	 * <dt>example filters:
+	 * <dd>{environment: "dev1", fabric: "fabric2"}
+	 * <dd>{environment: "dev2", fabric: "fabric2"}
+	 * </dl>
+	 * </p>
+	 * 
+	 * @param pathL
+	 *            the first path being compared
+	 * @param pathR
+	 *            the other path being compared
+	 * @return the generated filters
+	 */
+	private Document[] generateFilters(String pathL, String pathR) {
+		String[] arrL = pathL.split("/");
+		String[] arrR = pathR.split("/");
+		if (arrL.length != arrR.length) {
+			System.err.println("ERROR: Paths must be at the same specified level.");
+			return null;
+		}
+		Document filterL = new Document();
+		Document filterR = new Document();
+		System.out.println();
+		for (int i = 0; i < arrL.length; i++) {
+			if (arrL[i].charAt(0) != ('*')) {
+				filterL.append(genericPath[i], arrL[i]);
+			} else if (arrL[i].startsWith("*.")) {
+				filterL.append("extension", arrL[i].substring(2));
+			}
+		}
+		for (int i = 0; i < arrR.length; i++) {
+			if (arrR[i].charAt(0) != ('*')) {
+				filterR.append(genericPath[i], arrR[i]);
+			} else if (arrR[i].startsWith("*.")) {
+				filterR.append("extension", arrR[i].substring(2));
+			}
+		}
+		Document[] filters = { filterL, filterR };
+		return filters;
 	}
 
 	/**
@@ -389,8 +288,8 @@ public class QueryFunctions extends MongoManager {
 
 	/**
 	 * Retrieves filtered files from the MongoDB database, excludes files as
-	 * appropriate, compares the remaining queried files, and adds the results to a
-	 * CSV file.
+	 * appropriate, compares the remaining queried files, and adds the results
+	 * to a CSV file.
 	 * 
 	 * @return true if query is valid, false if not
 	 */
@@ -474,31 +373,31 @@ public class QueryFunctions extends MongoManager {
 	 * Compares Documents and adds the comparison outcomes to the table.
 	 * 
 	 * @param propsL
-	 *            a List of Documents representing every property in the left side
-	 *            of the query
+	 *            a List of Documents representing every property in the left
+	 *            side of the query
 	 * @param propsR
-	 *            a List of Documents representing every property in the right side
-	 *            of the query
+	 *            a List of Documents representing every property in the right
+	 *            side of the query
 	 * @return the table
 	 */
 	private ArrayList<String[]> createTable(ArrayList<Document> propsL, ArrayList<Document> propsR) {
 
 		// generates key set
-		Set<String> keyset = new LinkedHashSet<>();
+		Set<String> keyAmalgam = new LinkedHashSet<>();
 		for (Document prop : propsL) {
-			keyset.add(prop.getString("key"));
+			keyAmalgam.add(prop.getString("key"));
 		}
 		for (Document prop : propsR) {
-			keyset.add(prop.getString("key"));
+			keyAmalgam.add(prop.getString("key"));
 		}
-		keyset.remove("_id"); // auto-generated by MongoDB
+		keyAmalgam.remove("_id"); // auto-generated by MongoDB
 
 		// sets up row information
 		ArrayList<String[]> table = new ArrayList<>();
 		int keyDiffs = 0;
 		int valDiffs = 0;
 
-		for (String key : keyset) {
+		for (String key : keyAmalgam) {
 			Document propL = new Document();
 			Document propR = new Document();
 
@@ -506,11 +405,13 @@ public class QueryFunctions extends MongoManager {
 			for (Document prop : propsL) {
 				if (prop.getString("key").equals(key)) {
 					propL = prop;
+					break;
 				}
 			}
 			for (Document prop : propsR) {
 				if (prop.getString("key").equals(key)) {
 					propR = prop;
+					break;
 				}
 			}
 
@@ -554,7 +455,8 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Writes stored data to a CSV file with a user-specified name and directory.
+	 * Writes stored data to a CSV file with a user-specified name and
+	 * directory.
 	 * 
 	 * @param filename
 	 *            the user-specified filename
@@ -620,8 +522,8 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Creates a default name for the CSV file based on the lowest-level metadata
-	 * provided in the query.
+	 * Creates a default name for the CSV file based on the lowest-level
+	 * metadata provided in the query.
 	 * 
 	 * @return the default CSV name
 	 */
@@ -676,7 +578,7 @@ public class QueryFunctions extends MongoManager {
 			// set up spacing for CLI output
 			String key = prop.getString("key");
 			String value = prop.getString("value");
-			final int PATH_MAX_SPACING = 64;
+			final int PATH_MAX_SPACING = 80;
 
 			// lines up path with key
 			int numSpaces1;
@@ -703,7 +605,8 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Finds every key or value in the database that contains a user-given pattern.
+	 * Finds every key or value in the database that contains a user-given
+	 * pattern.
 	 * 
 	 * @param pattern
 	 *            substring being searched for
@@ -720,14 +623,6 @@ public class QueryFunctions extends MongoManager {
 
 		// set up filter for given key
 		Document filter = new Document();
-
-		/**
-		 * TODO advanced grep logic if no wildcards, check if property contains elem if
-		 * wildcards present if charAt(0) != * check that string starts with
-		 * 0->1stindexOf(*) if charAt(legnth-1) != * check that string ends with
-		 * last(*)->lastChar split up by * for all in split, check if index of each elem
-		 * in array is greater than the last
-		 */
 
 		Set<String> dataset = new HashSet<>();
 		MongoCursor<Document> cursor = collection.find(filter).iterator();
