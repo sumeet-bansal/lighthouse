@@ -150,7 +150,10 @@ public class QueryFunctions extends MongoManager {
 			}
 			subdirs.add(subdir);
 		}
-
+		
+		if (subdirs.isEmpty()) {
+			return "\n[ERROR] No matching properties found.\n";
+		}
 		if (subdirs.size() < 2) {
 			return "\n[ERROR] Directory must contain at least 2 files or subdirectories."
 					+ "\n\tOnly matching subdirectory found: " + subdirs.get(0) + "\n";
@@ -349,6 +352,7 @@ public class QueryFunctions extends MongoManager {
 			tables.add(table);
 
 		}
+		
 		System.out.println("Found " + queried + " properties and excluded " + excluded + " properties matching query.");
 
 		// if single query, sets column filenames to query comparison

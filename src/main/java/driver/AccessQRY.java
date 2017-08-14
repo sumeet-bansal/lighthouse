@@ -262,7 +262,7 @@ public class AccessQRY {
 		
 		// adds queries to QueryFunctions instance and compares
 		QueryFunctions c = new QueryFunctions();
-		String status = "Looking for properties with attributes:\n";
+		String status = "";
 		if (queried.size() == 1) {
 			status += c.generateInternalQueries(queried.get(0));
 		} else {
@@ -271,9 +271,9 @@ public class AccessQRY {
 			}
 		}
 		if (status != null) {
-			if (!status.startsWith("[ERROR]")) {
-				System.out.println(status);
-			} else if (status.startsWith("[ERROR]")) {
+			if (!status.contains("[ERROR]")) {
+				System.out.println("\nLooking for properties with attributes:\n" + status);
+			} else {
 				System.err.println(status);
 			}
 		}
