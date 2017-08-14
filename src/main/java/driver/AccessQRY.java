@@ -286,8 +286,8 @@ public class AccessQRY {
 		}
 
 		// prompts user to either enter a custom CSV name or use default name
-		String writePath = System.getProperty("user.home") + sep + "Documents" + sep + "lighthouse-reports";
-		new File(writePath).mkdirs(); // TODO user - workingdir/reports
+		String writePath = System.getProperty("user.dir") + sep + "lighthouse-reports";
+		new File(writePath).mkdirs();
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
 		// gives a summary of the discrepancies in the query
