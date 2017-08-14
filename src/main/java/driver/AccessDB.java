@@ -41,7 +41,7 @@ public class AccessDB {
 	 *            command-line arguments
 	 */
 	public static void run(String[] args) {
-
+		
 		/*
 		 * let the user know if the database needs to be populated in order to use
 		 * database functions

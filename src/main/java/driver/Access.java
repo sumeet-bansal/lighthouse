@@ -1,11 +1,14 @@
 package driver;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
 import org.apache.log4j.*;
+
+import com.mongodb.MongoSocketWriteException;
+import com.mongodb.MongoSocketOpenException;
+import com.mongodb.MongoTimeoutException;
 
 import databaseModule.MongoManager;
 
@@ -33,10 +36,7 @@ public class Access {
 			+ "\nTo ensure a working connection to the database, ensure the executable 'mongod' is running.\n";
 
 	/**
-	 * Takes command-line arguments and delegates functionality as appropriate.
-	 * 
-	 * @param arr
-	 *            command-line arguments
+	 * Takes command-line arguments and delegates functionality as appropriate
 	 */
 	public static void main(String[] args) {
 
@@ -48,35 +48,49 @@ public class Access {
 			logger.setLevel(Level.OFF);
 		}
 
-		// startup
-		printWelcome();
-		System.out.println(help);
-		System.out.println(note);
-		MongoManager.connectToDatabase();
-		System.out.println();
+		try {
+			
+			// startup
+			printWelcome();
+			System.out.println(help);
+			System.out.println(note);
+			MongoManager.connectToDatabase();
+			System.out.println();
 
-		// main loop
-		while (true) {
-			System.out.print("lighthouse-v" + version + " # Home $ ");
-			String result = s.nextLine();
-			if (result.equals("")) {
-				continue;
+			// main loop
+			while (true) {
+				System.out.print("lighthouse-v" + version + " # Home $ ");
+				String result = s.nextLine();
+				if (result.equals("")) {
+					continue;
+				}
+
+				// delegates functionality as appropriate
+				switch (result) {
+				case "help":
+					System.out.println(help);
+					break;
+				case "home":
+					break;
+				case "exit":
+					s.close();
+					System.exit(0);
+				default:
+					runModule(result);
+				}
+
 			}
 
-			// delegates functionality as appropriate
-			switch (result) {
-			case "help":
-				System.out.println(help);
-				break;
-			case "home":
-				break;
-			case "exit":
-				s.close();
-				System.exit(0);
-			default:
-				runModule(result);
-			}
-
+			// check mongo connection
+		} catch (MongoTimeoutException t) {
+			System.out.println(
+					"[DATABASE MESSAGE] Server connection timed out. Make sure a 'mongod' instance is running.");
+			System.out.println("\nExiting with error code 1...");
+			System.exit(1);
+		} catch (MongoSocketWriteException | MongoSocketOpenException s) {
+			System.out.println("[DATABASE MESSAGE] Mongo connection interrupted. Check if 'mongod' is still running.");
+			System.out.println("\nExiting with error code 2...");
+			System.exit(2);
 		}
 	}
 
@@ -142,35 +156,28 @@ public class Access {
 	/**
 	 * Prints a welcome page that runs when the user first starts up the jar
 	 */
-	public static void printWelcome() { // TODO string builder
-		ArrayList<String> lines = new ArrayList<>();
-		for (int i = 0; i < 2; i++) {
-			lines.add("");
-		}
+	public static void printWelcome() {
+		StringBuffer welcome = new StringBuffer(" \n \n");
 
-		lines.add("                                                         " + "         _-^-_");
-		lines.add("                                            -            " + "-    --   |@|   --    -            -");
-		lines.add(" _  _         _      _    _                              " + "         =====");
-		lines.add("| |(_)  __ _ | |__  | |_ | |__    ___   _   _  ___   ___ " + "          |\\|");
-		lines.add("| || | / _` || '_ \\ | __|| '_ \\  / _ \\ | | | |/ __| / _ \\" + "          |\\|");
-		lines.add("| || || (_| || | | || |_ | | | || (_) || |_| |\\__ \\|  __/" + "          |\\|");
-		lines.add("|_||_| \\__, ||_| |_| \\__||_| |_| \\___/  \\__,_||___/ \\___|"
-				+ "        ,/::|.._               ___");
-		lines.add("       |___/                                             "
-				+ "     __,./::: ...^ ~ ~~ ~ ~~~ /  ~`~");
+		welcome.append("                                                         " + "         _-^-_\n");
+		welcome.append(
+				"                                            -            " + "-    --   |@|   --    -            -\n");
+		welcome.append(" _  _         _      _    _                              " + "         =====\n");
+		welcome.append("| |(_)  __ _ | |__  | |_ | |__    ___   _   _  ___   ___ " + "          |\\|\n");
+		welcome.append("| || | / _` || '_ \\ | __|| '_ \\  / _ \\ | | | |/ __| / _ \\" + "          |\\|\n");
+		welcome.append("| || || (_| || | | || |_ | | | || (_) || |_| |\\__ \\|  __/" + "          |\\|\n");
+		welcome.append("|_||_| \\__, ||_| |_| \\__||_| |_| \\___/  \\__,_||___/ \\___|"
+				+ "        ,/::|.._               ___\n");
+		welcome.append(
+				"       |___/                                             " + "     __,./::: ...^ ~ ~~ ~ ~~~ /  ~`~\n");
 
-		for (int i = 0; i < 3; i++) {
-			lines.add("");
-		}
-		lines.add("version " + version);
-		lines.add("");
-		lines.add("developed by Pierce Kelaita, Sumeet Bansal, and Gagan Gupta");
-		for (int i = 0; i < 3; i++) {
-			lines.add("");
-		}
+		welcome.append(" \n \n \n \n");
+		welcome.append("version " + version + "\n \n");
+		welcome.append("developed by Pierce Kelaita, Sumeet Bansal, and Gagan Gupta");
+		welcome.append(" \n \n \n \n");
 
-		for (String str : lines) {
-			System.out.println(str);
+		for (String line : welcome.toString().split("\\n")) {
+			System.out.println(line);
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {

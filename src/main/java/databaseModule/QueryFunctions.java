@@ -23,24 +23,20 @@ public class QueryFunctions extends MongoManager {
 	private Set<Document> excludedProps = new HashSet<>();
 
 	/*
-	 * String[]: CSV row, formatted {file, key, value, file, key, value, key
-	 * diff, value diff}
+	 * String[]: CSV row, formatted {file, key, value, file, key, value, key diff,
+	 * value diff}
 	 * 
 	 * ArrayList<String>: a single table containing the entirety of a comparison
 	 * between queries
 	 * 
-	 * ArrayList<ArrayList<String>>: multiple tables, necessary due to how
-	 * internal queries generate several tables for each comparison between
-	 * fabrics/nodes
+	 * ArrayList<ArrayList<String>>: multiple tables, necessary due to how internal
+	 * queries generate several tables for each comparison between fabrics/nodes
 	 */
 	private ArrayList<ArrayList<String[]>> tables = new ArrayList<>();
 
 	private Set<String> filenames = new TreeSet<>();
 	private Integer[] discrepancies = new Integer[2];
 
-	/**
-	 * Constructor.
-	 */
 	public QueryFunctions() {
 		for (int i = 0; i < discrepancies.length; i++) {
 			discrepancies[i] = 0;
@@ -60,10 +56,9 @@ public class QueryFunctions extends MongoManager {
 	/**
 	 * Getter method for the discrepancy statistics of a query.
 	 * 
-	 * @return the discrepancy statistics as an Integer[] where Integer[0] is
-	 *         the total number of differences in the keys of a query and
-	 *         Integer[1] is the total number of differences in the values of a
-	 *         query
+	 * @return the discrepancy statistics as an Integer[] where Integer[0] is the
+	 *         total number of differences in the keys of a query and Integer[1] is
+	 *         the total number of differences in the values of a query
 	 */
 	public Integer[] getDiscrepancies() {
 		if (discrepancies[0] != null && discrepancies[1] != null) {
@@ -78,8 +73,8 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Takes in a single path input and generates a series of queries between
-	 * the subdirectories of the specified path.
+	 * Takes in a single path input and generates a series of queries between the
+	 * subdirectories of the specified path.
 	 * <p>
 	 * <dl>
 	 * <dt>example path parameters:
@@ -104,10 +99,10 @@ public class QueryFunctions extends MongoManager {
 	 * </p>
 	 * 
 	 * @param path
-	 *            the path containing the subdirectories being compared against
-	 *            each other
-	 * @return a String representing the status of the query: null if
-	 *         successful, else error message
+	 *            the path containing the subdirectories being compared against each
+	 *            other
+	 * @return a String representing the status of the query: null if successful,
+	 *         else error message
 	 */
 	public String generateInternalQueries(String path) {
 
@@ -168,6 +163,9 @@ public class QueryFunctions extends MongoManager {
 				status += addQuery(subdirs.get(i), subdirs.get(j));
 			}
 		}
+		if (status.length() == 0) {
+			status = null;
+		}
 		return status;
 	}
 
@@ -178,6 +176,8 @@ public class QueryFunctions extends MongoManager {
 	 *            the first path being compared
 	 * @param pathR
 	 *            the other path being compared
+	 * 
+	 * @return a String containing any filters throwing exceptions (empty if none)
 	 */
 	public String addQuery(String pathL, String pathR) {
 
@@ -216,8 +216,8 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Private helper method. Given path inputs, verifies the validity of the
-	 * inputs and generates filters for the inputs.
+	 * Private helper method. Given path inputs, verifies the validity of the inputs
+	 * and generates filters for the inputs.
 	 * <p>
 	 * <dl>
 	 * <dt>example path parameters:
@@ -298,8 +298,8 @@ public class QueryFunctions extends MongoManager {
 
 	/**
 	 * Retrieves filtered files from the MongoDB database, excludes files as
-	 * appropriate, compares the remaining queried files, and adds the results
-	 * to a CSV file.
+	 * appropriate, compares the remaining queried files, and adds the results to a
+	 * CSV file.
 	 * 
 	 * @return true if query is valid, false if not
 	 */
@@ -382,11 +382,11 @@ public class QueryFunctions extends MongoManager {
 	 * Compares Documents and adds the comparison outcomes to the table.
 	 * 
 	 * @param propsL
-	 *            a List of Documents representing every property in the left
-	 *            side of the query
+	 *            a List of Documents representing every property in the left side
+	 *            of the query
 	 * @param propsR
-	 *            a List of Documents representing every property in the right
-	 *            side of the query
+	 *            a List of Documents representing every property in the right side
+	 *            of the query
 	 * @return the table
 	 */
 	private ArrayList<String[]> createTable(ArrayList<Document> propsL, ArrayList<Document> propsR) {
@@ -464,8 +464,7 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Writes stored data to a CSV file with a user-specified name and
-	 * directory.
+	 * Writes stored data to a CSV file with a user-specified name and directory.
 	 * 
 	 * @param filename
 	 *            the user-specified filename
@@ -531,8 +530,8 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Creates a default name for the CSV file based on the lowest-level
-	 * metadata provided in the query.
+	 * Creates a default name for the CSV file based on the lowest-level metadata
+	 * provided in the query.
 	 * 
 	 * @return the default CSV name
 	 */
@@ -614,8 +613,7 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Finds every key or value in the database that contains a user-given
-	 * pattern.
+	 * Finds every key or value in the database that contains a user-given pattern.
 	 * 
 	 * @param pattern
 	 *            substring being searched for

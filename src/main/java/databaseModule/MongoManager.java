@@ -16,6 +16,10 @@ import com.mongodb.client.*;
  */
 public class MongoManager {
 
+	static final String DATABASE_NAME = "LH_DB";
+	static final String COLLECTION_NAME = "PROPERTIES";
+	static final int DEFAULT_PORT = 27017;
+
 	protected static MongoDatabase database;
 	protected static MongoCollection<Document> collection;
 
@@ -23,23 +27,30 @@ public class MongoManager {
 	protected static String[] reversePath = { "filename", "node", "fabric", "environment" };
 
 	/**
-	 * Initializes the cache.
+	 * Checks connection and initializes the cache if successful.
+	 * 
+	 * @return Whether or not Mongo connection is successful.
 	 */
+	@SuppressWarnings("resource")
 	public static void connectToDatabase() {
 		System.out.println("\n[DATABASE MESSAGE] Connecting to database...");
 
+		// check connection
+		MongoClient ping = new MongoClient();
+		MongoDatabase db = ping.getDatabase("ping");
+		db.drop();
+
 		// connects with server
-		@SuppressWarnings("resource")
-		MongoClient mongoClient = new MongoClient("localhost", 27017);
-		System.out.println("[DATABASE MESSAGE] Server connection successful @ localhost:27017");
+		MongoClient mongoClient = new MongoClient("localhost", DEFAULT_PORT);
+		System.out.println("[DATABASE MESSAGE] Server connection successful @ localhost:" + DEFAULT_PORT);
 
 		// connects with Database
-		database = mongoClient.getDatabase("ADS_DB");
+		database = mongoClient.getDatabase(DATABASE_NAME);
 
 		// creates Collection
-		collection = database.getCollection("ADS_COL");
-		System.out.println("[DATABASE MESSAGE] Database connection successful @ ADS_DB.ADS_COL");
-
+		collection = database.getCollection(COLLECTION_NAME);
+		System.out.println(
+				"[DATABASE MESSAGE] Database connection successful @ " + DATABASE_NAME + "." + COLLECTION_NAME);
 	}
 
 	/**
