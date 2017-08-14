@@ -67,7 +67,7 @@ public class AccessQRY {
 		}
 
 		// consolidate 'find' and 'grep' input into search query
-		ArrayList<String> searchQuery = new ArrayList<String>();
+		ArrayList<String> searchQuery = new ArrayList<>();
 		if (searchCommand) {
 			searchQuery = generateSearchQuery(args);
 			if (searchQuery == null) {
@@ -223,21 +223,22 @@ public class AccessQRY {
 	private static void runComparison(String[] args) {
 		ArrayList<String> queried = new ArrayList<String>();
 		ArrayList<String> excluded = new ArrayList<String>();
+		
 		// uses generic 'arr' to populate appropriate List
-		int i = 1;
+		int arg = 1;
 		ArrayList<String> arr = queried; // adds all args to 'queried'
-		while (i < args.length) {
+		while (arg < args.length) {
 
 			/*
 			 * if 'exclude' keyword detected, switches refs and adds rest of args to
 			 * 'excluded' List, else continues adding to 'queried'
 			 */
-			if (args[i].equals("exclude")) {
+			if (args[arg].equals("exclude")) {
 				arr = excluded;
 			} else {
-				arr.add(args[i]);
+				arr.add(args[arg]);
 			}
-			i++;
+			arg++;
 		}
 
 		// invalid query parameters
@@ -246,15 +247,37 @@ public class AccessQRY {
 			return;
 		}
 
-		// adds queries to QueryFunctions instance and compares
-		QueryFunctions c = new QueryFunctions();
-		if (queried.size() == 1) {
-			c.generateInternalQueries(queried.get(0));
-		} else {
-			for (int q = 0; q < queried.size(); q += 2) {
-				c.addQuery(queried.get(q), queried.get(q + 1));
+		for (int i = 0; i < queried.size(); i++) {
+			if (queried.get(i).split("/").length > 4) {
+				System.err.println("\n[ERROR] Invalid path input: " + queried.get(i) + "\n");
+				return;
 			}
 		}
+		for (int i = 0; i < excluded.size(); i++) {
+			if (excluded.get(i).split("/").length > 4) {
+				System.err.println("\n[ERROR] Invalid path input: " + excluded.get(i) + "\n");
+				return;
+			}
+		}
+		
+		// adds queries to QueryFunctions instance and compares
+		QueryFunctions c = new QueryFunctions();
+		String status = "Looking for properties with attributes:\n";
+		if (queried.size() == 1) {
+			status += c.generateInternalQueries(queried.get(0));
+		} else {
+			for (int q = 0; q < queried.size(); q += 2) {
+				status += c.addQuery(queried.get(q), queried.get(q + 1));
+			}
+		}
+		if (status != null) {
+			if (!status.startsWith("[ERROR]")) {
+				System.out.println(status);
+			} else if (status.startsWith("[ERROR]")) {
+				System.err.println(status);
+			}
+		}
+		
 		for (int e = 0; e < excluded.size(); e++) {
 			c.exclude(excluded.get(e));
 		}
@@ -306,22 +329,21 @@ public class AccessQRY {
 					c.clearQuery();
 					return;
 				} else if (result.equalsIgnoreCase("n")) {
+					
 					// checks if custom filename legal across OSes
-					String customName;
 					while (true) {
 						System.out.print("Enter custom CSV file name: ");
-						String test = input.readLine();
-						String legal = test.replaceAll("[^a-zA-Z0-9_ .-]", "~");
-						if (!test.equals(legal)) {
+						String custom = input.readLine();
+						String legal = custom.replaceAll("[^a-zA-Z0-9_ .-]", "~");
+						if (!custom.equals(legal)) {
 							System.out.println("\nERROR: illegal CSV file name.");
 							System.out.println("To prevent writing corrupted files, only letters,"
 									+ "\nnumbers, spaces, and the characters . _ - ~ are allowed.\n");
 							continue;
-						} else if (test.equals("")) {
+						} else if (custom.equals("")) {
 							continue;
 						} else {
-							customName = test;
-							c.writeToCSV(customName, writePath);
+							c.writeToCSV(custom, writePath);
 							return;
 						}
 					}

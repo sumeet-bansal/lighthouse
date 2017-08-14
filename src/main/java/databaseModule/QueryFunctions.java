@@ -78,8 +78,8 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Takes in a single path input and generates a filter document to find the
-	 * files to compare within those parameters.
+	 * Takes in a single path input and generates a series of queries between
+	 * the subdirectories of the specified path.
 	 * <p>
 	 * <dl>
 	 * <dt>example path parameters:
@@ -88,13 +88,16 @@ public class QueryFunctions extends MongoManager {
 	 * </p>
 	 * <p>
 	 * <dl>
-	 * <dt>example queries:<p>
+	 * <dt>example queries:
+	 * <p>
 	 * <dd>dev1/fabric2/node1
 	 * <dd>dev1/fabric2/node2
-	 * </p><p>
+	 * </p>
+	 * <p>
 	 * <dd>dev1/fabric2/node1
 	 * <dd>dev1/fabric2/node3
-	 * </p><p>
+	 * </p>
+	 * <p>
 	 * <dd>dev1/fabric2/node2
 	 * <dd>dev1/fabric2/node3
 	 * </dl>
@@ -103,9 +106,12 @@ public class QueryFunctions extends MongoManager {
 	 * @param path
 	 *            the path containing the subdirectories being compared against
 	 *            each other
+	 * @return a String representing the status of the query: null if
+	 *         successful, else error message
 	 */
-	public void generateInternalQueries(String path) {
+	public String generateInternalQueries(String path) {
 
+		// cleans up path input for processing
 		if (path.charAt(0) == '/') {
 			path = path.substring(1);
 		}
@@ -113,39 +119,56 @@ public class QueryFunctions extends MongoManager {
 			path = path.substring(0, path.length() - 1);
 		}
 
-		// given directory, populates List with all sub-directories
-		Set<String> dirSet = new HashSet<>();
-		String[] arr = path.split("/");
-		Document filter = new Document();
-		for (int i = 0; i < arr.length; i++) {
-			if (!arr[i].equals("*")) {
-				filter.append(genericPath[i], arr[i]);
-			}
-		}
-		MongoCursor<Document> cursor = collection.find(filter).iterator();
-		while (cursor.hasNext()) {
-			Document doc = cursor.next();
-			String loc = "";
-			for (int i = 0; i <= arr.length; i++) {
-				loc += doc.getString(genericPath[i]) + "/";
-			}
-			dirSet.add(loc.substring(0, loc.length() - 1));
-		}
+		// generates filter and verifies that a directory is being queried
 		ArrayList<String> subdirs = new ArrayList<>();
-		for (String subdir : dirSet) {
+		Document filter = generateFilter(path);
+		if (filter.get("filename") != null) {
+			return "[ERROR] Internal queries must be at a directory level" + "(i.e. environment, fabric, or node).\n";
+		}
+
+		// rebuilds path (in case of wildcard extensions)
+		String loc = "";
+		for (int j = 0; j < genericPath.length; j++) {
+			if (filter.get(genericPath[j]) != null) {
+				loc += filter.getString(genericPath[j]) + "/";
+			}
+		}
+
+		// retrieves all the subdirectories of the path
+		MongoCursor<String> cursor = null;
+		for (int i = 0; i < reversePath.length; i++) {
+			if (filter.get(reversePath[i]) != null) {
+				cursor = collection.distinct(reversePath[i - 1], filter, String.class).iterator();
+				break;
+			}
+		}
+
+		// adds all individual paths to dirSet
+		while (cursor.hasNext()) {
+			String subdir = loc + cursor.next();
+			if (filter.get("extension") != null) {
+				for (int i = subdir.split("/").length - 1; i < genericPath.length; i++) {
+					subdir += "/*";
+				}
+				subdir = subdir.substring(0, subdir.length());
+				subdir += "." + filter.get("extension");
+			}
 			subdirs.add(subdir);
 		}
+
 		if (subdirs.size() < 2) {
-			System.err.println("\n[ERROR] Directory must contain at least 2 files or subdirectories.\n");
-			return;
+			return "\n[ERROR] Directory must contain at least 2 files or subdirectories."
+					+ "\n\tOnly matching subdirectory found: " + subdirs.get(0) + "\n";
 		}
 
 		// query each unique pair of files within List
+		String status = "";
 		for (int i = 0; i < subdirs.size() - 1; i++) {
 			for (int j = i + 1; j < subdirs.size(); j++) {
-				addQuery(subdirs.get(i), subdirs.get(j));
+				status += addQuery(subdirs.get(i), subdirs.get(j));
 			}
 		}
+		return status;
 	}
 
 	/**
@@ -156,23 +179,26 @@ public class QueryFunctions extends MongoManager {
 	 * @param pathR
 	 *            the other path being compared
 	 */
-	public void addQuery(String pathL, String pathR) {
-		Document[] filters = generateFilters(pathL, pathR);
-		if (filters == null) {
-			return;
+	public String addQuery(String pathL, String pathR) {
+
+		if (pathL.split("/").length != pathR.split("/").length) {
+			return "[ERROR] Paths must be at the same specified level.";
 		}
+
+		Document[] filters = { generateFilter(pathL), generateFilter(pathR) };
+		String status = "";
 		try {
 
 			// adds query filters to queryPairs
-			System.out.println("Looking for properties with attributes:");
+			status += "\n\t" + filters[0].toJson();
+			status += "\n\t" + filters[1].toJson();
+			status += "\n";
 			queryPairs.add(filters);
-			System.out.println("\t" + filters[0].toJson());
-			System.out.println("\t" + filters[1].toJson());
 
 			// adds lowest-level path difference to CSV header
 			String[] splitL = pathL.split("/");
 			String[] splitR = pathR.split("/");
-			for (int i = splitL.length-1; i >= 0; i--) {
+			for (int i = splitL.length - 1; i >= 0; i--) {
 				if (!splitL[i].equals(splitR[i])) {
 					filenames.add(splitL[i]);
 					filenames.add(splitR[i]);
@@ -181,12 +207,12 @@ public class QueryFunctions extends MongoManager {
 			}
 
 		} catch (Exception e) {
-			System.err.println("Unable to add properties with attributes:");
+			status += "\nUnable to add properties with attributes:";
 			for (Document doc : filters) {
-				System.err.println("\t" + doc.toJson());
+				status += "\t" + doc.toJson();
 			}
-			e.printStackTrace();
 		}
+		return status;
 	}
 
 	/**
@@ -196,49 +222,33 @@ public class QueryFunctions extends MongoManager {
 	 * <dl>
 	 * <dt>example path parameters:
 	 * <dd>dev1/fabric2
-	 * <dd>dev2/fabric2
 	 * </dl>
 	 * </p>
 	 * <p>
 	 * <dl>
-	 * <dt>example filters:
+	 * <dt>example filter:
 	 * <dd>{environment: "dev1", fabric: "fabric2"}
-	 * <dd>{environment: "dev2", fabric: "fabric2"}
 	 * </dl>
 	 * </p>
 	 * 
-	 * @param pathL
-	 *            the first path being compared
-	 * @param pathR
-	 *            the other path being compared
-	 * @return the generated filters
+	 * @param path
+	 *            the path for which a filter is being generated
+	 * @return the generated filter
 	 */
-	private Document[] generateFilters(String pathL, String pathR) {
-		String[] arrL = pathL.split("/");
-		String[] arrR = pathR.split("/");
-		if (arrL.length != arrR.length) {
-			System.err.println("ERROR: Paths must be at the same specified level.");
-			return null;
+	private Document generateFilter(String path) {
+		while (path.indexOf("//") != -1) {
+			path.replace("//", "/");
 		}
-		Document filterL = new Document();
-		Document filterR = new Document();
-		System.out.println();
-		for (int i = 0; i < arrL.length; i++) {
-			if (arrL[i].charAt(0) != ('*')) {
-				filterL.append(genericPath[i], arrL[i]);
-			} else if (arrL[i].startsWith("*.")) {
-				filterL.append("extension", arrL[i].substring(2));
+		String[] split = path.split("/");
+		Document filter = new Document();
+		for (int i = 0; i < split.length; i++) {
+			if (split[i].charAt(0) != ('*')) {
+				filter.append(genericPath[i], split[i]);
+			} else if (split[i].startsWith("*.")) {
+				filter.append("extension", split[i].substring(2));
 			}
 		}
-		for (int i = 0; i < arrR.length; i++) {
-			if (arrR[i].charAt(0) != ('*')) {
-				filterR.append(genericPath[i], arrR[i]);
-			} else if (arrR[i].startsWith("*.")) {
-				filterR.append("extension", arrR[i].substring(2));
-			}
-		}
-		Document[] filters = { filterL, filterR };
-		return filters;
+		return filter;
 	}
 
 	/**
@@ -339,8 +349,7 @@ public class QueryFunctions extends MongoManager {
 			tables.add(table);
 
 		}
-		System.out.println(
-				"\nFound " + queried + " properties and " + "excluded " + excluded + " properties matching query.");
+		System.out.println("Found " + queried + " properties and excluded " + excluded + " properties matching query.");
 
 		// if single query, sets column filenames to query comparison
 		String left = "root";
