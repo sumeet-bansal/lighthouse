@@ -37,6 +37,9 @@ public class Access {
 
 	/**
 	 * Takes command-line arguments and delegates functionality as appropriate
+	 * 
+	 * @param args
+	 *            command-line arguments
 	 */
 	public static void main(String[] args) {
 
@@ -49,7 +52,7 @@ public class Access {
 		}
 
 		try {
-			
+
 			// startup
 			printWelcome();
 			System.out.println(help);

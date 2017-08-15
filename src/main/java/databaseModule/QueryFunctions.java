@@ -12,7 +12,7 @@ import com.mongodb.client.*;
  * Pulls queried data from MongoDB and compares key values.
  * 
  * @author ActianceEngInterns
- * @version 1.0
+ * @version 1.2
  */
 public class QueryFunctions extends MongoManager {
 
@@ -23,14 +23,15 @@ public class QueryFunctions extends MongoManager {
 	private Set<Document> excludedProps = new HashSet<>();
 
 	/*
-	 * String[]: CSV row, formatted {file, key, value, file, key, value, key diff,
-	 * value diff}
+	 * String[]: CSV row, formatted {file, key, value, file, key, value, key
+	 * diff, value diff}
 	 * 
-	 * ArrayList<String>: a single table containing the entirety of a comparison
-	 * between queries
+	 * ArrayList<String[]>: a single table containing the entirety of a
+	 * comparison between queries
 	 * 
-	 * ArrayList<ArrayList<String>>: multiple tables, necessary due to how internal
-	 * queries generate several tables for each comparison between fabrics/nodes
+	 * ArrayList<ArrayList<String>>: multiple tables, necessary due to how
+	 * internal queries generate several tables for each comparison between
+	 * fabrics/nodes
 	 */
 	private ArrayList<ArrayList<String[]>> tables = new ArrayList<>();
 
@@ -56,9 +57,10 @@ public class QueryFunctions extends MongoManager {
 	/**
 	 * Getter method for the discrepancy statistics of a query.
 	 * 
-	 * @return the discrepancy statistics as an Integer[] where Integer[0] is the
-	 *         total number of differences in the keys of a query and Integer[1] is
-	 *         the total number of differences in the values of a query
+	 * @return the discrepancy statistics as an Integer[] where Integer[0] is
+	 *         the total number of differences in the keys of a query and
+	 *         Integer[1] is the total number of differences in the values of a
+	 *         query
 	 */
 	public Integer[] getDiscrepancies() {
 		if (discrepancies[0] != null && discrepancies[1] != null) {
@@ -73,36 +75,27 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Takes in a single path input and generates a series of queries between the
-	 * subdirectories of the specified path.
-	 * <p>
+	 * Takes in a single path input and generates a series of queries between
+	 * the subdirectories of the specified path.
 	 * <dl>
 	 * <dt>example path parameters:
 	 * <dd>dev1/fabric2
 	 * </dl>
-	 * </p>
-	 * <p>
 	 * <dl>
 	 * <dt>example queries:
-	 * <p>
 	 * <dd>dev1/fabric2/node1
 	 * <dd>dev1/fabric2/node2
-	 * </p>
-	 * <p>
 	 * <dd>dev1/fabric2/node1
 	 * <dd>dev1/fabric2/node3
-	 * </p>
-	 * <p>
 	 * <dd>dev1/fabric2/node2
 	 * <dd>dev1/fabric2/node3
 	 * </dl>
-	 * </p>
 	 * 
 	 * @param path
-	 *            the path containing the subdirectories being compared against each
-	 *            other
-	 * @return a String representing the status of the query: null if successful,
-	 *         else error message
+	 *            the path containing the subdirectories being compared against
+	 *            each other
+	 * @return a String representing the status of the query: null if
+	 *         successful, else error message
 	 */
 	public String generateInternalQueries(String path) {
 
@@ -150,7 +143,7 @@ public class QueryFunctions extends MongoManager {
 			}
 			subdirs.add(subdir);
 		}
-		
+
 		if (subdirs.isEmpty()) {
 			return "\n[ERROR] No matching properties found.\n";
 		}
@@ -180,7 +173,8 @@ public class QueryFunctions extends MongoManager {
 	 * @param pathR
 	 *            the other path being compared
 	 * 
-	 * @return a String containing any filters throwing exceptions (empty if none)
+	 * @return a String containing any filters throwing exceptions (empty if
+	 *         none)
 	 */
 	public String addQuery(String pathL, String pathR) {
 
@@ -219,26 +213,22 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Private helper method. Given path inputs, verifies the validity of the inputs
-	 * and generates filters for the inputs.
-	 * <p>
+	 * Private helper method. Given path inputs, verifies the validity of the
+	 * inputs and generates filters for the inputs.
 	 * <dl>
 	 * <dt>example path parameters:
 	 * <dd>dev1/fabric2
 	 * </dl>
-	 * </p>
-	 * <p>
 	 * <dl>
 	 * <dt>example filter:
 	 * <dd>{environment: "dev1", fabric: "fabric2"}
 	 * </dl>
-	 * </p>
 	 * 
 	 * @param path
 	 *            the path for which a filter is being generated
-	 * @return the generated filter
+	 * @return the generated filter as a BSON Document
 	 */
-	private Document generateFilter(String path) {
+	private static Document generateFilter(String path) {
 		while (path.indexOf("//") != -1) {
 			path.replace("//", "/");
 		}
@@ -301,8 +291,8 @@ public class QueryFunctions extends MongoManager {
 
 	/**
 	 * Retrieves filtered files from the MongoDB database, excludes files as
-	 * appropriate, compares the remaining queried files, and adds the results to a
-	 * CSV file.
+	 * appropriate, compares the remaining queried files, and adds the results
+	 * to a CSV file.
 	 * 
 	 * @return true if query is valid, false if not
 	 */
@@ -352,7 +342,12 @@ public class QueryFunctions extends MongoManager {
 			tables.add(table);
 
 		}
-		
+
+		if (queried == 0) {
+			System.out.println("[ERROR] No matching properties found\n");
+			return false;
+		}
+
 		System.out.println("Found " + queried + " properties and excluded " + excluded + " properties matching query.");
 
 		// if single query, sets column filenames to query comparison
@@ -386,12 +381,14 @@ public class QueryFunctions extends MongoManager {
 	 * Compares Documents and adds the comparison outcomes to the table.
 	 * 
 	 * @param propsL
-	 *            a List of Documents representing every property in the left side
-	 *            of the query
+	 *            a List of Documents representing every property in the left
+	 *            side of the query
 	 * @param propsR
-	 *            a List of Documents representing every property in the right side
-	 *            of the query
-	 * @return the table
+	 *            a List of Documents representing every property in the right
+	 *            side of the query
+	 * @return the table as an ArrayList of String[] containing the entirety of
+	 *         a comparison between queries, with each String[] representing a
+	 *         CSV row
 	 */
 	private ArrayList<String[]> createTable(ArrayList<Document> propsL, ArrayList<Document> propsR) {
 
@@ -468,7 +465,8 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Writes stored data to a CSV file with a user-specified name and directory.
+	 * Writes stored data to a CSV file with a user-specified name and
+	 * directory.
 	 * 
 	 * @param filename
 	 *            the user-specified filename
@@ -534,8 +532,8 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Creates a default name for the CSV file based on the lowest-level metadata
-	 * provided in the query.
+	 * Creates a default name for the CSV file based on the lowest-level
+	 * metadata provided in the query.
 	 * 
 	 * @return the default CSV name
 	 */
@@ -560,6 +558,8 @@ public class QueryFunctions extends MongoManager {
 	 *            the key or value being found
 	 * @param location
 	 *            a specific path within which to find the key
+	 * @param type
+	 *            0 for key, 1 for value
 	 * @return a List of Strings representing each key location and value
 	 */
 	public static ArrayList<String> findProp(String input, String location, int type) {
@@ -574,7 +574,7 @@ public class QueryFunctions extends MongoManager {
 		// sets up filter for given property
 		Document filter = new Document();
 		if (location != null) {
-			filter = generatePathFilter(location);
+			filter = generateFilter(location);
 		}
 		filter.append(searchFor, input);
 
@@ -617,13 +617,17 @@ public class QueryFunctions extends MongoManager {
 	}
 
 	/**
-	 * Finds every key or value in the database that contains a user-given pattern.
+	 * Finds every key or value in the database that contains a user-given
+	 * pattern.
 	 * 
 	 * @param pattern
 	 *            substring being searched for
+	 * @param type
+	 *            0 for key, 1 for value
 	 * @return a Set of property keys or values that contain the pattern
 	 */
 	public static Set<String> grep(String pattern, int type) {
+
 		// determine search type (key or value)
 		String searchFor;
 		if (type == 0) {
@@ -644,23 +648,6 @@ public class QueryFunctions extends MongoManager {
 			}
 		}
 		return dataset;
-	}
-
-	/**
-	 * Private helper method. Generates mongo filters for a given path
-	 * 
-	 * @param path
-	 * @return
-	 */
-	private static Document generatePathFilter(String path) {
-		Document filter = new Document();
-		String[] metadata = path.split("/");
-		for (int i = 0; i < metadata.length; i++) {
-			if (!metadata[i].equals("*")) {
-				filter.append(genericPath[i], metadata[i]);
-			}
-		}
-		return filter;
 	}
 
 }

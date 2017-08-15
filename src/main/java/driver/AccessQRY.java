@@ -9,7 +9,7 @@ import databaseModule.*;
  * Runs the QueryFunctions from the command line.
  * 
  * @author ActianceEngInterns
- * @version 1.1
+ * @version 1.2
  */
 public class AccessQRY {
 
@@ -31,25 +31,31 @@ public class AccessQRY {
 			+ "\n      - Type 'exit' at any time to exit the program\n";
 
 	/**
-	 * Prints an error message that help users with 'find' and 'grep' commands
+	 * Returns an error message that helps users with 'find' and 'grep' commands.
 	 * 
 	 * @param term
 	 *            find or grep
+	 * @return helper message for usage based on functionality the user is trying to
+	 *         use
 	 */
 	private static String searchHelp(String term) {
-		String str = "\n - Use the flag -k to search for keys or the flag -v for values";
+		String header;
+		String message = new String();
 		if (term.equals("grep")) {
-			str += ("\n\n - Usage: lighthouse-v" + version + " # Query $ grep (-k / -v) <pattern>\n");
+			header = "\nUsage of 'grep'";
+			message += ("\n\n - Usage: lighthouse-v" + version + " # Query $ grep (-k / -v) <pattern>\n");
 		} else {
-			str += ("\n - Use flag -l for location parameter to find results only in a certain location (optional)"
+			header = "\nUsage of 'find'";
+			message += ("\n - Use flag -l for location parameter to find results only in a certain location (optional)"
 					+ "\n\n - Usage: lighthouse-v" + version
 					+ " # Query $ find (-k / -v) <key or value name> [-l (location path)]\n");
 		}
-		return str;
+		header += "\n\n - Use the flag -k to search for keys or the flag -v for values";
+		return header + message;
 	}
 
 	/**
-	 * Handles user input and delegates functionality based on first command
+	 * Handles user input and delegates functionality based on first command.
 	 * 
 	 * @param args
 	 *            command-line arguments
@@ -66,7 +72,7 @@ public class AccessQRY {
 			}
 		}
 
-		// consolidate 'find' and 'grep' input into search query
+		// consolidates 'find' and 'grep' input into search query
 		ArrayList<String> searchQuery = new ArrayList<>();
 		if (searchCommand) {
 			searchQuery = generateSearchQuery(args);
@@ -76,34 +82,38 @@ public class AccessQRY {
 			}
 		}
 
-		// handle command line input
+		// handles command line input
 		switch (args[0]) {
 		case "compare":
 			runComparison(args);
 			break;
 		case "find":
-			printSearchResults(searchQuery, "find");
-			break;
 		case "grep":
-			printSearchResults(searchQuery, "grep");
+			printSearchResults(searchQuery, args[0]);
 			break;
 		case "help":
 			System.out.println(help);
 			break;
 		default:
-			System.err.println(
-					"Command '" + args[0] + "' not recognized. Use the 'help' command for details on usage.\n");
+			System.err.println("Invalid input. Use the 'help' command for details on usage.");
 		}
 
 	}
 
 	/**
 	 * Checks if input for 'find' and 'grep' commands is valid and consolidates the
-	 * input into an ArrayList that can be used by printSearchResults()
+	 * input by type into an ArrayList that can be used by printSearchResults()
+	 * <dl>
+	 * <dt>Format of parsed ArrayList:
+	 * <dd>Name: searchQuery
+	 * <dd>- Index 0: flag (-k or -v for keys and values)
+	 * <dd>- Index 1: search term (can include spaces)
+	 * <dd>- Index 2 (if applicable): location
+	 * </dl>
 	 * 
 	 * @param args
 	 *            command-line arguments
-	 * @return command-line arguments parsed into an ArrayList by type
+	 * @return parsed ArrayList
 	 */
 	private static ArrayList<String> generateSearchQuery(String[] args) {
 		ArrayList<String> searchQuery = new ArrayList<String>();
@@ -112,19 +122,19 @@ public class AccessQRY {
 			return null;
 		}
 
-		// make sure user flags for keys or values
+		// makes sure user flags for keys or values
 		if (!(args[1].equals("-k") || args[1].equals("-v"))) {
 			return null;
 		} else {
 			searchQuery.add(args[1]);
 		}
 
-		// iterate through user input to determine search term and location, if given
+		// iterates through user input to determine search term and location (optional)
 		String searchTerm = "";
 		String location = "";
 		boolean hasLocation = false;
 
-		for (int i = 2; i < args.length; i++) { // TODO javadoc
+		for (int i = 2; i < args.length; i++) {
 			if (args[0].equals("find")) {
 				if (!hasLocation) {
 					if (args[i].equals("-l") && args.length > i + 1) {
@@ -140,6 +150,8 @@ public class AccessQRY {
 				searchTerm += args[i] + " ";
 			}
 		}
+
+		// adds term at index 1 and location at index 2 of searchQuery
 		searchTerm = searchTerm.substring(0, searchTerm.length() - 1);
 		searchQuery.add(searchTerm);
 		if (hasLocation) {
@@ -150,16 +162,16 @@ public class AccessQRY {
 
 	/**
 	 * Handles user input for 'find' / 'grep' commands and prints the results of
-	 * their search
+	 * their searches.
 	 * 
 	 * @param searchQuery
-	 *            parsed command-line arguemtns
+	 *            parsed command-line arguments
 	 * @param function
 	 *            "find" or "grep"
 	 */
 	private static void printSearchResults(ArrayList<String> searchQuery, String function) {
 
-		// Parse search query specifications
+		// parses search query specifications
 		String flag = searchQuery.get(0);
 		String searchTerm = searchQuery.get(1);
 		String location = null;
@@ -167,7 +179,7 @@ public class AccessQRY {
 			location = searchQuery.get(2);
 		}
 
-		// Check user given flag to see if user wants to search for keys or values
+		// checks user given flag to see if user wants to search for keys or values
 		int searchType = -1;
 		String propType = "";
 		if (flag.equals("-k")) {
@@ -178,7 +190,7 @@ public class AccessQRY {
 			propType = "value";
 		}
 
-		// Print matching properties based on function specification
+		// prints matching properties based on function specification
 		if (function.equals("find")) {
 			ArrayList<String> pathList = QueryFunctions.findProp(searchTerm, location, searchType);
 			if (pathList.size() == 0) {
@@ -215,7 +227,7 @@ public class AccessQRY {
 
 	/**
 	 * Handles user input for 'compare' command, prints the results of the
-	 * comparison, and writes them to a CSV file as appropriate
+	 * comparison, and writes them to a CSV file as appropriate.
 	 * 
 	 * @param args
 	 *            command-line arguments
@@ -223,7 +235,7 @@ public class AccessQRY {
 	private static void runComparison(String[] args) {
 		ArrayList<String> queried = new ArrayList<String>();
 		ArrayList<String> excluded = new ArrayList<String>();
-		
+
 		// uses generic 'arr' to populate appropriate List
 		int arg = 1;
 		ArrayList<String> arr = queried; // adds all args to 'queried'
@@ -259,7 +271,7 @@ public class AccessQRY {
 				return;
 			}
 		}
-		
+
 		// adds queries to QueryFunctions instance and compares
 		QueryFunctions c = new QueryFunctions();
 		String status = "";
@@ -277,7 +289,7 @@ public class AccessQRY {
 				System.err.println(status);
 			}
 		}
-		
+
 		for (int e = 0; e < excluded.size(); e++) {
 			c.exclude(excluded.get(e));
 		}
@@ -291,7 +303,7 @@ public class AccessQRY {
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
 		// gives a summary of the discrepancies in the query
-		String writeZero = ""; // holds user input
+		String writeZero = "";
 		int diffkey = c.getDiscrepancies()[0];
 		int diffval = c.getDiscrepancies()[1];
 		int difftotal = c.getDiscrepancies()[2];
@@ -318,7 +330,7 @@ public class AccessQRY {
 			System.out.println("Total discrepancies\t" + difftotal);
 		}
 
-		String result = ""; // holds user input
+		String result = "";
 		System.out.println();
 		while (true) {
 			System.out.print("Use default CSV file name " + c.getDefaultName() + "? (y/n): ");
@@ -329,7 +341,7 @@ public class AccessQRY {
 					c.clearQuery();
 					return;
 				} else if (result.equalsIgnoreCase("n")) {
-					
+
 					// checks if custom filename legal across OSes
 					while (true) {
 						System.out.print("Enter custom CSV file name: ");

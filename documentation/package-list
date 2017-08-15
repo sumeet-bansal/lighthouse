@@ -1,6 +1,4 @@
-cachingLayer
+databaseModule
 driver
 parser
 parserTester
-zookeeperModule
-zookeeperTester

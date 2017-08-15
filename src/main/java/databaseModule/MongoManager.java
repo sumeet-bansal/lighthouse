@@ -28,8 +28,6 @@ public class MongoManager {
 
 	/**
 	 * Checks connection and initializes the cache if successful.
-	 * 
-	 * @return Whether or not Mongo connection is successful.
 	 */
 	@SuppressWarnings("resource")
 	public static void connectToDatabase() {
