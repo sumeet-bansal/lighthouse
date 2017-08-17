@@ -85,6 +85,7 @@ public class Access {
 				case "quit":
 				case "exit":
 					s.close();
+					MongoManager.disconnect();
 					System.exit(0);
 					break;
 				}

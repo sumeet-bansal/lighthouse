@@ -16,10 +16,11 @@ import com.mongodb.client.*;
  */
 public class MongoManager {
 
-	static final String DATABASE_NAME = "LH_DB";
-	static final String COLLECTION_NAME = "PROPERTIES";
+	static final String DB_NAME = "LH_DB";
+	static final String COL_NAME = "LH_COL";
 	static final int DEFAULT_PORT = 27017;
 
+	protected static MongoClient client;
 	protected static MongoDatabase database;
 	protected static MongoCollection<Document> collection;
 
@@ -29,7 +30,6 @@ public class MongoManager {
 	/**
 	 * Checks connection and initializes the cache if successful.
 	 */
-	@SuppressWarnings("resource")
 	public static void connectToDatabase() {
 		System.out.println("\n[DATABASE MESSAGE] Connecting to database...");
 
@@ -37,18 +37,26 @@ public class MongoManager {
 		MongoClient ping = new MongoClient();
 		MongoDatabase db = ping.getDatabase("ping");
 		db.drop();
+		ping.close();
 
 		// connects with server
-		MongoClient mongoClient = new MongoClient("localhost", DEFAULT_PORT);
+		client = new MongoClient("localhost", DEFAULT_PORT);
 		System.out.println("[DATABASE MESSAGE] Server connection successful @ localhost:" + DEFAULT_PORT);
 
 		// connects with Database
-		database = mongoClient.getDatabase(DATABASE_NAME);
+		database = client.getDatabase(DB_NAME);
 
 		// creates Collection
-		collection = database.getCollection(COLLECTION_NAME);
+		collection = database.getCollection(COL_NAME);
 		System.out.println(
-				"[DATABASE MESSAGE] Database connection successful @ " + DATABASE_NAME + "." + COLLECTION_NAME);
+				"[DATABASE MESSAGE] Database connection successful @ " + DB_NAME + "." + COL_NAME);
+	}
+	
+	/**
+	 * Disconnects the Mongo connection safely.
+	 */
+	public static void disconnect() {
+		client.close();
 	}
 
 	/**
@@ -68,12 +76,12 @@ public class MongoManager {
 	 * @return the generated filter as a BSON Document
 	 */
 	public static Document generateFilter(String path) {
-		
+
 		// cleans up the path
 		while (path.indexOf("//") != -1) {
 			path.replace("//", "/");
 		}
-		
+
 		// splits the path by delimiter and adds metadata to filter
 		String[] split = path.split("/");
 		Document filter = new Document();
