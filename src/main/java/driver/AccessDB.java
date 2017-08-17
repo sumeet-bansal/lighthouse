@@ -84,6 +84,7 @@ public class AccessDB {
 				System.err.println(listHelp);
 			}
 			break;
+		case "man":
 		case "help":
 			System.out.println(help);
 			break;

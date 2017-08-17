@@ -221,24 +221,21 @@ public class QueryEngine extends MongoManager {
 	 * @param path
 	 *            the path of the file being blocked
 	 */
-	public void exclude(String path) {
-		try {
-			String[] arr = path.split("/");
-			Document filter = new Document();
+	public String exclude(String path) {
+		
+		// generates filter for exclusion
+		Document filter = generateFilter(path);
+		
+		// generates status message
+		String status = "\t" + filter.toJson();
 
-			System.out.println("\nExcluding properties with attributes:");
-			System.out.println("\t" + filter.toJson());
-
-			MongoCursor<Document> cursor = collection.find(filter).iterator();
-			while (cursor.hasNext()) {
-				excludedProps.add(cursor.next());
-			}
-
-		} catch (Exception e) {
-			System.out.println("Invalid 'exclude' input.");
-			e.printStackTrace();
+		// adds all exclusions to a Set to be cross-referenced during comparison
+		MongoCursor<Document> cursor = collection.find(filter).iterator();
+		while (cursor.hasNext()) {
+			excludedProps.add(cursor.next());
 		}
-		System.out.println();
+		
+		return status;
 	}
 
 	/**

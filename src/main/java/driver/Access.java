@@ -70,7 +70,7 @@ public class Access {
 				}
 				args = input.split(" ");
 
-				// switches branches
+				// switches modules or exits application
 				switch (args[0]) {
 				case "home":
 				case "db":
@@ -82,15 +82,17 @@ public class Access {
 						args[0] = "help";
 					}
 					break;
+				case "quit":
+				case "exit":
+					s.close();
+					System.exit(0);
+					break;
 				}
 
 				// executes commands for 'home' branch
 				if (branch.equals("home")) {
 					switch (args[0]) {
-					case "exit":
-						s.close();
-						System.exit(0);
-						break;
+					case "man":
 					case "help":
 						System.out.println(help);
 						break;

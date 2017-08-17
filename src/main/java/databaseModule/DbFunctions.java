@@ -17,12 +17,13 @@ import parser.*;
  * @version 2.0
  */
 public class DbFunctions extends MongoManager {
-	
+
 	/**
 	 * Feeds parsed Documents into the database.
 	 * 
 	 * @param path
-	 *            the path containing the files to be cached
+	 *            the path containing the files to be cached (i.e. a compatible
+	 *            directory structure, as outlined in the README and Dev Guide)
 	 */
 	public static void populate(String path) {
 		File folder = new File(path);
@@ -35,7 +36,7 @@ public class DbFunctions extends MongoManager {
 
 			LinkedList<Document> docs = new LinkedList<>();
 			Map<String, String> metadata = s.getMetadata();
-			
+
 			// feeds data of parsed file to Document
 			Map<String, Object> data = s.getData();
 			for (Map.Entry<String, Object> property : data.entrySet()) {
@@ -55,9 +56,9 @@ public class DbFunctions extends MongoManager {
 			for (Document doc : docs) {
 				collection.insertOne(doc);
 			}
-			
+
 		}
-		System.out.println("\nAdded " + count + " properties to database");
+		System.out.println("\nAdded " + count + " properties to database.\n");
 	}
 
 	/**
@@ -149,5 +150,5 @@ public class DbFunctions extends MongoManager {
 			}
 		}
 	}
-	
+
 }

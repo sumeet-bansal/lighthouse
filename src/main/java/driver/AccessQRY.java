@@ -55,6 +55,10 @@ public class AccessQRY {
 		// handles command line input	
 		switch (cmd) {
 		case "compare":
+			if (args == null) {
+				System.err.println("\n[ERROR] No queries specified.\n");
+				break;
+			}
 			runComparison(args);
 			break;
 		case "find":
@@ -63,6 +67,7 @@ public class AccessQRY {
 		case "grep":
 			parseGrep(args);
 			break;
+		case "man":
 		case "help":
 			System.out.println(help);
 			break;
@@ -227,9 +232,9 @@ public class AccessQRY {
 	private static void runComparison(String[] args) {
 		ArrayList<String> queried = new ArrayList<String>();
 		ArrayList<String> excluded = new ArrayList<String>();
-
+		
 		// uses generic 'arr' to populate appropriate List
-		int arg = 1;
+		int arg = 0;
 		ArrayList<String> arr = queried; // adds all args to 'queried'
 		while (arg < args.length) {
 
@@ -284,10 +289,18 @@ public class AccessQRY {
 		}
 
 		// adds exclusions to comparator
+		status = "";
 		for (int e = 0; e < excluded.size(); e++) {
-			comparator.exclude(excluded.get(e));
+			status += comparator.exclude(excluded.get(e)) + "\n";
 		}
-		
+		if (status != null) {
+			if (!status.contains("[ERROR]")) {
+				System.out.println("\nExcluding properties with attributes:\n" + status);
+			} else {
+				System.err.println(status);
+			}
+		}
+
 		// aborts if unable to compare
 		if (!comparator.compare()) {
 			return;
