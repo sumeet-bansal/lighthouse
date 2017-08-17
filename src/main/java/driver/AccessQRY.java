@@ -13,46 +13,23 @@ import databaseModule.*;
  */
 public class AccessQRY {
 
-	private static String version = Access.version;
 	private static String sep = File.separator;
 
-	private static String help = "\nQUERY MODULE -- POSSIBLE COMMANDS\n"
-			+ "\n'help'\n\tgoes to the help page for 'query'" + "\n\tUsage: lighthouse-" + version + " # Query $ help"
+	private static String help = "\nQUERY MODULE -- POSSIBLE COMMANDS"
+			+ "\n'help'\n\tgoes to the help page for 'query'"
+			+ "\n\tUsage: ~$ help"
 			+ "\n'compare'\n\tcompares the selected root directories and generates appropriate CSVs"
-			+ "\n\tUsage: lighthouse-v" + version + " # Query $ compare <path1> <path2>"
+			+ "\n\tUsage: ~$ compare <path1> <path2>"
 			+ "\n'exclude'\n\texcludes selected files or directories from the query"
-			+ "\n\tmust be used in conjunction with the 'compare' command" + "\n\tUsage: lighthouse-v" + version
-			+ " # Query $ compare <path1> <path2> exclude <path> <path> ... <path>"
-			+ "\n'grep'\n\tfinds every property key and value in the database that contains a given pattern"
-			+ "\n\tUsage: lighthouse-v" + version + " # Query $ grep -k / -v <pattern>"
-			+ "\n'find'\n\tprints the locations and values of a user-given key or value at a specified location, if given"
-			+ "\n\tUsage: lighthouse-v" + version + " # Query $ find -k / -v <key or value name> [-l (location path)]\n"
-			+ "\n      - Type the command for another module ('db', 'home') to go to that module"
-			+ "\n      - Type 'exit' at any time to exit the program\n";
-
-	/**
-	 * Returns an error message that helps users with 'find' and 'grep' commands.
-	 * 
-	 * @param term
-	 *            find or grep
-	 * @return helper message for usage based on functionality the user is trying to
-	 *         use
-	 */
-	private static String searchHelp(String term) {
-		String header;
-		String message = new String();
-		if (term.equals("grep")) {
-			header = "\nUsage of 'grep'";
-			message += ("\n\n - Usage: lighthouse-v" + version + " # Query $ grep (-k / -v) <pattern>\n");
-		} else {
-			header = "\nUsage of 'find'";
-			message += ("\n - Use flag -l for location parameter to find results only in a certain location (optional)"
-					+ "\n\n - Usage: lighthouse-v" + version
-					+ " # Query $ find (-k / -v) <key or value name> [-l (location path)]\n");
-		}
-		header += "\n\n - Use the flag -k to search for keys or the flag -v for values";
-		return header + message;
-	}
+			+ "\n\tmust be used in conjunction with the 'compare' command"
+			+ "\n\tUsage: ~$ compare <path1> <path2> exclude <path> <path> ... <path>"
+			+ "\n'grep'\n\tfinds every property key or value in the database matching a given pattern"
+			+ "\n\tUsage: ~$ grep [toggle] <pattern>"
+			+ "\n\ttoggles:\n\t\t-k\tto find matching keys\n\t\t-v\tto find matching values"
+			+ "\n'find'\n\tprints the locations and values of a key/value (can be toggled) within an optional location"
+			+ "\n\tUsage: ~$ find [toggle] [-l path] <pattern>"
+			+ "\n\ttoggles:\n\t\t-k\tto find matching keys\n\t\t-v\tto find matching values"
+			+ "\nType the name of another module to switch modules.\n";
 
 	/**
 	 * Handles user input and delegates functionality based on first command.
@@ -62,167 +39,182 @@ public class AccessQRY {
 	 */
 	public static void run(String[] args) {
 
-		// let user know if database is empty
-		boolean searchCommand = args[0].equals("grep") || args[0].equals("find");
-		if (searchCommand || args[0].equals("compare")) {
-			if (MongoManager.getCol().count() == 0) {
-				System.out.println("Database is empty. Switch to the database module using 'db' and use"
-						+ "\nthe 'populate' command to feed files to the database.\n");
-				return;
-			}
+		// warns that database is empty
+		if (MongoManager.getCol().count() == 0) {
+			System.err.println("[ERROR] Database is empty. Switch to the db module to feed files to the database.\n");
+			return;
 		}
 
-		// consolidates 'find' and 'grep' input into search query
-		ArrayList<String> searchQuery = new ArrayList<>();
-		if (searchCommand) {
-			searchQuery = generateSearchQuery(args);
-			if (searchQuery == null) {
-				System.err.println(searchHelp(args[0]));
-				return;
-			}
+		String cmd = args[0];
+		if (args.length > 1) {
+			args = Arrays.copyOfRange(args, 1, args.length);
+		} else {
+			args = null;
 		}
 
-		// handles command line input
-		switch (args[0]) {
+		// handles command line input	
+		switch (cmd) {
 		case "compare":
 			runComparison(args);
 			break;
 		case "find":
+			parseFind(args);
+			break;
 		case "grep":
-			printSearchResults(searchQuery, args[0]);
+			parseGrep(args);
 			break;
 		case "help":
 			System.out.println(help);
 			break;
 		default:
-			System.err.println("Invalid input. Use the 'help' command for details on usage.");
+			System.err.println("Invalid input. Use the 'help' command for details on usage.\n");
 		}
 
 	}
-
+	
 	/**
-	 * Checks if input for 'find' and 'grep' commands is valid and consolidates the
-	 * input by type into an ArrayList that can be used by printSearchResults()
-	 * <dl>
-	 * <dt>Format of parsed ArrayList:
-	 * <dd>Name: searchQuery
-	 * <dd>- Index 0: flag (-k or -v for keys and values)
-	 * <dd>- Index 1: search term (can include spaces)
-	 * <dd>- Index 2 (if applicable): location
-	 * </dl>
+	 * Parses args into a format that can be fed as parameters to the `grep`
+	 * function.
 	 * 
 	 * @param args
 	 *            command-line arguments
-	 * @return parsed ArrayList
 	 */
-	private static ArrayList<String> generateSearchQuery(String[] args) {
-		ArrayList<String> searchQuery = new ArrayList<String>();
-
-		if (args.length < 3) {
-			return null;
+	static void parseGrep(String[] args) {
+		
+		String pattern = null;
+		int toggle = 0;
+		
+		// in case of no args
+		if (args == null) {
+			System.err.println("\n[ERROR] No pattern specified.\n");
+			return;
 		}
+		
+		// option parsing
+		for (int i = 0; i < args.length; i++) {
+			switch(args[i]) {
+			case "-k":
+			case "--key":
+				toggle = 0;		// toggle set to 0 for key
+				break;
+			case "-v":
+			case "--val":
+			case "--value":
+				toggle = 1;		// toggle set to 1 for value
+				break;
+			case "-l":
+			case "--loc":
+			case "--location":
+				
+				// location opts not supported for `grep`
+				System.err.println("\n[ERROR] Invalid option: " + args[i] + "\n");
+				return;
+				
+			default:
+				
+				// if pattern unassigned, assigns the first non-opt arg
+				pattern = pattern == null ? args[i] : pattern;
+				break;
 
-		// makes sure user flags for keys or values
-		if (!(args[1].equals("-k") || args[1].equals("-v"))) {
-			return null;
-		} else {
-			searchQuery.add(args[1]);
-		}
-
-		// iterates through user input to determine search term and location (optional)
-		String searchTerm = "";
-		String location = "";
-		boolean hasLocation = false;
-
-		for (int i = 2; i < args.length; i++) {
-			if (args[0].equals("find")) {
-				if (!hasLocation) {
-					if (args[i].equals("-l") && args.length > i + 1) {
-						hasLocation = true;
-						continue;
-					} else {
-						searchTerm += args[i] + " ";
-					}
-				} else {
-					location += args[i];
-				}
-			} else {
-				searchTerm += args[i] + " ";
 			}
 		}
-
-		// adds term at index 1 and location at index 2 of searchQuery
-		searchTerm = searchTerm.substring(0, searchTerm.length() - 1);
-		searchQuery.add(searchTerm);
-		if (hasLocation) {
-			searchQuery.add(location);
+		
+		// checks if no pattern found
+		if (pattern == null) {
+			System.err.println("\n[ERROR] No pattern specified.\n");
+			return;
 		}
-		return searchQuery;
+		
+		// prints CLI output
+		Set<String> matches = QueryFunctions.grep(pattern, toggle);
+		String type = toggle == 0 ? "key" : "value";
+		if (matches.size() == 0) {
+			System.out.println("No " + type + " matching \"" + pattern + "\" found in database.\n");
+		} else {
+			System.out.println("\nFound " + matches.size() + " matching " + type + "(s):");
+			for (String prop : matches) {
+				System.out.println(" - " + prop);
+			}
+			System.out.println();
+		}
 	}
-
+	
 	/**
-	 * Handles user input for 'find' / 'grep' commands and prints the results of
-	 * their searches.
+	 * Parses args into a format that can be fed as parameters to the `find`
+	 * function.
 	 * 
-	 * @param searchQuery
-	 *            parsed command-line arguments
-	 * @param function
-	 *            "find" or "grep"
+	 * @param args
+	 *            command-line arguments
 	 */
-	private static void printSearchResults(ArrayList<String> searchQuery, String function) {
-
-		// parses search query specifications
-		String flag = searchQuery.get(0);
-		String searchTerm = searchQuery.get(1);
-		String location = null;
-		if (function.equals("find") && searchQuery.size() > 2) {
-			location = searchQuery.get(2);
+	static void parseFind(String[] args) {
+		
+		String pattern = null, location = null;
+		int toggle = 0;
+		
+		// in case of no args
+		if (args == null) {
+			System.err.println("\n[ERROR] No pattern specified.\n");
+			return;
 		}
+		
+		// option parsing
+		for (int i = 0; i < args.length; i++) {
+			switch(args[i]) {
+			case "-k":
+			case "--key":
+				toggle = 0;		// toggle set to 0 for key
+				break;
+			case "-v":
+			case "--val":
+			case "--value":
+				toggle = 1;		// toggle set to 1 for value
+				break;
+			case "-l":
+			case "--loc":
+			case "--location":
+				if (i == args.length-2) {
+					System.err.println("[ERROR] location flag `-l` requires a location argument.");
+				} else {
+					
+					// if location unassigned, assigns the arg after -l flag
+					location = location == null ? args[++i] : location;
+					
+				}
+				break;
+			default:
+				
+				// if pattern unassigned, assigns the first non-opt arg
+				pattern = pattern == null ? args[i] : pattern;
+				break;
 
-		// checks user given flag to see if user wants to search for keys or values
-		int searchType = -1;
-		String propType = "";
-		if (flag.equals("-k")) {
-			searchType = 0; // search for keys
-			propType = "key";
+			}
+		}
+		
+		// checks if no pattern found
+		if (pattern == null) {
+			System.err.println("\n[ERROR] No pattern specified.\n");
+			return;
+		}
+		
+		String type = toggle == 0 ? "key" : "value";		// used for printing to CLI
+		ArrayList<String> matches = QueryFunctions.findProp(pattern, location, toggle);
+		
+		// prints CLI output
+		if (matches.size() == 0) {
+			type = toggle == 0 ? "Key" : "Value";
+			System.out.print("\n" + type + " \"" + pattern + "\" not found in database");
+			if (location != null) {
+				System.out.print(" at location " + location);
+			}
+			System.out.println(".\nUse the `grep` command to find relevant properties.\n");
 		} else {
-			searchType = 1; // search for values
-			propType = "value";
-		}
-
-		// prints matching properties based on function specification
-		if (function.equals("find")) {
-			ArrayList<String> pathList = QueryFunctions.findProp(searchTerm, location, searchType);
-			if (pathList.size() == 0) {
-				System.out.print("\n" + propType + " \"" + searchTerm + "\" not found in database");
-				if (location != null) {
-					System.out.print(" at location " + location);
-				}
-				System.out.print(".\n");
-			} else {
-				String s = "s";
-				if (pathList.size() == 1) {
-					s = "";
-				}
-				System.out.println("\nFound " + pathList.size() + " instance" + s + " of " + propType + " \""
-						+ searchTerm + "\":");
-				for (String path : pathList) {
-					System.out.println(" - " + path);
-				}
+			System.out.println("\nFound " + matches.size() + " instance(s)" + " of " + type + " \""
+					+ pattern + "\":");
+			for (String path : matches) {
+				System.out.println(" " + path);
 			}
-		} else if (function.equals("grep")) {
-			Set<String> propSet = QueryFunctions.grep(searchTerm, searchType);
-			if (propSet != null && propSet.size() == 0) {
-				System.out.print("\nNo " + propType + " containing \"" + searchTerm + "\" found in database");
-				System.out.print(".\n");
-			} else {
-				System.out.println("\nFound " + propSet.size() + " matching " + propType + ":");
-				for (String prop : propSet) {
-					System.out.println(" - " + prop);
-				}
-			}
+			System.out.println();
 		}
-		System.out.println();
 	}
 
 	/**
@@ -253,12 +245,13 @@ public class AccessQRY {
 			arg++;
 		}
 
-		// invalid query parameters
+		// invalid query parameters (queries must be made in pairs unless internal)
 		if (queried.size() == 0 || queried.size() > 1 && queried.size() % 2 != 0) {
 			System.err.println(help);
 			return;
 		}
 
+		// verifies query and exclusion paths
 		for (int i = 0; i < queried.size(); i++) {
 			if (queried.get(i).split("/").length > 4) {
 				System.err.println("\n[ERROR] Invalid path input: " + queried.get(i) + "\n");
@@ -272,14 +265,14 @@ public class AccessQRY {
 			}
 		}
 
-		// adds queries to QueryFunctions instance and compares
-		QueryFunctions c = new QueryFunctions();
+		// adds queries to comparator
+		QueryFunctions comparator = new QueryFunctions();
 		String status = "";
 		if (queried.size() == 1) {
-			status += c.generateInternalQueries(queried.get(0));
+			status += comparator.generateInternalQueries(queried.get(0));
 		} else {
 			for (int q = 0; q < queried.size(); q += 2) {
-				status += c.addQuery(queried.get(q), queried.get(q + 1));
+				status += comparator.addQuery(queried.get(q), queried.get(q + 1));
 			}
 		}
 		if (status != null) {
@@ -290,10 +283,13 @@ public class AccessQRY {
 			}
 		}
 
+		// adds exclusions to comparator
 		for (int e = 0; e < excluded.size(); e++) {
-			c.exclude(excluded.get(e));
+			comparator.exclude(excluded.get(e));
 		}
-		if (!c.compare()) {
+		
+		// aborts if unable to compare
+		if (!comparator.compare()) {
 			return;
 		}
 
@@ -303,24 +299,26 @@ public class AccessQRY {
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
 		// gives a summary of the discrepancies in the query
-		String writeZero = "";
-		int diffkey = c.getDiscrepancies()[0];
-		int diffval = c.getDiscrepancies()[1];
-		int difftotal = c.getDiscrepancies()[2];
+		String write = "";
+		int diffkey = comparator.getDiscrepancies()[0];
+		int diffval = comparator.getDiscrepancies()[1];
+		int difftotal = comparator.getDiscrepancies()[2];
+		
+		// in case of identical configurations
 		if (difftotal == 0) {
 			System.out.println("\nNo discrepancies found in the directories given by the query.");
 			while (true) {
 				System.out.print("Would you still like to write a CSV report? (y/n): ");
 				try {
-					writeZero = input.readLine();
+					write = input.readLine();
 				} catch (IOException e) {
 					System.out.println("Illegal input!");
 					continue;
 				}
-				if (writeZero.equalsIgnoreCase("n")) {
+				if (write.equalsIgnoreCase("n")) {
 					System.out.println();
 					return;
-				} else if (writeZero.equalsIgnoreCase("y")) {
+				} else if (write.equalsIgnoreCase("y")) {
 					break;
 				}
 			}
@@ -333,12 +331,12 @@ public class AccessQRY {
 		String result = "";
 		System.out.println();
 		while (true) {
-			System.out.print("Use default CSV file name " + c.getDefaultName() + "? (y/n): ");
+			System.out.print("Use default CSV file name " + comparator.getDefaultName() + "? (y/n): ");
 			try {
 				result = input.readLine();
 				if (result.equalsIgnoreCase("y")) {
-					c.writeToCSV(writePath);
-					c.clearQuery();
+					comparator.writeToCSV(writePath);
+					comparator.clearQuery();
 					return;
 				} else if (result.equalsIgnoreCase("n")) {
 
@@ -347,6 +345,8 @@ public class AccessQRY {
 						System.out.print("Enter custom CSV file name: ");
 						String custom = input.readLine();
 						String legal = custom.replaceAll("[^a-zA-Z0-9_ .-]", "~");
+						
+						// if custom != legal, then custom had illegal characters
 						if (!custom.equals(legal)) {
 							System.out.println("\nERROR: illegal CSV file name.");
 							System.out.println("To prevent writing corrupted files, only letters,"
@@ -355,7 +355,7 @@ public class AccessQRY {
 						} else if (custom.equals("")) {
 							continue;
 						} else {
-							c.writeToCSV(custom, writePath);
+							comparator.writeToCSV(custom, writePath);
 							return;
 						}
 					}

@@ -5,6 +5,7 @@ import java.util.*;
 
 import org.bson.Document;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.client.MongoCursor;
 
 import databaseModule.*;
@@ -17,22 +18,26 @@ import databaseModule.*;
  */
 public class AccessDB {
 
-	private static String version = Access.version;
+	private static final String help = "\nDATABASE MODULE -- POSSIBLE COMMANDS"
+			+ "\n'help'\n\tgoes to the help page for 'db'"
+			+ "\n\tUsage: ~$ help"
+			+ "\n'populate'\n\tpopulates the database with the given files"
+			+ "\n\tUsage: ~$ populate <root directory>"
+			+ "\n'info'\n\tprovides info about the contents of the database"
+			+ "\n\tUsage: ~$ info"
+			+ "\n'list'\n\tprints the structure of the database at user-specified level"
+			+ "\n\tUsage: ~$ list <level (1-4)>"
+			+ "\n'clear'\n\tclears the database"
+			+ "\n\tUsage: ~$ clear"
+			+ "\nType the name of another module to switch modules.\n";
 
-	private static String help = "\nDATABASE MODULE -- POSSIBLE COMMANDS\n"
-			+ "\n'help'\n\tgoes to the help page for 'db'" + "\n\tUsage: lighthouse-v" + version + " # Database $ help"
-			+ "\n'populate'\n\tpopulates the database with the given files" + "\n\tUsage: lighthouse-v" + version
-			+ " # Database $ populate <root directory>" + "\n'clear'\n\tclears the database" + "\n\tUsage: lighthouse-v"
-			+ version + " # Database $ clear"
-			+ "\n'list'\n\tprints the structure of the database at user-specified level" + "\n\tUsage: lighthouse-v"
-			+ version + " # Database $ <level (1-4)>" + "\n'info'\n\tprovides info about the contents of the database"
-			+ "\n\tUsage: lighthouse-v" + version + " # Database $ info\n"
-			+ "\n      - Type the command for another module ('query', 'home') to go to that module"
-			+ "\n      - Type 'exit' at any time to exit the program\n";
-
-	private static String listHelp = "\nUsage: lighthouse-v" + version + " # Database $ list <level>"
-			+ "\nWhere <level> denotes the lowest level to which you would like to see the database structure."
-			+ "\nAccepted level values:" + "\n\t4 - environment" + "\n\t3 - fabric" + "\n\t2 - node" + "\n\t1 - file\n";
+	private static final String listHelp = "\nUsage: ~$ list <level>"
+			+ "\nNote: level denotes the preferred lowest level of the database structure."
+			+ "\nAccepted level values:"
+			+ "\n\t4 - environment"
+			+ "\n\t3 - fabric"
+			+ "\n\t2 - node"
+			+ "\n\t1 - file\n";
 
 	/**
 	 * Handles user input and delegates functionality based on first command
@@ -42,27 +47,30 @@ public class AccessDB {
 	 */
 	public static void run(String[] args) {
 		
-		/*
-		 * let the user know if the database needs to be populated in order to use
-		 * database functions
-		 */
+		// warns that database is empty
 		if (MongoManager.getCol().count() == 0 && !args[0].equals("populate") && !args[0].equals("help")) {
 			System.err.println("Database is empty. Use the 'populate' command to feed files to the database.\n");
 			return;
 		}
-
-		// handle command line input
+		
+		// handles command line input
 		switch (args[0]) {
 		case "populate":
-			if (args.length != 2) {
+
+			// checks if directory specified
+			if (args.length < 2) {
 				System.err.println(help);
 				return;
 			}
-			DbFunctions.populate(args[1]);
-			System.out.println();
+			
+			// adds all specified directories to database
+			for (int i = 1; i < args.length; i++) {
+				DbFunctions.populate(args[1]);
+			}
+			
 			break;
 		case "clear":
-			promptForClear();
+			promptClear();
 			break;
 		case "info":
 			printInfo();
@@ -80,21 +88,20 @@ public class AccessDB {
 			System.out.println(help);
 			break;
 		default:
-			System.err.println(
-					"Command '" + args[0] + "' not recognized. Use the 'help' command for details on usage.\n");
+			System.err.println("Invalid input. Use the 'help' command for details on usage.\n");
 		}
 
 	}
 
 	/**
-	 * Prompts user to see if they want to clear the database
-	 * 
+	 * Prompts user to verify that the database should be cleared. 
 	 */
-	private static void promptForClear() {
+	private static void promptClear() {
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 		String result = "";
-		System.out.println();
 
+		System.out.println();
+		
 		// repeatedly queries in case of invalid input
 		while (true) {
 			System.out.print("Clear entire database? (y/n): ");
@@ -105,8 +112,8 @@ public class AccessDB {
 			}
 			if (result.equalsIgnoreCase("y")) {
 				long n = MongoManager.clearDB();
-				System.out.println(
-						"\nCleared " + n + " properties from collection " + MongoManager.getCol().getNamespace());
+				MongoNamespace col = MongoManager.getCol().getNamespace();
+				System.out.println("\nCleared " + n + " properties from collection " + col + "\n");
 				break;
 			} else if (result.equalsIgnoreCase("n")) {
 				return;
@@ -114,31 +121,38 @@ public class AccessDB {
 				continue;
 			}
 		}
-		System.out.println();
 	}
 
 	/**
-	 * Checks if 'list' level input is valid
+	 * Checks if 'list' level input is valid.
 	 * 
 	 * @param args
-	 *            command-line arguemtns
-	 * @return validity of input
+	 *            command-line arguments
+	 * @return true if the level is valid, else false
 	 */
 	private static boolean validLevel(String[] args) {
 		int level;
+		
+		// verify that level is parseable int
 		try {
 			level = Integer.parseInt(args[1]);
 		} catch (Exception e) {
 			return false;
 		}
+
+		// verify that level falls within scope of database
 		if (level < 1 || level > 4) {
 			return false;
 		}
+		
 		return true;
 	}
 
 	/**
-	 * Prints an info page for the database
+	 * Details scope of database (i.e. number of environments, fabrics, nodes,
+	 * files).
+	 * 
+	 * TODO rewrite with tree implementation
 	 */
 	private static void printInfo() {
 		System.out.println("\nDatabase Info:");
