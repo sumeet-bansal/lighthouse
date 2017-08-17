@@ -52,6 +52,42 @@ public class MongoManager {
 	}
 
 	/**
+	 * Private helper method. Given path inputs, verifies the validity of the
+	 * inputs and generates filters for the inputs.
+	 * <dl>
+	 * <dt>example path parameters:
+	 * <dd>dev1/fabric2
+	 * </dl>
+	 * <dl>
+	 * <dt>example filter:
+	 * <dd>{environment: "dev1", fabric: "fabric2"}
+	 * </dl>
+	 * 
+	 * @param path
+	 *            the path for which a filter is being generated
+	 * @return the generated filter as a BSON Document
+	 */
+	public static Document generateFilter(String path) {
+		
+		// cleans up the path
+		while (path.indexOf("//") != -1) {
+			path.replace("//", "/");
+		}
+		
+		// splits the path by delimiter and adds metadata to filter
+		String[] split = path.split("/");
+		Document filter = new Document();
+		for (int i = 0; i < split.length; i++) {
+			if (split[i].charAt(0) != ('*')) {
+				filter.append(genericPath[i], split[i]);
+			} else if (split[i].startsWith("*.")) {
+				filter.append("extension", split[i].substring(2));
+			}
+		}
+		return filter;
+	}
+
+	/**
 	 * Clears all Documents from database.
 	 * 
 	 * @return the number of properties cleared from the database

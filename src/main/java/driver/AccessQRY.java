@@ -266,7 +266,7 @@ public class AccessQRY {
 		}
 
 		// adds queries to comparator
-		QueryFunctions comparator = new QueryFunctions();
+		QueryEngine comparator = new QueryEngine();
 		String status = "";
 		if (queried.size() == 1) {
 			status += comparator.generateInternalQueries(queried.get(0));
