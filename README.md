@@ -2,14 +2,10 @@
 Lighthouse is a suite of diagnostic tools developed by the 2017 summer engineering interns of Actiance's Alcatraz division for company-wide use. Lighthouse facilitates multi-team coordination by ensuring parity across server configurations and is a scalable, extensible framework for highly functional diagnostic tools.
 
 # Set Up
-Lighthouse can be run as a command-line executable:
-
-1. Ensure [MongoDB](https://www.mongodb.com/) is installed on the machine.
-
+__Lighthouse requires having [MongoDB](https://www.mongodb.com/) and JRE 1.8 installed__. It can be run as a command-line executable:
+1. Ensure [MongoDB](https://www.mongodb.com/) and JRE 1.8 is installed on the machine.
 2. Run `mongod.exe` to ensure a working MongoDB connection.
-
 3. Navigate to the directory containing the executable.
-
 4. Run the following command: `java -jar lighthouse-1.2.jar`. From here, the application help pages are sufficiently detailed to run Lighthouse.
 
 # Functionality (as of v1.2)
@@ -17,6 +13,9 @@ Lighthouse standardizes and parses various server configuration files (e.g. .pro
 
 # Architecture and Pipeline
 Lighthouse was developed entirely within Java and utilizes the MongoDB API significantly.
+
+### Crawler
+The `crawler` program acts as a complement to the 'lighthouse' diagnostic suite and can be found [here](https://github.com/sumeet-bansal/crawler).
 
 ### Parsing Files
 The modular design philosophy behind Lighthouse also shapes how the file parsing system works. Just as Lighthouse serves as a framework into which diagnostic tools can be plugged into, the file parsing system serves as a framework into which different types of file parsers can be plugged into. As of v1.2, Lighthouse currently supports .properties, .yaml, .config, .xml, and hosts files, as well as any variations of those (e.g. .prop, .yml).
@@ -48,6 +47,8 @@ is parsed into the following MongoDB Document:
 "extension" :   "properties"
 ```
 
+#### Adding Support for New File Types
+
 To create a parser for a new file type, extend the `AbstractParser` class, which contains supporting methods for any given parser. Within the new parser, the only code to be written is the `standardize()` method, which varies from file type to file type. Once this new parser is up and running, the parser and its file types must be added to the part of the `FileParser` class which delegates functionality to different parsers by file type. When this is all completed, the new parser will instantly be functional and Lighthouse as a whole will be able to parse the new file type, cache and query all files of that type in and from the database.
 
 Currently supported file types:
@@ -58,17 +59,19 @@ Currently supported file types:
 + hosts
 
 ### Editing the Database
+#### Populating the Database
 Lighthouse offers basic functionality for editing the MongoDB database: a database can be cleared or populated, and info about a database can be printed to the command line. Within MongoDB itself, the database is listed as `LH_DB` and collection as `LH_COL`. Detailed usage statements can be found in the application's help pages, but as an example, this command populates the database with a compatible root directory (as outlined in [the Parsing Files section](#parsing-files)):
 
 ```
-~ # Database $ populate /user/root
+lighthouse-v1.2: db $ populate /user/root
 Added 1017 properties to database.
 ```
 
+#### Verifying the Database
 The results of the previous command can be verified as such:
 
 ```
-~ # Database $ info
+lighthouse-v1.2: db $ info
 Database Info:
 
 Properties      1017
@@ -85,7 +88,7 @@ Environments:
 This outputs the number of properties, files, nodes, and fabrics within the database and lists the available environments. Lighthouse also supports finding specific properties within the database, as outlined in the ['Querying the Database' section](#querying-the-database). Since it is a basic MongoDB database, it can also easily be searched or modified through the Mongo application itself or some equivalent (e.g. [Robo 3T, formerly RoboMongo](https://robomongo.org/)). In order to further verify the structure of the database, Lighthouse supports a flexible 'list' command. This command allows the user to see the database folder structure at a specified lowest level between 1 and 4, where 1 represents the file level and 4 represents the environment level. For example, the following command details the database structure down to the node level:
 
 ```
-~ # Database $ list 2
+lighthouse-v1.2: db $ list 2
 
 DATABASE STRUCTURE @ NODE LEVEL
 
@@ -109,10 +112,13 @@ dev2
 ```
 
 ### Querying the Database
-The most robust and useful feature of Lighthouse is its advanced query function, which allows for efficient querying of the MongoDB database. By default, query results are written to CSVs in the working directory. The query function currently has two modes, comparing two levels and comparing a single level internally (i.e. comparing all its subdirectories against each other). "Levels" refers to the directory structure of the root directory and, by extension, the database. What this means functionally is that the advanced query function can compare not only files but also directories like nodes, fabrics, and entire environments. For example, the same command can compare not only files but also fabrics or environments:
+The most robust and useful feature of Lighthouse is its advanced query function, which allows for efficient querying of the MongoDB database. By default, query results are written to CSVs in the working directory. The query function currently has two modes, comparing two levels and comparing a single level internally (i.e. comparing all its subdirectories against each other). "Levels" refers to the directory structure of the root directory and, by extension, the database.
+
+#### Basic Queries
+Functionally, the advanced query function can compare not only files but also directories. For example, the same command can compare not only files but also fabrics of environments:
 
 ```
-~ # Query $ compare dev1/storm/common/server.properties dev2/storm/common/server.properties
+lighthouse-v1.2: query $ compare dev1/storm/common/server.properties dev2/storm/common/server.properties
 Looking for files with attributes:
         { "environment" : "dev1", "fabric" : "storm", "node" : "common", "filename" : "server.properties" }
         { "environment" : "dev2", "fabric" : "storm", "node" : "common", "filename" : "server.properties" }
@@ -126,7 +132,7 @@ Total discrepancies:    14
 Use default CSV file name lighthouse-report_2017-07-28_17.14.44_server.csv? (y/n): y
 Successfully wrote lighthouse-report_2017-07-28_17.14.44_server.csv to /user/Documents/lighthouse-reports
 
-~ # Query $ compare dev1 dev2
+lighthouse-v1.2: query $ compare dev1 dev2
 Looking for files with attributes:
         { "environment" : "dev1" }
         { "environment" : "dev2" }
@@ -141,10 +147,13 @@ Use default CSV file name lighthouse-report_2017-07-28_17.14.16_dev1_dev2.csv? (
 Successfully wrote lighthouse-report_2017-07-28_17.14.16_dev1_dev2.csv to /user/Documents/lighthouse-reports
 ```
 
-Both are equally valid commands but can be as precise or broad as needed. Additionally, Lighthouse supports wildcards (`*`) which allow for comparing all subdirectories or files in a directory and can be used to further finetune queries. For example, the following command can be used to exclusively compare all `server.properties` files across all fabrics of an environment:
+Both are equally valid commands but can be as precise or broad as needed.
+
+#### Wildcards
+Additionally, Lighthouse supports wildcards (`*`) which allow for comparing all subdirectories or files in a directory and can be used to further finetune queries. For example, the following command can be used to exclusively compare all `server.properties` files across all fabrics of an environment:
 
 ```
-~ # query $ compare dev1/*/common/server.properties dev2/*/common/server.properties
+lighthouse-v1.2: query $ compare dev1/*/common/server.properties dev2/*/common/server.properties
 Looking for files with attributes:
         { "environment" : "dev1", "node" : "common", "filename" : "server.properties" }
         { "environment" : "dev2", "node" : "common", "filename" : "server.properties" }
@@ -159,10 +168,11 @@ Use default CSV file name lighthouse-report_2017-07-28_17.14.44_server.csv? (y/n
 Successfully wrote lighthouse-report_2017-07-28_17.15.07_server.csv to /user/Documents/lighthouse-reports
 ```
 
+#### Internal Queries
 Lighthouse additionally supports "internal queries"--queries within the same directory (i.e. comparing all its subdirectories against each other). For example, the following command internally compares a fabric, i.e. compares all nodes within a single fabric against each other:
 
 ```
-# Query $ compare RWC-Dev/storm
+lighthouse-v1.2: query $ compare RWC-Dev/storm
 
 Looking for properties with attributes:
         { "environment" : "RWC-Dev", "fabric" : "storm", "node" : "n4" }
@@ -198,10 +208,11 @@ Use default CSV file name lighthouse-report_2017-08-03_13.43.05_n4_n3_n2_n1? (y/
 Successfully wrote lighthouse-report_2017-08-03_13.43.10_n4_n3_n2_n1.csv to /user/Documents/lighthouse-reports
 ```
 
+#### Exclusions
 To further finetune queries, specific files or directories can be excluded. For example, the following command can be used to compare two environments but exclude dev-specific information (found within `system.properties`):
 
 ```
-~ # Query $ compare dev1 dev2 exclude */*/*/system.properties
+lighthouse-v1.2: query $ compare dev1 dev2 exclude */*/*/system.properties
 Looking for files with attributes:
         { "environment" : "dev1" }
         { "environment" : "dev2" }
@@ -219,10 +230,11 @@ Use default CSV file name lighthouse-report_2017-08-03_13.08.07_dev1_dev2? (y/n)
 Successfully wrote lighthouse-report_2017-08-03_13.09.05_dev1_dev2.csv to /user/Documents/lighthouse-reports
 ```
 
+#### `find` and `grep`
 Lighthouse can also find all instances of a property within the database and supports a custom version of the 'grep' command to find specific property keys or values from just fragments of the key or value name. The `-k` and -`v` flags can be used to if the search is for keys or values. Both commands have optional location flags `-l` to narrow down the query. For example, the following commands find a specific property from the key fragment `report` and then search for all instances of that property within a specific location (in this case, `dev1/karaf`):
 
 ```
-~ # Query $ grep -k report
+lighthouse-v1.2: query $ grep -k report
 
 Found 11 matching property keys:
 report.kibana.index
@@ -237,7 +249,7 @@ report.savedsearch.scroll.page.size
 report.rollup.retry.limit
 report/http_protocol
 
-~ # Query $ find -k report.kibana.index -l dev1/karaf
+lighthouse-v1.2: query $ find -k report.kibana.index -l dev1/karaf
 
 Location: dev1/karaf
 
@@ -254,8 +266,8 @@ PATH: dev1/karaf/h2/server.properties/         VALUE: .kibanaold
     
 Further suggestions welcome. For information on contacting developers, please see ['Developers' section](#developers).
 
-# Accessibility
-The code can be found online on [the GitHub page for Lighthouse](https://github.com/sbansal21/AlcatrazDiagnosticSuite) and each release of Lighthouse can be found online on [the GitHub releases page for Lighthouse](https://github.com/sbansal21/AlcatrazDiagnosticSuite/releases). Lighthouse is currently on release v1.2 with future releases under development. 
+# Code and Build
+The code can be found online on [the GitHub page for Lighthouse](https://github.com/sumeet-bansal/lighthouse) and each release of Lighthouse can be found online on [the GitHub releases page for Lighthouse](https://github.com/sumeet-bansal/lighthouse/releases). Lighthouse is currently on release v1.2 with future releases under development. The repo is set up as a Maven project that can be easily compiled and built.
 
 # Developers
 + Sumeet Bansal (sbansal@actiance.com)
