@@ -64,7 +64,7 @@ Lighthouse offers basic functionality for editing the MongoDB database: a databa
 
 ```
 lighthouse-v1.2: db $ populate /user/root
-Added 1017 properties to database.
+Added 10170 properties to database.
 ```
 
 #### Verifying the Database
@@ -72,43 +72,62 @@ The results of the previous command can be verified as such:
 
 ```
 lighthouse-v1.2: db $ info
-Database Info:
 
-Properties      1017
-Files           423
-Nodes           21
-Fabrics         9
+There are currently 10170 properties in the database.
+
+environments    5 (see below)
+  > fabrics     21
+    - nodes     56
+      - files   423
 
 Environments:
- - dev1
- - dev2
- - dev3
+1. dev1
+2. dev2
+...
+5. dev5
 ```
 
-This outputs the number of properties, files, nodes, and fabrics within the database and lists the available environments. Lighthouse also supports finding specific properties within the database, as outlined in the ['Querying the Database' section](#querying-the-database). Since it is a basic MongoDB database, it can also easily be searched or modified through the Mongo application itself or some equivalent (e.g. [Robo 3T, formerly RoboMongo](https://robomongo.org/)). In order to further verify the structure of the database, Lighthouse supports a flexible 'list' command. This command allows the user to see the database folder structure at a specified lowest level between 1 and 4, where 1 represents the file level and 4 represents the environment level. For example, the following command details the database structure down to the node level:
+This outputs the number of properties, files, nodes, and fabrics within the database and lists the available environments. Lighthouse also supports finding specific properties within the database, as outlined in the ['Querying the Database' section](#querying-the-database). Since it is a basic MongoDB database, it can also easily be searched or modified through the Mongo application itself or some equivalent (e.g. [Robo 3T, formerly RoboMongo](https://robomongo.org/)). In order to further verify the structure of the database, Lighthouse supports a flexible 'list' command. This command allows the user to see the database directory structure at a specified branch and relative depth. For example, the following command details the database structure down to the node level:
 
 ```
-lighthouse-v1.2: db $ list 2
-
-DATABASE STRUCTURE @ NODE LEVEL
+lighthouse-v1.2: db $ list 3
 
 dev1
-  > karaf
-    - common
-    - h1
-    - h2
-  > hazelcast
-    - common
-    - h1
+ | karaf
+ |  | common
+ |  | h1
+ |  | h2
+ | hazelcast
+ |  | common
+ |  | h1
 dev2
-  > karaf
-    ...
-  > storm
-    - common
-    - h1
-    - h2
-    - h3
-    - h4
+ | karaf
+...
+ | storm
+ |  | common
+ |  | h1
+ |  | h2
+ |  | h3
+ |  | h4
+```
+
+The `list` command can additionally support greater depths or specific directories within the system. For example, the following command details the database structure down to the file level for the `RWC-Dev/storm` path:
+
+```
+lighthouse-v1.2: db $ list RWC-Dev/storm 2
+storm
+ | h1
+ |  | compression.whitelist
+ |  | compression.blacklist
+ |  | product-build.info
+ |  | server.properties
+ |  | storm.yaml
+ | ...
+ | h4
+ |  | compression.blacklist
+ |  | product-build.info
+ |  | server.properties
+ |  | storm.yaml
 ```
 
 ### Querying the Database
