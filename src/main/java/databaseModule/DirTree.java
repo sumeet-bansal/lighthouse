@@ -14,7 +14,7 @@ public class DirTree {
 	private DirNode root;
 
 	/**
-	 * Creates Nodes for the Tree.
+	 * Creates Nodes for the tree.
 	 * 
 	 * @author Sumeet Bansal
 	 * @version 1.0
@@ -161,10 +161,13 @@ public class DirTree {
 			throw new IllegalArgumentException("No such path.");
 		}
 
+		// returns names of children
 		DirNode node = findNode(root, path);
 		Set<String> children = new HashSet<>();
-		for (DirNode child : node.getChildren()) {
-			children.add(child.getName());
+		if (node != null) {
+			for (DirNode child : node.getChildren()) {
+				children.add(child.getName());
+			}
 		}
 		return children;
 	}
@@ -179,7 +182,8 @@ public class DirTree {
 	 * @return the specified DirNode, or null
 	 */
 	private DirNode findNode(DirNode curNode, String path) {
-
+		
+		// shifts the key and path one level down
 		String key = "";
 		if (path.indexOf("/") != -1) {
 			key = path.substring(0, path.indexOf("/"));
@@ -189,20 +193,24 @@ public class DirTree {
 			path = "";
 		}
 
+		// base case
 		if (key.equals("")) {
 			return curNode;
 		}
 
+		// recursive case
 		for (DirNode child : curNode.getChildren()) {
 			if (key.equals(child.getName())) {
 				return findNode(child, path);
 			}
 		}
+		
+		// no matching node found
 		return null;
 	}
 
 	/**
-	 * Helper method that adds a DirNode to the Dir recursively.
+	 * Helper method that adds a DirNode to the tree recursively.
 	 * 
 	 * @param curNode
 	 *            the current DirNode being checked
@@ -216,7 +224,7 @@ public class DirTree {
 			return;
 		}
 
-		// shiDirs the key and path one level down
+		// shifts the key and path one level down
 		String key;
 		if (path.indexOf("/") != -1) {
 			key = path.substring(0, path.indexOf("/"));
@@ -253,12 +261,15 @@ public class DirTree {
 			System.err.println("[ERROR] Invalid path.");
 			return;
 		}
-		
+
+		// purely for aesthetic purposes
 		String buffer = "";
 		if (node != root) {
 			System.out.println(node.getName());
 			buffer = " | ";
 		}
+
+		// calls on the recursive function
 		for (DirNode child : node.getChildren()) {
 			prnt(child, buffer, level);
 		}
@@ -274,12 +285,40 @@ public class DirTree {
 	 *            the number of levels to traverse
 	 */
 	private void prnt(DirNode node, String buffer, int level) {
+		
+		// base case
 		if (level == 0) {
 			return;
 		}
+		
+		// recursive case
 		System.out.println(buffer + node.getName());
 		for (DirNode child : node.getChildren()) {
-			prnt(child, buffer + " | ", level-1);
+			prnt(child, buffer + " | ", level - 1);
 		}
+	}
+
+	/**
+	 * Counts the number of nodes at a certain depth (useful for checking how many nodes/files/etc.
+	 * are currently in the database).
+	 * @param node
+	 *            the current dirNode in the traversal
+	 * @param level
+	 *            the number of levels remaining to traverse through
+	 * @return the number of nodes at a certain depth
+	 */
+	public int countNodes(DirNode node, int level) {
+		
+		// base case
+		if (level == 0) {
+			return 1;
+		}
+
+		// recursive case
+		int nodes = 0;
+		for (DirNode child : node.getChildren()) {
+			nodes += countNodes(child, level - 1);
+		}
+		return nodes;
 	}
 }

@@ -71,6 +71,7 @@ public class DbFunctions extends MongoManager {
 	 */
 	public static void printStructure(String path, int level) {
 		DirTree tree = popTree();
+		System.out.println();
 		tree.print(path, level);
 	}
 
@@ -95,56 +96,27 @@ public class DbFunctions extends MongoManager {
 	 * TODO rewrite with tree implementation
 	 */
 	public static void printInfo() {
-		System.out.println("\nDatabase Info:");
+		DirTree tree = popTree();
+		long properties = MongoManager.getCol().count();
+		int level = 1;
+		int envs = tree.countNodes(tree.getRoot(), level++);
+		int fabrics = tree.countNodes(tree.getRoot(), level++);
+		int nodes = tree.countNodes(tree.getRoot(), level++);
+		int files = tree.countNodes(tree.getRoot(), level++);
 
-		// count each type of metadata tag in database
-		long propCount = MongoManager.getCol().count();
-		int fileCount = 0;
-		int nodeCount = 0;
-		int fabCount = 0;
-		Set<String> envs = MongoManager.getEnvironments();
-		ArrayList<Document> props = new ArrayList<Document>();
-		MongoCursor<Document> cursor = MongoManager.getCol().find().iterator();
-		while (cursor.hasNext()) {
-			props.add(cursor.next());
-		}
-		for (int i = 0; i < envs.size(); i++) {
-			Set<String> fabs = new HashSet<>();
-			for (Document prop : props) {
-				String fab = prop.getString("fabric");
-				fabs.add(fab);
-			}
-			fabCount += fabs.size();
-			for (int j = 0; j < fabs.size(); j++) {
-				Set<String> nodes = new HashSet<>();
-				for (Document prop : props) {
-					String node = prop.getString("node");
-					nodes.add(node);
-				}
-				nodeCount += nodes.size();
-				for (int k = 0; k < nodes.size(); k++) {
-					Set<String> files = new HashSet<>();
-					for (Document prop : props) {
-						String file = prop.getString("filename");
-						files.add(file);
-					}
-					fileCount += files.size();
-				}
-			}
-		}
-
-		// print db count
-		System.out.println("\nProperties\t" + propCount);
-		System.out.println("Files\t\t" + fileCount);
-		System.out.println("Nodes\t\t" + nodeCount);
-		System.out.println("Fabrics\t\t" + fabCount);
+		System.out.println("\nThere are currently " + properties + " properties in the database.");
+		System.out.println("\nenvironments\t\t" + envs + " (see below)");
+		System.out.println(" > fabrics\t\t" + fabrics);
+		System.out.println("   - nodes\t\t" + nodes);
+		System.out.println("     - files\t\t" + files);
 
 		// print environments
-		if (propCount != 0) {
+		if (envs != 0) {
 			System.out.println("\nEnvironments:");
 		}
-		for (String env : envs) {
-			System.out.println("- " + env);
+		int i = 0;
+		for (String env : MongoManager.getEnvironments()) {
+			System.out.println(++i + ". " + env);
 		}
 		System.out.println("\nUse the 'list' command to see a detailed database structure.\n");
 	}
