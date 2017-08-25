@@ -92,10 +92,10 @@ public class DbFunctions extends MongoManager {
 	/**
 	 * Details scope of database (i.e. number of environments, fabrics, nodes,
 	 * files).
-	 * 
-	 * TODO rewrite with tree implementation
 	 */
 	public static void printInfo() {
+		
+		// calculates numbers of tree nodes at respective depths
 		DirTree tree = popTree();
 		long properties = MongoManager.getCol().count();
 		int level = 1;
