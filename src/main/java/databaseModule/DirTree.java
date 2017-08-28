@@ -22,7 +22,7 @@ public class DirTree {
 	protected class DirNode {
 
 		String name;
-		HashSet<DirNode> children;
+		Set<DirNode> children;
 
 		/**
 		 * Constructor for class DirNode, initializes all fields.
@@ -32,7 +32,7 @@ public class DirTree {
 		 */
 		public DirNode(String name) {
 			this.name = name;
-			children = new HashSet<>();
+			children = new LinkedHashSet<>();
 		}
 
 		/**
