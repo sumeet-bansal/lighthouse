@@ -36,7 +36,8 @@ public class DbFunctions extends MongoManager {
 
 			LinkedList<Document> docs = new LinkedList<>();
 			Map<String, String> metadata = s.getMetadata();
-
+			Document filter = new Document();
+			
 			// feeds data of parsed file to Document
 			Map<String, Object> data = s.getData();
 			for (Map.Entry<String, Object> property : data.entrySet()) {
@@ -53,6 +54,11 @@ public class DbFunctions extends MongoManager {
 				count++;
 			}
 
+			// overwrites existing properties with matching metadata
+			for (Map.Entry<String, String> entry : metadata.entrySet()) {
+				filter.append(entry.getKey(), entry.getValue());
+			}
+			collection.deleteMany(filter);
 			for (Document doc : docs) {
 				collection.insertOne(doc);
 			}
