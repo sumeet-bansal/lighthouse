@@ -82,12 +82,12 @@ public class QueryFunctions extends MongoManager {
 			if (path.length() < MAX_PATH_SPACING) {
 				spaces = MAX_PATH_SPACING - path.length();
 			}
-
-			// output line with path, key, and value
-			String line = path;
 			for (int i = 0; i < spaces; i++) {
 				path += " ";
 			}
+
+			// output line with path, key, and value
+			String line = path;
 			if (toggle == 1) {
 				line += "Key: " + prop.getString("key");
 			} else {
