@@ -9,7 +9,7 @@ import java.util.*;
  * @author ActianceEngInterns
  * @version 1.1
  */
-public class ParseHost extends AbstractParser {
+public class ParseHosts extends AbstractParser {
 
 	/**
 	 * Standardizes input File into a Map of keys and values.

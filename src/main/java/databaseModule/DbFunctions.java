@@ -26,8 +26,8 @@ public class DbFunctions extends MongoManager {
 	 *            as outlined in the README and Dev Guide)
 	 */
 	public static void populate(String path) {
-		File folder = new File(path);
-		DirectoryParser directory = new DirectoryParser(folder);
+		File root = new File(path);
+		DirectoryParser directory = new DirectoryParser(root);
 		directory.parseAll();
 		ArrayList<AbstractParser> parsedFiles = directory.getParsedData();
 		int count = 0;

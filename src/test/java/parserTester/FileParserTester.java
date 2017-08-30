@@ -19,8 +19,7 @@ public class FileParserTester {
 	public static void main(String[] args) {
 		String dir = System.getProperty("user.home") + "/workspace/diagnosticSuite/root/";
 		String path = dir + "jeremy/storm/common/server.properties";
-		File f = new File(path);
-		FileParser reader = new FileParser(f);
+		FileParser reader = new FileParser(new File(dir), new File(path));
 		reader.parseFile();
 		System.out.println(reader.getData());
 	}

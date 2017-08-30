@@ -14,7 +14,7 @@ public class DirectoryParser {
 
 	private File directory;
 	private ArrayList<AbstractParser> parsedData = new ArrayList<>();
-	private ArrayList<String> filePaths = new ArrayList<>();
+	private ArrayList<String> filepaths = new ArrayList<>();
 
 	private ArrayList<String[]> headers = new ArrayList<>();
 	private ArrayList<String> errors = new ArrayList<>();
@@ -45,13 +45,13 @@ public class DirectoryParser {
 	 * @param directory
 	 *            the directory being searched
 	 */
-	private void fileFinder(File directory) {
+	private void findFiles(File directory) {
 		try {
 			for (File file : directory.listFiles()) {
 				if (file.isDirectory()) {
-					fileFinder(file);
+					findFiles(file);
 				} else {
-					filePaths.add(file.getPath());
+					filepaths.add(file.getPath());
 				}
 			}
 		} catch (NullPointerException e) {
@@ -65,10 +65,10 @@ public class DirectoryParser {
 	 * internal ArrayList.
 	 */
 	public void parseAll() {
-		fileFinder(directory);
+		findFiles(directory);
 		System.out.println();
-		for (String path : filePaths) {
-			FileParser reader = new FileParser(new File(path));
+		for (String path : filepaths) {
+			FileParser reader = new FileParser(directory, new File(path));
 			if (reader.parseFile()) {
 				parsedData.add(reader.getData());
 				String[] fileWithHeader = { path, reader.getData().toString() };

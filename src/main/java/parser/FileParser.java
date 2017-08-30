@@ -9,6 +9,7 @@ import java.io.*;
  * @version 1.0
  */
 public class FileParser {
+	private File root;
 	private File input;
 	private AbstractParser data;
 	private String errorDescription;
@@ -19,7 +20,8 @@ public class FileParser {
 	 * @param f
 	 *            input File being read
 	 */
-	public FileParser(File f) {
+	public FileParser(File root, File f) {
+		this.root = root;
 		this.input = f;
 		instantiateParser();
 	}
@@ -29,27 +31,42 @@ public class FileParser {
 	 */
 	public void instantiateParser() {
 		try {
+			String rootpath = root.getAbsolutePath();
 			String filepath = input.getAbsolutePath();
-			String fileType = filepath.substring(filepath.lastIndexOf('.') + 1);
-			if (fileType.equalsIgnoreCase("config") || fileType.equalsIgnoreCase("conf")
-					|| fileType.equalsIgnoreCase("cfg")) {
+			String fileType = filepath.substring(filepath.lastIndexOf('.') + 1).toLowerCase();
+			switch(fileType) {
+			case "cfg":
+			case "conf":
+			case "config":
 				data = new ParseConf();
-			} else if (fileType.equalsIgnoreCase("yaml") || fileType.equalsIgnoreCase("yml")) {
+				break;
+			case "yml":
+			case "yaml":
 				data = new ParseYaml();
-			} else if (fileType.equalsIgnoreCase("properties") || fileType.equalsIgnoreCase("prop")
-					|| fileType.equalsIgnoreCase("env")) {
+				break;
+			case "env":
+			case "prop":
+			case "properties":
 				data = new ParseProp();
-			} else if (input.getName().equalsIgnoreCase("hosts")) {
-				data = new ParseHost();
-			} else if (fileType.equalsIgnoreCase("xml")) {
+				break;
+			case "hosts":
+				data = new ParseHosts();
+				break;
+			case "xml":
 				data = new ParseXML();
-			} else if (fileType.equalsIgnoreCase("info")) {
+				break;
+			case "info":
 				data = new ParseInfo();
-			} else if (fileType.equalsIgnoreCase("whitelist") || fileType.equalsIgnoreCase("blacklist")) {
+				break;
+			case "whitelist":
+			case "blacklist":
 				data = new ParseList();
-			} else if (fileType.equalsIgnoreCase("keyring") || fileType.equalsIgnoreCase("gateway")) {
+				break;
+			case "keyring":
+			case "gateway":
 				data = new ParseCephData();
-			} else {
+				break;
+			default:
 				String[] arr = filepath.split("\\.");
 				String backup = arr[arr.length - 1];
 				String end = backup.substring(backup.length() - 2, backup.length());
@@ -57,10 +74,10 @@ public class FileParser {
 						|| backup.equals("workingCopy") || backup.equals("mp"))) {
 					errorDescription = "unsupported: " + filepath;
 				}
-				data = null;
+				data = null;				
 			}
 			if (data != null) {
-				data.setPath(filepath);
+				data.setPath(rootpath, filepath);
 			}
 		} catch (Exception e) {
 			errorDescription = e.getMessage();
