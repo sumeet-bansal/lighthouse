@@ -105,10 +105,10 @@ public class DbFunctions extends MongoManager {
 		DirTree tree = popTree();
 		long properties = MongoManager.getCol().count();
 		int level = 1;
-		int envs = tree.countNodes(tree.getRoot(), level++);
-		int fabrics = tree.countNodes(tree.getRoot(), level++);
-		int nodes = tree.countNodes(tree.getRoot(), level++);
-		int files = tree.countNodes(tree.getRoot(), level++);
+		int envs = tree.countNodes(tree.getRoot(), level++, true);
+		int fabrics = tree.countNodes(tree.getRoot(), level++, true);
+		int nodes = tree.countNodes(tree.getRoot(), level++, true);
+		int files = tree.countNodes(tree.getRoot(), level++, false);
 
 		System.out.println("\nThere are currently " + properties + " properties in the database.");
 		System.out.println("\nenvironments\t\t" + envs + " (see below)");

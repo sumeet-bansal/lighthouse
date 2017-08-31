@@ -23,16 +23,20 @@ public class DirTree {
 
 		String name;
 		Set<DirNode> children;
+		boolean isDir;
 
 		/**
 		 * Constructor for class DirNode, initializes all fields.
 		 * 
 		 * @param name
 		 *            DirNode name
+		 * @param isDir
+		 *            boolean indicating if the DirNode represents a directory
 		 */
-		public DirNode(String name) {
+		public DirNode(String name, boolean isDir) {
 			this.name = name;
 			children = new LinkedHashSet<>();
+			this.isDir = isDir;
 		}
 
 		/**
@@ -51,6 +55,15 @@ public class DirTree {
 		 */
 		public Set<DirNode> getChildren() {
 			return children;
+		}
+
+		/**
+		 * Getter for DirNode type (i.e. either file or directory).
+		 * 
+		 * @return true if DirNode is a directory, false if a file
+		 */
+		public boolean isDirectory() {
+			return isDir;
 		}
 
 		/**
@@ -80,7 +93,7 @@ public class DirTree {
 	 */
 	public DirTree() {
 		this.nelems = 0;
-		this.root = new DirNode("root");
+		this.root = new DirNode("root", true);
 	}
 
 	/**
@@ -182,7 +195,7 @@ public class DirTree {
 	 * @return the specified DirNode, or null
 	 */
 	private DirNode findNode(DirNode curNode, String path) {
-		
+
 		// shifts the key and path one level down
 		String key = "";
 		if (path.indexOf("/") != -1) {
@@ -204,7 +217,7 @@ public class DirTree {
 				return findNode(child, path);
 			}
 		}
-		
+
 		// no matching node found
 		return null;
 	}
@@ -226,12 +239,15 @@ public class DirTree {
 
 		// shifts the key and path one level down
 		String key;
+		boolean isDir;
 		if (path.indexOf("/") != -1) {
 			key = path.substring(0, path.indexOf("/"));
 			path = path.substring(path.indexOf("/") + 1);
+			isDir = true;		// must be a directory
 		} else {
 			key = path;
 			path = null;
+			isDir = false;		// must be a file
 		}
 
 		// finds correct child and goes down another level
@@ -243,7 +259,7 @@ public class DirTree {
 		}
 
 		// code block only reachable if no matching children
-		DirNode child = new DirNode(key);
+		DirNode child = new DirNode(key, isDir);
 		curNode.addChild(child);
 		add(child, path);
 	}
@@ -285,12 +301,12 @@ public class DirTree {
 	 *            the number of levels to traverse
 	 */
 	private void prnt(DirNode node, String buffer, int level) {
-		
+
 		// base case
 		if (level == 0) {
 			return;
 		}
-		
+
 		// recursive case
 		System.out.println(buffer + node.getName());
 		for (DirNode child : node.getChildren()) {
@@ -307,17 +323,20 @@ public class DirTree {
 	 *            the number of levels remaining to traverse through
 	 * @return the number of nodes at a certain depth
 	 */
-	public int countNodes(DirNode node, int level) {
-		
+	public int countNodes(DirNode node, int level, boolean dirsOnly) {
+
 		// base case
 		if (level == 0) {
+			if (dirsOnly && !node.isDirectory()) {
+				return 0;
+			}
 			return 1;
 		}
 
 		// recursive case
 		int nodes = 0;
 		for (DirNode child : node.getChildren()) {
-			nodes += countNodes(child, level - 1);
+			nodes += countNodes(child, level - 1, dirsOnly);
 		}
 		return nodes;
 	}
