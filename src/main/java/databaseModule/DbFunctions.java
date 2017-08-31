@@ -5,6 +5,7 @@ import java.util.*;
 
 import org.bson.Document;
 
+import com.mongodb.*;
 import com.mongodb.client.MongoCursor;
 
 import parser.*;
@@ -22,29 +23,54 @@ public class DbFunctions extends MongoManager {
 	 * Feeds parsed Documents into the database.
 	 * 
 	 * @param path
-	 *            the path containing the files to be cached (i.e. a compatible directory structure,
-	 *            as outlined in the README and Dev Guide)
+	 *            the path of the root directory containing the files to be cached (i.e. a
+	 *            compatible directory structure, as outlined in the README and Dev Guide)
 	 */
 	public static void populate(String path) {
+
 		File root = new File(path);
 		DirectoryParser directory = new DirectoryParser(root);
 		directory.parseAll();
 		ArrayList<AbstractParser> parsedFiles = directory.getParsedData();
-		int count = 0;
 
-		for (AbstractParser s : parsedFiles) {
+		Map<Document, Set<String>> ignore = new HashMap<>();
+
+		// iterates through each parsed file
+		int count = 0;
+		for (AbstractParser parsedFile : parsedFiles) {
 
 			LinkedList<Document> docs = new LinkedList<>();
-			Map<String, String> metadata = s.getMetadata();
+			Map<String, String> metadata = parsedFile.getMetadata();
+			Map<String, Object> data = parsedFile.getData();
+
+			// sets up generic path filter for specific file
 			Document filter = new Document();
+			for (Map.Entry<String, String> entry : metadata.entrySet()) {
+				filter.append(entry.getKey(), entry.getValue());
+			}
 			
+			System.out.println();
+			System.out.println(filter.toJson());
+			System.out.println();
+
+			// if file is .ignore file, add to Map of BSON filters and properties to ignore
+			if (parsedFile.isInternal()) {
+				if (!ignore.containsKey(filter)) {
+					ignore.put(filter, new HashSet<String>());
+				}
+				for (Map.Entry<String, Object> property : data.entrySet()) {
+					ignore.get(filter).add(property.getKey());
+				}
+				continue;
+			}
+
 			// feeds data of parsed file to Document
-			Map<String, Object> data = s.getData();
 			for (Map.Entry<String, Object> property : data.entrySet()) {
 
 				Document doc = new Document(); // represents a single property
 				doc.append("key", property.getKey());
 				doc.append("value", property.getValue().toString());
+				doc.append("ignore", false);
 
 				// gets metadata of parsed file and tags Document accordingly
 				for (Map.Entry<String, String> entry : metadata.entrySet()) {
@@ -55,16 +81,58 @@ public class DbFunctions extends MongoManager {
 			}
 
 			// overwrites existing properties with matching metadata
-			for (Map.Entry<String, String> entry : metadata.entrySet()) {
-				filter.append(entry.getKey(), entry.getValue());
-			}
 			collection.deleteMany(filter);
-			for (Document doc : docs) {
-				collection.insertOne(doc);
+			if (!docs.isEmpty()) {
+				collection.insertMany(docs);
 			}
 
 		}
+
+		// sets the "ignore" field to true for each property specified in each .ignore file
+		for (Map.Entry<Document, Set<String>> entry : ignore.entrySet()) {
+			ignore(entry.getKey(), entry.getValue());
+		}
+
 		System.out.println("\nAdded " + count + " properties to database.\n");
+	}
+
+	/**
+	 * Given a BSON and set of properties, updates the "ignore" field for each property matching the
+	 * filter to true.
+	 * 
+	 * @param filter
+	 *            a BSON filter containing metadata specifying which properties to ignore
+	 * @param properties
+	 *            a Set containing the keys of each property to be ignored
+	 */
+	private static void ignore(Document filter, Set<String> properties) {
+
+		// creates Mongo query including each property
+		QueryBuilder qb = new QueryBuilder();
+		Iterator<String> iter = properties.iterator();
+		String[] ignore = new String[properties.size()];
+		int i = 0;
+		while (iter.hasNext()) {
+			ignore[i++] = iter.next();
+		}
+		qb.put("key").in(ignore);
+
+		// adds path filter to query
+		BasicDBObject query = new BasicDBObject();
+		query.putAll(qb.get());
+		query.putAll(filter);
+		query.remove("filename");
+		query.remove("path");
+		query.remove("extension");
+
+		System.out.println();
+		System.out.println(query.toJson());
+		System.out.println();
+		
+		// updates "ignore" field to true for all properties matching query
+		Document updated = new Document().append("$set", new Document().append("ignore", "true"));
+		collection.updateMany(query, updated);
+
 	}
 
 	/**
@@ -96,11 +164,10 @@ public class DbFunctions extends MongoManager {
 	}
 
 	/**
-	 * Details scope of database (i.e. number of environments, fabrics, nodes,
-	 * files).
+	 * Details scope of database (i.e. number of environments, fabrics, nodes, files).
 	 */
 	public static void printInfo() {
-		
+
 		// calculates numbers of tree nodes at respective depths
 		DirTree tree = popTree();
 		long properties = MongoManager.getCol().count();

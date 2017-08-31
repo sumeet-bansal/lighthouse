@@ -66,6 +66,10 @@ public class FileParser {
 			case "gateway":
 				data = new ParseCephData();
 				break;
+			case "ignore":
+				data = new ParseIgnore();
+				data.setInternal(true);
+				break;
 			default:
 				String[] arr = filepath.split("\\.");
 				String backup = arr[arr.length - 1];
@@ -104,10 +108,7 @@ public class FileParser {
 	 * @return the File-specific parser
 	 */
 	public AbstractParser getData() {
-		if (data != null) {
-			return data;
-		}
-		return null;
+		return data;
 	}
 
 	/**

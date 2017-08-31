@@ -11,10 +11,9 @@ import java.util.*;
  */
 public abstract class AbstractParser {
 
-	protected String root;
-	protected String path;
+	protected String root, path;
 	protected Map<String, Object> data = new LinkedHashMap<>();
-	protected boolean error = false;
+	protected boolean error, internal;
 
 	/**
 	 * Getter method for the parsed data.
@@ -73,6 +72,31 @@ public abstract class AbstractParser {
 	public final void setPath(String root, String path) {
 		this.root = cleanPath(root + "/");
 		this.path = cleanPath(path);
+	}
+
+	/**
+	 * Returns boolean indicating if file is internal to Lighthouse--i.e. a file that modifies
+	 * Lighthouse settings and is not meant to be added to the database to be queried. For example,
+	 * a .ignore file, which marks certain properties to be ignored, is not meant to be queried and
+	 * would therefore be an "internal" file.
+	 * 
+	 * @return true if a file is internal, else false
+	 */
+	public final boolean isInternal() {
+		return internal;
+	}
+
+	/**
+	 * Setter method for "internal" instance variable. A file is internal if it modifies Lighthouse
+	 * settings and is not meant to be added to the database to be queried. For example, a .ignore
+	 * file, which marks certain properties to be ignored, is not meant to be queried and would
+	 * therefore be an "internal" file.
+	 * 
+	 * @param bool
+	 *            true if a file is internal, else false
+	 */
+	public final void setInternal(boolean bool) {
+		internal = bool;
 	}
 
 	/**
