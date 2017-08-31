@@ -48,10 +48,6 @@ public class DbFunctions extends MongoManager {
 			for (Map.Entry<String, String> entry : metadata.entrySet()) {
 				filter.append(entry.getKey(), entry.getValue());
 			}
-			
-			System.out.println();
-			System.out.println(filter.toJson());
-			System.out.println();
 
 			// if file is .ignore file, add to Map of BSON filters and properties to ignore
 			if (parsedFile.isInternal()) {
@@ -70,7 +66,7 @@ public class DbFunctions extends MongoManager {
 				Document doc = new Document(); // represents a single property
 				doc.append("key", property.getKey());
 				doc.append("value", property.getValue().toString());
-				doc.append("ignore", false);
+				doc.append("ignore", "false");
 
 				// gets metadata of parsed file and tags Document accordingly
 				for (Map.Entry<String, String> entry : metadata.entrySet()) {
@@ -124,10 +120,6 @@ public class DbFunctions extends MongoManager {
 		query.remove("filename");
 		query.remove("path");
 		query.remove("extension");
-
-		System.out.println();
-		System.out.println(query.toJson());
-		System.out.println();
 		
 		// updates "ignore" field to true for all properties matching query
 		Document updated = new Document().append("$set", new Document().append("ignore", "true"));

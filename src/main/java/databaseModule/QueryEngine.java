@@ -394,26 +394,28 @@ public class QueryEngine extends MongoManager {
 					+ propR.getString("node") + "/" + propR.getString("filename");
 
 			// copies property values to Strings
-			String valueL = "null";
-			String valueR = "null";
-			if (propL.get("value") != null) {
-				valueL = propL.get("value").toString();
-			}
-			if (propR.get("value") != null) {
-				valueR = propR.get("value").toString();
-			}
+			String valueL = propL.get("value") != null ? propL.get("value").toString() : "null";
+			String valueR = propR.get("value") != null ? propR.get("value").toString() : "null";
+			
+			String ignoreL = propL.getString("ignore") != null ? propL.getString("ignore") : null;
+			String ignoreR = propR.getString("ignore") != null ? propR.getString("ignore") : null;
 
 			// compares and generates diff report
-			if (valueL != "null" && valueR != "null" && !valueL.equals(valueR)) {
+			if (ignoreL != null && ignoreR != null && ignoreL.equals("true") && ignoreR.equals("true")) {
+				String[] row = { pathL, key, valueL, pathR, key, valueR, "ignored", "ignored" };
+				table.add(row);
+			} else if (valueL != "null" && valueR != "null" && !valueL.equals(valueR)) {
 				String[] row = { pathL, key, valueL, pathR, key, valueR, "same", "different" };
 				table.add(row);
 				valDiffs++;
 			} else if (valueL == "null") {
-				String[] row = { "null", "null", "null", pathR, key, valueR, "missing in left", "missing in left" };
+				String[] row = { "null", "null", "null", pathR, key, valueR, "missing in left",
+						"missing in left" };
 				table.add(row);
 				keyDiffs++;
 			} else if (valueR == "null") {
-				String[] row = { pathL, key, valueL, "null", "null", "null", "missing in right", "missing in right" };
+				String[] row = { pathL, key, valueL, "null", "null", "null", "missing in right",
+						"missing in right" };
 				table.add(row);
 				keyDiffs++;
 			} else {
