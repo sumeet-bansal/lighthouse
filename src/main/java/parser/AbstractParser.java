@@ -41,17 +41,16 @@ public abstract class AbstractParser {
 		String relativePath = path.substring(root.length());
 		String[] split = relativePath.split("/");
 		String[] delimitedPath = new String[predictedPath.length];
-		for (int i = 0; i < split.length; i++) {
-			delimitedPath[delimitedPath.length - i - 1] = split[split.length - i - 1];
+		for (int i = 0; i < split.length - 1; i++) {
+			delimitedPath[i] = split[i];
 		}
+		delimitedPath[delimitedPath.length - 1] = split[split.length - 1];
 
 		// goes through arrays and adds metadata if not null
 		Map<String, String> metadata = new LinkedHashMap<>();
 		for (int i = predictedPath.length - 1; i >= 0; i--) {
 			if (delimitedPath[i] != null) {
 				metadata.put(predictedPath[i], delimitedPath[i]);
-			} else {
-				break;
 			}
 		}
 		metadata.put("path", relativePath);
