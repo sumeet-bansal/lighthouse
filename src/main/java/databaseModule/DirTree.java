@@ -165,8 +165,7 @@ public class DirTree {
 	 * @throws IllegalArgumentException
 	 *             if the path does not exist
 	 */
-	public Set<String> getChildren(String path)
-			throws NullPointerException, IllegalArgumentException {
+	public Set<String> getChildren(String path) throws NullPointerException, IllegalArgumentException {
 		if (path == null) {
 			throw new NullPointerException("The path is null.");
 		}
@@ -243,11 +242,11 @@ public class DirTree {
 		if (path.indexOf("/") != -1) {
 			key = path.substring(0, path.indexOf("/"));
 			path = path.substring(path.indexOf("/") + 1);
-			isDir = true;		// must be a directory
+			isDir = true; // must be a directory
 		} else {
 			key = path;
 			path = null;
-			isDir = false;		// must be a file
+			isDir = false; // must be a file
 		}
 
 		// finds correct child and goes down another level
@@ -321,6 +320,9 @@ public class DirTree {
 	 *            the current dirNode in the traversal
 	 * @param level
 	 *            the number of levels remaining to traverse through
+	 * @param dirsOnly
+	 *            true to only report tree nodes representing directories, false to report files as
+	 *            well
 	 * @return the number of nodes at a certain depth
 	 */
 	public int countNodes(DirNode node, int level, boolean dirsOnly) {

@@ -206,6 +206,7 @@ public class QueryEngine extends MongoManager {
 	 * 
 	 * @param path
 	 *            the path of the file being blocked
+	 * @return a String containing all exclusion filters (empty if none)
 	 */
 	public String exclude(String path) {
 

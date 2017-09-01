@@ -17,6 +17,8 @@ public class FileParser {
 	/**
 	 * Constructor. Initializes internal File and Standardizer variables.
 	 * 
+	 * @param root
+	 *            the root directory from which the File is from
 	 * @param f
 	 *            input File being read
 	 */
@@ -34,7 +36,7 @@ public class FileParser {
 			String rootpath = root.getAbsolutePath();
 			String filepath = input.getAbsolutePath();
 			String fileType = filepath.substring(filepath.lastIndexOf('.') + 1).toLowerCase();
-			switch(fileType) {
+			switch (fileType) {
 			case "cfg":
 			case "conf":
 			case "config":
@@ -78,7 +80,7 @@ public class FileParser {
 						|| backup.equals("workingCopy") || backup.equals("mp"))) {
 					errorDescription = "unsupported: " + filepath;
 				}
-				data = null;				
+				data = null;
 			}
 			if (data != null) {
 				data.setPath(rootpath, filepath);

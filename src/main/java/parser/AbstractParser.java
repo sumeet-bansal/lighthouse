@@ -66,6 +66,8 @@ public abstract class AbstractParser {
 	/**
 	 * Setter method for file path instance variable.
 	 * 
+	 * @param root
+	 *            the root directory from which the File is from
 	 * @param path
 	 *            the path of the File being standardized
 	 */

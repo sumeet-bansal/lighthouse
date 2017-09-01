@@ -123,7 +123,7 @@ public class AccessDB {
 	/**
 	 * Checks if 'list' level input is valid.
 	 * 
-	 * @param args
+	 * @param arg
 	 *            command-line arguments
 	 * @return true if the level is valid, else false
 	 */
