@@ -12,7 +12,7 @@ import com.mongodb.client.*;
  * Pulls queried data from MongoDB and compares key values.
  * 
  * @author ActianceEngInterns
- * @version 1.2
+ * @version 1.3
  */
 public class QueryEngine extends MongoManager {
 
@@ -23,35 +23,32 @@ public class QueryEngine extends MongoManager {
 	private Set<Document> excludedProps = new HashSet<>();
 
 	/*
-	 * String[]: CSV row, formatted {file, key, value, file, key, value, key
-	 * diff, value diff}
+	 * String[]: CSV row, formatted {file, key, value, file, key, value, key diff, value diff}
 	 * 
-	 * ArrayList<String[]>: a single table containing the entirety of a
-	 * comparison between queries
+	 * ArrayList<String[]>: a single table containing the entirety of a comparison between queries
 	 * 
-	 * ArrayList<ArrayList<String>>: multiple tables, necessary due to how
-	 * internal queries generate several tables for each comparison between
-	 * fabrics/nodes
+	 * ArrayList<ArrayList<String>>: multiple tables, necessary due to how internal queries generate
+	 * several tables for each comparison between fabrics/nodes
 	 */
 	private ArrayList<ArrayList<String[]>> tables = new ArrayList<>();
 
 	private Set<String> filenames = new TreeSet<>();
-	private Integer[] discrepancies = new Integer[2];
+	private Map<String, Integer> discrepancies = new HashMap<>();
 
 	/**
 	 * Constructor.
 	 */
 	public QueryEngine() {
-		for (int i = 0; i < discrepancies.length; i++) {
-			discrepancies[i] = 0;
-		}
+		discrepancies.put("key", 0);
+		discrepancies.put("value", 0);
+		discrepancies.put("ignored", 0);
 	}
 
 	/**
 	 * Getter method for table.
 	 * 
-	 * @return a 2D representation of CSV as a series of tables, with each table
-	 *         representing a single comparison
+	 * @return a 2D representation of CSV as a series of tables, with each table representing a
+	 *         single comparison
 	 */
 	public List<ArrayList<String[]>> getTables() {
 		return tables;
@@ -60,26 +57,18 @@ public class QueryEngine extends MongoManager {
 	/**
 	 * Getter method for the discrepancy statistics of a query.
 	 * 
-	 * @return the discrepancy statistics as an Integer[] where Integer[0] is
-	 *         the total number of differences in the keys of a query and
-	 *         Integer[1] is the total number of differences in the values of a
-	 *         query
+	 * @return the discrepancy statistics as a Map where the entry "key" corresponds to the total
+	 *         number of differences in the keys of a query, the entry "value" corresponds to the
+	 *         total number of differences in the values of a query, and the entry "ignored"
+	 *         corresponds to the total number of properties that were ignored by the QueryEngine.
 	 */
-	public Integer[] getDiscrepancies() {
-		if (discrepancies[0] != null && discrepancies[1] != null) {
-			Integer diffkey = discrepancies[0];
-			Integer diffval = discrepancies[1];
-			Integer[] report = { diffkey, diffval, diffkey + diffval };
-			return report;
-		} else {
-			Integer[] report = { -1, -1, -1 };
-			return report;
-		}
+	public Map<String, Integer> getDiscrepancies() {
+		return discrepancies;
 	}
 
 	/**
-	 * Takes in a single path input and generates a series of queries between
-	 * the subdirectories of the specified path.
+	 * Takes in a single path input and generates a series of queries between the subdirectories of
+	 * the specified path.
 	 * <dl>
 	 * <dt>example path parameters:
 	 * <dd>dev1/fabric2
@@ -95,10 +84,8 @@ public class QueryEngine extends MongoManager {
 	 * </dl>
 	 * 
 	 * @param path
-	 *            the path containing the subdirectories being compared against
-	 *            each other
-	 * @return a String representing the status of the query: null if
-	 *         successful, else error message
+	 *            the path containing the subdirectories being compared against each other
+	 * @return a String representing the status of the query: null if successful, else error message
 	 */
 	public String generateInternalQueries(String path) {
 
@@ -176,8 +163,7 @@ public class QueryEngine extends MongoManager {
 	 * @param pathR
 	 *            the other path being compared
 	 * 
-	 * @return a String containing any filters throwing exceptions (empty if
-	 *         none)
+	 * @return a String containing any filters throwing exceptions (empty if none)
 	 */
 	public String addQuery(String pathL, String pathR) {
 
@@ -222,10 +208,10 @@ public class QueryEngine extends MongoManager {
 	 *            the path of the file being blocked
 	 */
 	public String exclude(String path) {
-		
+
 		// generates filter for exclusion
 		Document filter = generateFilter(path);
-		
+
 		// generates status message
 		String status = "\t" + filter.toJson();
 
@@ -234,7 +220,7 @@ public class QueryEngine extends MongoManager {
 		while (cursor.hasNext()) {
 			excludedProps.add(cursor.next());
 		}
-		
+
 		return status;
 	}
 
@@ -245,16 +231,15 @@ public class QueryEngine extends MongoManager {
 		int size = queryPairs.size() * 2;
 		queryPairs.clear();
 		excludedProps.clear();
-		for (int i = 0; i < discrepancies.length; i++) {
-			discrepancies[i] = 0;
+		for (Map.Entry<String, Integer> entry : discrepancies.entrySet()) {
+			discrepancies.put(entry.getKey(), 0);
 		}
 		System.out.println("Cleared " + size + " entries from query.\n");
 	}
 
 	/**
-	 * Retrieves filtered files from the MongoDB database, excludes files as
-	 * appropriate, compares the remaining queried files, and adds the results
-	 * to a CSV file.
+	 * Retrieves filtered files from the MongoDB database, excludes files as appropriate, compares
+	 * the remaining queried files, and adds the results to a CSV file.
 	 * 
 	 * @return true if query is valid, false if not
 	 */
@@ -269,9 +254,10 @@ public class QueryEngine extends MongoManager {
 		// adds properties matching both sides of query
 		for (Document[] queryPair : queryPairs) {
 
-			// creates Documents as specified in the query
-			ArrayList<Document> docsL = new ArrayList<>();
-			ArrayList<Document> docsR = new ArrayList<>();
+			// creates Document lists as specified in the query
+			// Maps used to rapidly hash properties and corresponding Documents for constant lookup
+			Map<String, Document> docsL = new HashMap<>();
+			Map<String, Document> docsR = new HashMap<>();
 			MongoCursor<Document> cursor;
 
 			// finds all unblocked properties on left side of query
@@ -281,7 +267,7 @@ public class QueryEngine extends MongoManager {
 				if (excludedProps.contains(doc)) {
 					excluded++;
 				} else {
-					docsL.add(doc);
+					docsL.put(doc.getString("key"), doc);
 				}
 				queried++;
 			}
@@ -293,7 +279,7 @@ public class QueryEngine extends MongoManager {
 				if (excludedProps.contains(doc)) {
 					excluded++;
 				} else {
-					docsR.add(doc);
+					docsR.put(doc.getString("key"), doc);
 				}
 				queried++;
 			}
@@ -343,94 +329,63 @@ public class QueryEngine extends MongoManager {
 	 * Compares Documents and adds the comparison outcomes to the table.
 	 * 
 	 * @param propsL
-	 *            a List of Documents representing every property in the left
-	 *            side of the query
+	 *            a List of Documents representing every property in the left side of the query
 	 * @param propsR
-	 *            a List of Documents representing every property in the right
-	 *            side of the query
-	 * @return the table as an ArrayList of String[] containing the entirety of
-	 *         a comparison between queries, with each String[] representing a
-	 *         CSV row
+	 *            a List of Documents representing every property in the right side of the query
+	 * @return the table as an ArrayList of String[] containing the entirety of a comparison between
+	 *         queries, with each String[] representing a CSV row
 	 */
-	private ArrayList<String[]> createTable(ArrayList<Document> propsL, ArrayList<Document> propsR) {
+	private ArrayList<String[]> createTable(Map<String, Document> propsL, Map<String, Document> propsR) {
 
 		// generates key set
 		Set<String> keyAmalgam = new LinkedHashSet<>();
-		for (Document prop : propsL) {
-			keyAmalgam.add(prop.getString("key"));
-		}
-		for (Document prop : propsR) {
-			keyAmalgam.add(prop.getString("key"));
-		}
+		keyAmalgam.addAll(propsL.keySet());
+		keyAmalgam.addAll(propsR.keySet());
 		keyAmalgam.remove("_id"); // auto-generated by MongoDB
 
 		// sets up row information
 		ArrayList<String[]> table = new ArrayList<>();
-		int keyDiffs = 0;
-		int valDiffs = 0;
 
 		for (String key : keyAmalgam) {
-			Document propL = new Document();
-			Document propR = new Document();
 
 			// finds appropriate property from the keyset
-			for (Document prop : propsL) {
-				if (prop.getString("key").equals(key)) {
-					propL = prop;
-					break;
-				}
-			}
-			for (Document prop : propsR) {
-				if (prop.getString("key").equals(key)) {
-					propR = prop;
-					break;
-				}
-			}
-
-			// writes paths from property metadata
-			String pathL = propL.getString("environment") + "/" + propL.getString("fabric") + "/"
-					+ propL.getString("node") + "/" + propL.getString("filename");
-			String pathR = propR.getString("environment") + "/" + propR.getString("fabric") + "/"
-					+ propR.getString("node") + "/" + propR.getString("filename");
+			Document propL = propsL.get(key);
+			Document propR = propsR.get(key);
 
 			// copies property values to Strings
-			String valueL = propL.get("value") != null ? propL.get("value").toString() : "null";
-			String valueR = propR.get("value") != null ? propR.get("value").toString() : "null";
-			
-			String ignoreL = propL.getString("ignore") != null ? propL.getString("ignore") : null;
-			String ignoreR = propR.getString("ignore") != null ? propR.getString("ignore") : null;
+			String pathL = propL != null ? propL.getString("path") : "";
+			String pathR = propR != null ? propR.getString("path") : "";
+			String valueL = propL != null ? propL.getString("value") : "";
+			String valueR = propR != null ? propR.getString("value") : "";
 
 			// compares and generates diff report
-			if (ignoreL != null && ignoreR != null && ignoreL.equals("true") && ignoreR.equals("true")) {
-				String[] row = { pathL, key, valueL, pathR, key, valueR, "ignored", "ignored" };
-				table.add(row);
-			} else if (valueL != "null" && valueR != "null" && !valueL.equals(valueR)) {
-				String[] row = { pathL, key, valueL, pathR, key, valueR, "same", "different" };
-				table.add(row);
-				valDiffs++;
-			} else if (valueL == "null") {
-				String[] row = { "null", "null", "null", pathR, key, valueR, "missing in left",
-						"missing in left" };
-				table.add(row);
-				keyDiffs++;
-			} else if (valueR == "null") {
-				String[] row = { pathL, key, valueL, "null", "null", "null", "missing in right",
-						"missing in right" };
-				table.add(row);
-				keyDiffs++;
+			String keyStatus, valueStatus;
+			if (propL == null) {
+				keyStatus = valueStatus = "missing in left";
+				discrepancies.put("key", discrepancies.get("key") + 1);
+			} else if (propR == null) {
+				keyStatus = valueStatus = "missing in right";
+				discrepancies.put("key", discrepancies.get("key") + 1);
+			} else if (propL.getString("ignore").equals("true") || propL.getString("ignore").equals("true")) {
+				keyStatus = valueStatus = "ignored";
+				discrepancies.put("ignored", discrepancies.get("ignored") + 1);
+			} else if (propL.getString("key").equals(propL.getString("key")) && !valueL.equals(valueR)) {
+				keyStatus = "same";
+				valueStatus = "different";
+				discrepancies.put("value", discrepancies.get("value") + 1);
+			} else if (propL.getString("key").equals(propL.getString("key"))) {
+				keyStatus = valueStatus = "same";
 			} else {
-				String[] row = { pathL, key, valueL, pathR, key, valueR, "same", "same" };
-				table.add(row);
+				keyStatus = valueStatus = "";
 			}
+			String[] row = { pathL, key, valueL, pathR, key, valueR, keyStatus, valueStatus };
+			table.add(row);
 		}
-		discrepancies[0] += keyDiffs;
-		discrepancies[1] += valDiffs;
 		return table;
 	}
 
 	/**
-	 * Writes stored data to a CSV file with a user-specified name and
-	 * directory.
+	 * Writes stored data to a CSV file with a user-specified name and directory.
 	 * 
 	 * @param filename
 	 *            the user-specified filename
@@ -484,8 +439,7 @@ public class QueryEngine extends MongoManager {
 	}
 
 	/**
-	 * Writes data to CSV file with a default name if the name is not
-	 * user-specified.
+	 * Writes data to CSV file with a default name if the name is not user-specified.
 	 * 
 	 * @param directory
 	 *            the directory the CSV is being written to
@@ -496,8 +450,8 @@ public class QueryEngine extends MongoManager {
 	}
 
 	/**
-	 * Creates a default name for the CSV file based on the lowest-level
-	 * metadata provided in the query.
+	 * Creates a default name for the CSV file based on the lowest-level metadata provided in the
+	 * query.
 	 * 
 	 * @return the default CSV name
 	 */

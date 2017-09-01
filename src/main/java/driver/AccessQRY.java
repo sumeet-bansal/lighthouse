@@ -294,7 +294,7 @@ public class AccessQRY {
 			status += comparator.exclude(excluded.get(e)) + "\n";
 		}
 		if (status != null) {
-			if (!status.contains("[ERROR]")) {
+			if (!status.equals("") && !status.contains("[ERROR]")) {
 				System.out.println("\nExcluding properties with attributes:\n" + status);
 			} else {
 				System.err.println(status);
@@ -313,9 +313,10 @@ public class AccessQRY {
 
 		// gives a summary of the discrepancies in the query
 		String write = "";
-		int diffkey = comparator.getDiscrepancies()[0];
-		int diffval = comparator.getDiscrepancies()[1];
-		int difftotal = comparator.getDiscrepancies()[2];
+		int diffkey = comparator.getDiscrepancies().get("key");
+		int diffval = comparator.getDiscrepancies().get("value");
+		int difftotal = diffkey + diffval;
+		int ignored = comparator.getDiscrepancies().get("ignored");
 		
 		// in case of identical configurations
 		if (difftotal == 0) {
@@ -339,6 +340,7 @@ public class AccessQRY {
 			System.out.println("\nKey discrepancies\t" + diffkey);
 			System.out.println("Value discrepancies\t" + diffval);
 			System.out.println("Total discrepancies\t" + difftotal);
+			System.out.println("Ignored properties\t" + ignored);
 		}
 
 		String result = "";
