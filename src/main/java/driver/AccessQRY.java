@@ -9,7 +9,7 @@ import databaseModule.*;
  * Runs the QueryFunctions from the command line.
  * 
  * @author ActianceEngInterns
- * @version 1.2
+ * @version 1.3
  */
 public class AccessQRY {
 
@@ -28,7 +28,7 @@ public class AccessQRY {
 			+ "\n\ttoggles:\n\t\t-k\tto find matching keys\n\t\t-v\tto find matching values"
 			+ "\n'find'\n\tprints the locations and values of a key/value (can be toggled) within an optional location"
 			+ "\n\tUsage: ~$ find [toggle] [-l path] <pattern>"
-			+ "\n\ttoggles:\n\t\t-k\tto find matching keys\n\t\t-v\tto find matching values"
+			+ "\n\ttoggles:\n\t\t-k, --key\tto find matching keys\n\t\t-v, --value\tto find matching values"
 			+ "\nType the name of another module to switch modules. Available modules: home, db, query.\n";
 
 	/**
