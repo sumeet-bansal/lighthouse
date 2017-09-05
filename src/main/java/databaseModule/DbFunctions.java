@@ -87,32 +87,37 @@ public class DbFunctions extends MongoManager {
 
 		// sets the "ignore" field to true for each property specified in each .ignore file
 		for (Map.Entry<Document, Set<String>> entry : ignore.entrySet()) {
-			ignore(entry.getKey(), entry.getValue());
+			ignore(entry.getKey(), entry.getValue(), true);
 		}
 
 		return count;
 	}
 
 	/**
-	 * Given a BSON and set of properties, updates the "ignore" field for each property matching the
-	 * filter to true.
+	 * Given a BSON filter and set of properties, updates the "ignore" field for each property
+	 * matching the filter to the optionally-specified value.
 	 * 
 	 * @param filter
 	 *            a BSON filter containing metadata specifying which properties to ignore
 	 * @param properties
 	 *            a Set containing the keys of each property to be ignored
+	 * @param toggle
+	 *            true if the properties are to be ignored, else false
 	 */
-	private static void ignore(Document filter, Set<String> properties) {
+	public static void ignore(Document filter, Set<String> properties, boolean toggle) {
+
+		// if filter param is null, creates an empty BSON filter
+		filter = filter == null ? new Document() : filter;
 
 		// creates Mongo query including each property
 		QueryBuilder qb = new QueryBuilder();
 		Iterator<String> iter = properties.iterator();
-		String[] ignore = new String[properties.size()];
+		String[] ignoredProps = new String[properties.size()];
 		int i = 0;
 		while (iter.hasNext()) {
-			ignore[i++] = iter.next();
+			ignoredProps[i++] = iter.next();
 		}
-		qb.put("key").in(ignore);
+		qb.put("key").in(ignoredProps);
 
 		// adds path filter to query
 		BasicDBObject query = new BasicDBObject();
@@ -121,11 +126,29 @@ public class DbFunctions extends MongoManager {
 		query.remove("filename");
 		query.remove("path");
 		query.remove("extension");
-		
-		// updates "ignore" field to true for all properties matching query
-		Document updated = new Document().append("$set", new Document().append("ignore", "true"));
+
+		String ignore = toggle ? "true" : "false";
+
+		// updates "ignore" field to toggled value
+		Document updated = new Document().append("$set", new Document().append("ignore", ignore));
 		collection.updateMany(query, updated);
 
+	}
+
+	/**
+	 * Given a location path and set of properties, updates the "ignore" field for each property
+	 * matching the filter to the optionally-specified value.
+	 * 
+	 * @param location
+	 *            a specific path within which to ignore a property
+	 * @param properties
+	 *            a Set containing the keys of each property to be ignored
+	 * @param toggle
+	 *            true if the properties are to be ignored, else false
+	 */
+	public static void ignore(String location, Set<String> properties, boolean toggle) {
+		Document filter = location != null ? generateFilter(location) : null;
+		ignore(filter, properties, toggle);
 	}
 
 	/**
@@ -184,6 +207,21 @@ public class DbFunctions extends MongoManager {
 			System.out.println(++i + ". " + env);
 		}
 		System.out.println("\nUse the 'list' command to see a detailed database structure.\n");
+	}
+
+	/**
+	 * Getter method for the database properties set to be ignored.
+	 * 
+	 * @return a Set containing all the properties with the "ignore" field marked as "true"
+	 */
+	public static Set<String> getIgnored() {
+		Set<String> ignored = new HashSet<>();
+		Document filter = new Document().append("ignore", "true");
+		MongoCursor<String> cursor = collection.distinct("key", filter, String.class).iterator();
+		while (cursor.hasNext()) {
+			ignored.add(cursor.next());
+		}
+		return ignored;
 	}
 
 }
