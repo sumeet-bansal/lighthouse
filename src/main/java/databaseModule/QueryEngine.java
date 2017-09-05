@@ -229,26 +229,20 @@ public class QueryEngine extends MongoManager {
 	 * Clears the internal queryPairs and excludedProps Lists.
 	 */
 	public void clearQuery() {
-		int size = queryPairs.size() * 2;
 		queryPairs.clear();
 		excludedProps.clear();
 		for (Map.Entry<String, Integer> entry : discrepancies.entrySet()) {
 			discrepancies.put(entry.getKey(), 0);
 		}
-		System.out.println("Cleared " + size + " entries from query.\n");
 	}
 
 	/**
 	 * Retrieves filtered files from the MongoDB database, excludes files as appropriate, compares
 	 * the remaining queried files, and adds the results to a CSV file.
 	 * 
-	 * @return true if query is valid, false if not
+	 * @return a String detailing the results of the operation
 	 */
-	public boolean compare() {
-		if (queryPairs.isEmpty()) {
-			return false;
-		}
-
+	public String compare() {
 		int queried = 0;
 		int excluded = 0;
 
@@ -293,11 +287,8 @@ public class QueryEngine extends MongoManager {
 		}
 
 		if (queried == 0) {
-			System.out.println("[ERROR] No matching properties found\n");
-			return false;
+			return "[ERROR] No matching properties found.";
 		}
-
-		System.out.println("Found " + queried + " properties and excluded " + excluded + " properties matching query.");
 
 		// if single query, sets column filenames to query comparison
 		String left = "root";
@@ -323,7 +314,7 @@ public class QueryEngine extends MongoManager {
 		ArrayList<String[]> tableHeader = new ArrayList<>();
 		tableHeader.add(header);
 		tables.add(0, tableHeader);
-		return true;
+		return "Found " + queried + " properties and excluded " + excluded + " properties matching query.";
 	}
 
 	/**
@@ -392,62 +383,40 @@ public class QueryEngine extends MongoManager {
 	 *            the user-specified filename
 	 * @param directory
 	 *            the user-specified directory
+	 * @return a String detailing the results of the operation
 	 */
-	public void writeToCSV(String filename, String directory) {
+	public String writeToCSV(String filename, String directory) {
 		if (queryPairs.size() == 0) {
-			System.err.println("\nUnable to write CSV because query list is empty.\n");
-			return;
+			return "[ERROR] Unable to write CSV because query list is empty.";
 		}
 		if (tables.get(0).size() == 1 && tables.size() == 1) {
-			System.err.println("\nUnable to write CSV because no documents were found matching your query.\n");
-			return;
+			return "[ERROR] Unable to write CSV because no documents were found matching your query.";
 		}
-		String path = directory + "/" + filename + ".csv";
-		BufferedWriter bw = null;
-		FileWriter fw = null;
+
+		String content = "";
+		for (ArrayList<String[]> table : tables) {
+			for (String[] arr : table) {
+				for (String str : arr) {
+					if (str.equals("null")) {
+						content += ("\"\"" + ",");
+					} else {
+						str = str.replace("\"", "'");
+						content += ("\"" + str + "\"" + ",");
+					}
+				}
+				content += "\n";
+			}
+		}
 
 		try {
-			String content = "";
-			for (ArrayList<String[]> table : tables) {
-				for (String[] arr : table) {
-					for (String str : arr) {
-						if (str.equals("null")) {
-							content += ("\"\"" + ",");
-						} else {
-							str = str.replace("\"", "'");
-							content += ("\"" + str + "\"" + ",");
-						}
-					}
-					content += "\n";
-				}
-			}
-			fw = new FileWriter(path, true);
-			bw = new BufferedWriter(fw);
-			bw.write(content);
-			System.out.println("\nSuccessfully wrote " + filename + ".csv to " + directory + "\n");
+			String path = directory + "/" + filename + ".csv";
+			BufferedWriter writer = new BufferedWriter(new FileWriter(path, true));
+			writer.write(content);
+			writer.close();
+			return "Successfully wrote " + filename + ".csv to " + directory;
 		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (bw != null)
-					bw.close();
-				if (fw != null)
-					fw.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			return "[ERROR] Unable to write to CSV.";
 		}
-	}
-
-	/**
-	 * Writes data to CSV file with a default name if the name is not user-specified.
-	 * 
-	 * @param directory
-	 *            the directory the CSV is being written to
-	 */
-	public void writeToCSV(String directory) {
-		String defaultName = getDefaultName();
-		writeToCSV(defaultName, directory);
 	}
 
 	/**

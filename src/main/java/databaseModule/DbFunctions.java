@@ -25,8 +25,9 @@ public class DbFunctions extends MongoManager {
 	 * @param path
 	 *            the path of the root directory containing the files to be cached (i.e. a
 	 *            compatible directory structure, as outlined in the README and Dev Guide)
+	 * @return the number of properties added to the database
 	 */
-	public static void populate(String path) {
+	public static int populate(String path) {
 
 		File root = new File(path);
 		DirectoryParser directory = new DirectoryParser(root);
@@ -89,7 +90,7 @@ public class DbFunctions extends MongoManager {
 			ignore(entry.getKey(), entry.getValue());
 		}
 
-		System.out.println("\nAdded " + count + " properties to database.\n");
+		return count;
 	}
 
 	/**
@@ -137,7 +138,6 @@ public class DbFunctions extends MongoManager {
 	 */
 	public static void printStructure(String path, int level) {
 		DirTree tree = popTree();
-		System.out.println();
 		tree.print(path, level);
 	}
 

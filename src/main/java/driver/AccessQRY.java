@@ -29,7 +29,7 @@ public class AccessQRY {
 			+ "\n'find'\n\tprints the locations and values of a key/value (can be toggled) within an optional location"
 			+ "\n\tUsage: ~$ find [toggle] [-l path] <pattern>"
 			+ "\n\ttoggles:\n\t\t-k\tto find matching keys\n\t\t-v\tto find matching values"
-			+ "\nType the name of another module to switch modules.\n";
+			+ "\nType the name of another module to switch modules. Available modules: home, db, query.\n";
 
 	/**
 	 * Handles user input and delegates functionality based on first command.
@@ -78,8 +78,7 @@ public class AccessQRY {
 	}
 	
 	/**
-	 * Parses args into a format that can be fed as parameters to the `grep`
-	 * function.
+	 * Parses args into a format that can be fed as parameters to the `grep` function.
 	 * 
 	 * @param args
 	 *            command-line arguments
@@ -97,7 +96,7 @@ public class AccessQRY {
 		
 		// option parsing
 		for (int i = 0; i < args.length; i++) {
-			switch(args[i]) {
+			switch (args[i]) {
 			case "-k":
 			case "--key":
 				toggle = 0;		// toggle set to 0 for key
@@ -145,8 +144,7 @@ public class AccessQRY {
 	}
 	
 	/**
-	 * Parses args into a format that can be fed as parameters to the `find`
-	 * function.
+	 * Parses args into a format that can be fed as parameters to the `find` function.
 	 * 
 	 * @param args
 	 *            command-line arguments
@@ -164,7 +162,7 @@ public class AccessQRY {
 		
 		// option parsing
 		for (int i = 0; i < args.length; i++) {
-			switch(args[i]) {
+			switch (args[i]) {
 			case "-k":
 			case "--key":
 				toggle = 0;		// toggle set to 0 for key
@@ -177,7 +175,7 @@ public class AccessQRY {
 			case "-l":
 			case "--loc":
 			case "--location":
-				if (i == args.length-2) {
+				if (i == args.length - 2) {
 					System.err.println("[ERROR] location flag `-l` requires a location argument.");
 				} else {
 					
@@ -213,8 +211,7 @@ public class AccessQRY {
 			}
 			System.out.println(".\nUse the `grep` command to find relevant properties.\n");
 		} else {
-			System.out.println("\nFound " + matches.size() + " instance(s)" + " of " + type + " \""
-					+ pattern + "\":");
+			System.out.println("\nFound " + matches.size() + " instance(s)" + " of " + type + " \"" + pattern + "\":");
 			for (String path : matches) {
 				System.out.println(" " + path);
 			}
@@ -223,8 +220,8 @@ public class AccessQRY {
 	}
 
 	/**
-	 * Handles user input for 'compare' command, prints the results of the
-	 * comparison, and writes them to a CSV file as appropriate.
+	 * Handles user input for 'compare' command, prints the results of the comparison, and writes
+	 * them to a CSV file as appropriate.
 	 * 
 	 * @param args
 	 *            command-line arguments
@@ -232,15 +229,15 @@ public class AccessQRY {
 	private static void runComparison(String[] args) {
 		ArrayList<String> queried = new ArrayList<String>();
 		ArrayList<String> excluded = new ArrayList<String>();
-		
+
 		// uses generic 'arr' to populate appropriate List
 		int arg = 0;
 		ArrayList<String> arr = queried; // adds all args to 'queried'
 		while (arg < args.length) {
 
 			/*
-			 * if 'exclude' keyword detected, switches refs and adds rest of args to
-			 * 'excluded' List, else continues adding to 'queried'
+			 * if 'exclude' keyword detected, switches refs and adds rest of args to 'excluded'
+			 * List, else continues adding to 'queried'
 			 */
 			if (args[arg].equals("exclude")) {
 				arr = excluded;
@@ -252,7 +249,7 @@ public class AccessQRY {
 
 		// invalid query parameters (queries must be made in pairs unless internal)
 		if (queried.size() == 0 || queried.size() > 1 && queried.size() % 2 != 0) {
-			System.err.println(help);
+			System.err.println("\n[ERROR] Invalid number of queries.\n");
 			return;
 		}
 
@@ -270,8 +267,9 @@ public class AccessQRY {
 			}
 		}
 
-		// adds queries to comparator
 		QueryEngine comparator = new QueryEngine();
+
+		// adds queries to comparator
 		String status = "";
 		if (queried.size() == 1) {
 			status += comparator.generateInternalQueries(queried.get(0));
@@ -301,9 +299,13 @@ public class AccessQRY {
 			}
 		}
 
-		// aborts if unable to compare
-		if (!comparator.compare()) {
+		// aborts if unable to compare for any reason
+		String result = comparator.compare();
+		if (result.contains("[ERROR]")) {
+			System.err.println(result);
 			return;
+		} else {
+			System.out.println(result);
 		}
 
 		// prompts user to either enter a custom CSV name or use default name
@@ -312,13 +314,13 @@ public class AccessQRY {
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
 		// gives a summary of the discrepancies in the query
-		String write = "";
 		int diffkey = comparator.getDiscrepancies().get("key");
 		int diffval = comparator.getDiscrepancies().get("value");
 		int difftotal = diffkey + diffval;
 		int ignored = comparator.getDiscrepancies().get("ignored");
-		
+
 		// in case of identical configurations
+		String write = "";
 		if (difftotal == 0) {
 			System.out.println("\nNo discrepancies found in the directories given by the query.");
 			while (true) {
@@ -329,6 +331,7 @@ public class AccessQRY {
 					System.out.println("Illegal input!");
 					continue;
 				}
+
 				if (write.equalsIgnoreCase("n")) {
 					System.out.println();
 					return;
@@ -341,46 +344,63 @@ public class AccessQRY {
 			System.out.println("Value discrepancies\t" + diffval);
 			System.out.println("Total discrepancies\t" + difftotal);
 			System.out.println("Ignored properties\t" + ignored);
+			System.out.println();
 		}
 
-		String result = "";
-		System.out.println();
-		while (true) {
-			System.out.print("Use default CSV file name " + comparator.getDefaultName() + "? (y/n): ");
-			try {
-				result = input.readLine();
-				if (result.equalsIgnoreCase("y")) {
-					comparator.writeToCSV(writePath);
-					comparator.clearQuery();
-					return;
-				} else if (result.equalsIgnoreCase("n")) {
 
-					// checks if custom filename legal across OSes
-					while (true) {
-						System.out.print("Enter custom CSV file name: ");
-						String custom = input.readLine();
-						String legal = custom.replaceAll("[^a-zA-Z0-9_ .-]", "~");
-						
-						// if custom != legal, then custom had illegal characters
-						if (!custom.equals(legal)) {
-							System.out.println("\nERROR: illegal CSV file name.");
-							System.out.println("To prevent writing corrupted files, only letters,"
-									+ "\nnumbers, spaces, and the characters . _ - ~ are allowed.\n");
-							continue;
-						} else if (custom.equals("")) {
-							continue;
-						} else {
-							comparator.writeToCSV(custom, writePath);
-							return;
-						}
-					}
-				} else {
-					continue;
-				}
+		String filename = comparator.getDefaultName();
+		while (true) {
+			System.out.print("Use default CSV file name " + filename + "? (y/n): ");
+
+			String choice = "";
+			try {
+				choice = input.readLine();
 			} catch (IOException e) {
-				System.out.println("Illegal input!");
+				System.out.println("[ERROR] Illegal input.");
 				continue;
 			}
-		}
+
+			if (choice.equalsIgnoreCase("y")) {
+				break;
+			} else if (choice.equalsIgnoreCase("n")) {
+
+				// checks if custom filename legal across OSes
+				while (true) {
+					System.out.print("Enter custom CSV file name: ");
+					String custom;
+					try {
+						custom = input.readLine();
+					} catch (IOException e) {
+						System.out.println("[ERROR] Illegal input.");
+						continue;
+					}
+					
+					// regex contains all valid characters: alphanumeric and _.-
+					String legal = custom.replaceAll("[^a-zA-Z0-9_ .-]", "~");
+
+					// if custom != legal, then custom had illegal characters
+					if (!custom.equals(legal)) {
+						System.err.println("\n[ERROR] Illegal CSV file name.");
+						System.err.println("To prevent writing corrupted files, only the following are allowed:"
+								+ "letters, numbers, spaces, and the characters ._-\n");
+						continue;
+					} else if (custom.equals("")) {
+						continue;
+					} else {
+						filename = custom;
+						break;
+					}
+				} // end of custom file naming loop
+				
+				break;
+				
+			} else {
+				continue;
+			}
+			
+		} // end of main prompt loop
+		
+		result = comparator.writeToCSV(filename, writePath);
+		System.out.println("\n" + result + "\n");		
 	}
 }
