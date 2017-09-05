@@ -75,10 +75,16 @@ public class FileParser {
 			default:
 				String[] arr = filepath.split("\\.");
 				String backup = arr[arr.length - 1];
-				String end = backup.substring(backup.length() - 2, backup.length());
-				if (!((backup.charAt(0) == 'b' && end.equals("up")) || backup.equals("debug")
-						|| backup.equals("workingCopy") || backup.equals("mp"))) {
+				switch (backup) {
+				case "backup":
+				case "bkup":
+				case "debug":
+				case "workingCopy":
+				case "mp":
+					break;
+				default:
 					errorDescription = "unsupported: " + filepath;
+					break;
 				}
 				data = null;
 			}
