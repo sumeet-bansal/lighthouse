@@ -63,7 +63,7 @@ public class AccessDB {
 
 			// checks if directory specified
 			if (args == null) {
-				System.err.println(help);
+				System.err.println("\n[ERROR] No directory specified.\n");
 				return;
 			}
 
@@ -131,7 +131,7 @@ public class AccessDB {
 			System.out.println(help);
 			break;
 		default:
-			System.err.println("Invalid input. Use the 'help' command for details on usage.\n");
+			System.err.println("[ERROR] invalid input: " + cmd + "\nUse the 'help' command for details on usage.\n");
 		}
 
 	}

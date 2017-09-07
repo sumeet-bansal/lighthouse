@@ -19,7 +19,7 @@ public class Access {
 	private static String branch = "home";
 	public static final String VERSION = "1.3.0";
 	public static final String APPNAME = "lighthouse-v" + VERSION;
-	
+
 	private static String help = "\nHOME PAGE -- POSSIBLE COMMANDS"
 			+ "\n'help'\n\tgoes to the help page for the general diagnostic tool"
 			+ "\n\tUsage: ~$ help"
@@ -57,66 +57,69 @@ public class Access {
 
 			// runs until `exit` command given
 			while (true) {
+
+				// prompts and takes input, split into array in case of multiple commands
 				System.out.print("lighthouse-v" + VERSION + ": " + branch + " $ ");
-				String input = s.nextLine();
-				if (input.equals("")) {
-					continue;
-				} else {
-					while (input.indexOf("  ") != -1) {
-						input.replace("  ", " ");
-					}
-				}
-				args = input.split(" ");
+				String[] input = s.nextLine().split(";");
 
-				// switches modules or exits application
-				switch (args[0]) {
-				case "home":
-				case "db":
-				case "query":
-					branch = args[0];
-					if (args.length > 1) {
-						args = Arrays.copyOfRange(args, 1, args.length);
-					} else {
-						args[0] = "help";
-					}
-					break;
-				case "quit":
-				case "exit":
-					s.close();
-					MongoManager.disconnect();
-					System.exit(0);
-					break;
-				}
+				for (int cmdi = 0; cmdi < input.length; cmdi++) {
 
-				// executes commands for 'home' branch
-				if (branch.equals("home")) {
-					switch (args[0]) {
-					case "man":
-					case "help":
-						System.out.println(help);
-						break;
-					default:
-						System.err.println("Invalid input. Use the 'help' command for details on usage.\n");
+					// cleans commands for processing
+					args = parseArgs(input[cmdi]);
+					if (args == null) {
 						continue;
 					}
-				}
 
-				// delegates functionality as appropriate
-				switch (branch) {
-				case "home":
-					break;
-				case "db":
-					AccessDB.run(args);
-					break;
-				case "query":
-					AccessQRY.run(args);
-					break;
-				default:
-					System.err.println("This should never run.");
-					break;
-				}
+					// switches modules or exits application
+					switch (args[0]) {
+					case "home":
+					case "db":
+					case "query":
+						branch = args[0];
+						if (args.length > 1) {
+							args = Arrays.copyOfRange(args, 1, args.length);
+						} else {
+							args[0] = "help";
+						}
+						break;
+					case "quit":
+					case "exit":
+						s.close();
+						MongoManager.disconnect();
+						System.exit(0);
+						break;
+					}
 
-			}
+					// executes commands for 'home' branch
+					if (branch.equals("home")) {
+						switch (args[0]) {
+						case "man":
+						case "help":
+							System.out.println(help);
+							break;
+						default:
+							System.err.println("Invalid input. Use the 'help' command for details on usage.\n");
+							continue;
+						}
+					}
+
+					// delegates functionality as appropriate
+					switch (branch) {
+					case "home":
+						break;
+					case "db":
+						AccessDB.run(args);
+						break;
+					case "query":
+						AccessQRY.run(args);
+						break;
+					default:
+						System.err.println("This should never run.");
+						break;
+					}
+
+				} // end of multi-command loop
+			} // end of indefinite while loop
 
 		} catch (MongoTimeoutException t) {
 			String error = "[DATABASE MESSAGE] Server connection timed out. Make sure a 'mongod' instance is running.";
@@ -127,6 +130,56 @@ public class Access {
 			System.out.println(error + "\n\nExiting with error code 2.");
 			System.exit(2);
 		}
+	}
+
+	/**
+	 * Cleans command-line statements for processing.
+	 * 
+	 * @param command
+	 *            a full command-line statement
+	 * @return an array of command-line arguments meant to mimic the standard 'args' parameter
+	 */
+	private static String[] parseArgs(String command) {
+
+		// replaces all trailing, leading, or duplicate spaces
+		command = command.trim().replaceAll("\\s{2,}", " ");
+
+		// skips empty commands
+		if (command.equals("")) {
+			return null;
+		}
+
+		String[] args = command.split(" ");
+
+		// processes args within quotation marks
+		if (command.indexOf('\"') != -1) {
+			ArrayList<String> parsed = new ArrayList<>(); // to simplify chaining logic
+			String full = null; // chains args within quotation marks, null otherwise
+			for (int i = 0; i < args.length; i++) {
+				if (args[i].indexOf("\"") != args[i].lastIndexOf("\"")) {
+					parsed.add(args[i].replaceAll("\"", ""));
+				} else if (full == null && !args[i].contains("\"")) {
+					parsed.add(args[i]);
+				} else if (full == null && args[i].contains("\"")) {
+					full = args[i];
+				} else if (full != null && !args[i].contains("\"")) {
+					full += " " + args[i];
+				} else if (full != null && args[i].contains("\"") || i == args.length - 1) {
+					full += " " + args[i];
+					parsed.add(full.replaceAll("\"", ""));
+					full = null;
+				}
+			}
+
+			// re instantiates new 'args' to fit parsed ArrayList
+			args = new String[parsed.size()];
+			int i = 0;
+			for (String arg : parsed) {
+				args[i++] = arg;
+			}
+		}
+
+		return args;
 	}
 
 	/**

@@ -55,7 +55,7 @@ public class DirectoryParser {
 				}
 			}
 		} catch (NullPointerException e) {
-			System.err.println("\n[DATABASE ERROR] Directory " + directory + " not found");
+			System.err.println("\n[DATABASE ERROR] Directory " + directory + " not found.");
 			return;
 		}
 	}
@@ -66,7 +66,7 @@ public class DirectoryParser {
 	 */
 	public void parseAll() {
 		findFiles(directory);
-		System.out.println();
+		boolean err = false;
 		for (String path : filepaths) {
 			FileParser reader = new FileParser(directory, new File(path));
 			if (reader.parseFile()) {
@@ -74,6 +74,10 @@ public class DirectoryParser {
 				String[] fileWithHeader = { path, reader.getData().toString() };
 				headers.add(fileWithHeader);
 			} else if (reader.getErrorDescription() != null){
+				if (!err) {
+					System.out.println();
+				}
+				err = true;
 				System.out.println("[DATABASE MESSAGE] " + reader.getErrorDescription());
 			}
 		}
