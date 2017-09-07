@@ -92,13 +92,13 @@ public class AccessDB {
 		case "list":
 			int level = -1;
 			String path = "";
-			if (args.length == 1) {
+			if (args != null && args.length == 1) {
 				if (validateLevel(args[0])) {
 					level = Integer.parseInt(args[0]);
 				} else {
 					path = args[0];
 				}
-			} else if (args.length > 1) {
+			} else if (args != null && args.length > 1) {
 				path = args[0];
 				level = validateLevel(args[1]) ? Integer.parseInt(args[1]) : -1;
 			}
