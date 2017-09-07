@@ -113,6 +113,10 @@ public class AccessDB {
 			}
 
 			Set<String> ignored = DbFunctions.getIgnored();
+			if (ignored.size() == 0) {
+				System.out.println("\nNo properties set to be ignored.\n");
+				break;
+			}
 			System.out.println("\n" + ignored.size() + " properties set to be ignored:");
 
 			Iterator<String> iter = ignored.iterator();
@@ -164,8 +168,9 @@ public class AccessDB {
 			case "-l":
 			case "--loc":
 			case "--location":
-				if (i == args.length - 2) {
+				if (i > args.length - 2) {
 					System.err.println("\n[ERROR] location flag `-l` requires a location argument.");
+					return;
 				} else {
 
 					// if location unassigned, assigns the arg after -l flag
@@ -181,7 +186,16 @@ public class AccessDB {
 
 			}
 		}
-		DbFunctions.ignore(location, toIgnore, toggle);
+
+		if (toIgnore.size() == 0) {
+			System.err.println("\n[ERROR] No properties specified.");
+			return;
+		}
+
+		String result = DbFunctions.ignore(location, toIgnore, toggle);
+		if (result != null) {
+			System.err.println("\n" + result);
+		}
 
 	}
 

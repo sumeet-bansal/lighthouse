@@ -103,11 +103,22 @@ public class DbFunctions extends MongoManager {
 	 *            a Set containing the keys of each property to be ignored
 	 * @param toggle
 	 *            true if the properties are to be ignored, else false
+	 * @return a String returning the results of the operation, null if successful
 	 */
-	public static void ignore(Document filter, Set<String> properties, boolean toggle) {
+	public static String ignore(Document filter, Set<String> properties, boolean toggle) {
 
 		// if filter param is null, creates an empty BSON filter
 		filter = filter == null ? new Document() : filter;
+
+		// removes unnecessary fields from filter Document
+		filter.remove("filename");
+		filter.remove("path");
+		filter.remove("extension");
+
+		// if the filtered query returns no properties, path is not within database
+		if (!collection.find(filter).iterator().hasNext()) {
+			return "[ERROR] Invalid path.";
+		}
 
 		// creates Mongo query including each property
 		QueryBuilder qb = new QueryBuilder();
@@ -123,15 +134,16 @@ public class DbFunctions extends MongoManager {
 		BasicDBObject query = new BasicDBObject();
 		query.putAll(qb.get());
 		query.putAll(filter);
-		query.remove("filename");
-		query.remove("path");
-		query.remove("extension");
 
-		String ignore = toggle ? "true" : "false";
+		if (!collection.find(query).iterator().hasNext()) {
+			return "No matching properties found.";
+		}
 
 		// updates "ignore" field to toggled value
+		String ignore = toggle ? "true" : "false";
 		Document updated = new Document().append("$set", new Document().append("ignore", ignore));
 		collection.updateMany(query, updated);
+		return null;
 
 	}
 
@@ -145,10 +157,11 @@ public class DbFunctions extends MongoManager {
 	 *            a Set containing the keys of each property to be ignored
 	 * @param toggle
 	 *            true if the properties are to be ignored, else false
+	 * @return a String returning the results of the operation, null if successful
 	 */
-	public static void ignore(String location, Set<String> properties, boolean toggle) {
+	public static String ignore(String location, Set<String> properties, boolean toggle) {
 		Document filter = location != null ? generateFilter(location) : null;
-		ignore(filter, properties, toggle);
+		return ignore(filter, properties, toggle);
 	}
 
 	/**
