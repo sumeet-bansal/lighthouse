@@ -133,7 +133,7 @@ public class AccessQRY {
 		Set<String> matches = QueryFunctions.grep(pattern, toggle);
 		String type = toggle == 0 ? "key" : "value";
 		if (matches.size() == 0) {
-			System.out.println("No " + type + " matching \"" + pattern + "\" found in database.\n");
+			System.out.println("\nNo " + type + " matching \"" + pattern + "\" found.\n");
 		} else {
 			System.out.println("\nFound " + matches.size() + " matching " + type + "(s):");
 			for (String prop : matches) {
