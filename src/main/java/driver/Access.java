@@ -17,7 +17,7 @@ public class Access {
 	public static Scanner s = new Scanner(System.in);
 
 	private static String branch = "home";
-	public static final String VERSION = "1.3";
+	public static final String VERSION = "1.3.0";
 	public static final String APPNAME = "lighthouse-v" + VERSION;
 	
 	private static String help = "\nHOME PAGE -- POSSIBLE COMMANDS"
@@ -51,10 +51,9 @@ public class Access {
 
 			// startup
 			printSplash();
-			System.out.println(help);
-			System.out.println(note);
+			System.out.println("\n" + note);
 			MongoManager.connectToDatabase();
-			System.out.println();
+			System.out.println(help);
 
 			// runs until `exit` command given
 			while (true) {
@@ -146,9 +145,7 @@ public class Access {
 			page.add("| || || (_| || | | || |_ | | | || (_) || |_| |\\__ \\|  __/          |\\|");
 			page.add("|_||_| \\__, ||_| |_| \\__||_| |_| \\___/  \\__,_||___/ \\___|        ,/::|.._              ___");
 			page.add("       |___/                                                  __,./::: ...^ ~ ~~~~~~~ / ~~");
-			page.add("\n\nversion " + VERSION + "\n");
-			page.add("developed by Sumeet Bansal, Pierce Kelaita, and Gagan Gupta");
-			page.add("\n\n\n\n");
+			page.add("\nversion " + VERSION + " -- developed by Sumeet Bansal, Pierce Kelaita, and Gagan Gupta");
 
 			Iterator<String> scroll = page.iterator();
 			while (scroll.hasNext()) {
