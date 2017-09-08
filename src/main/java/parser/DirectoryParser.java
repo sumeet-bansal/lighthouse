@@ -44,27 +44,34 @@ public class DirectoryParser {
 	 * 
 	 * @param directory
 	 *            the directory being searched
+	 * @return the number of files found within the directory, -1 if no directory found
 	 */
-	private void findFiles(File directory) {
+	public int findFiles(File directory) {
+		int found = 0;
 		try {
 			for (File file : directory.listFiles()) {
 				if (file.isDirectory()) {
-					findFiles(file);
+					found += findFiles(file);
 				} else {
 					filepaths.add(file.getPath());
+					found++;
 				}
 			}
 		} catch (NullPointerException e) {
 			System.err.println("\n[DATABASE ERROR] Directory " + directory + " not found.");
-			return;
+			return -1;
 		}
+		return found;
 	}
 
 	/**
 	 * Parses each file in directory and adds the resulting data to the appropriate
 	 * internal ArrayList.
+	 * 
+	 * @return the number of successfully parsed files
 	 */
-	public void parseAll() {
+	public int parseAll() {
+		int parsed = 0;
 		findFiles(directory);
 		boolean err = false;
 		for (String path : filepaths) {
@@ -73,6 +80,7 @@ public class DirectoryParser {
 				parsedData.add(reader.getData());
 				String[] fileWithHeader = { path, reader.getData().toString() };
 				headers.add(fileWithHeader);
+				parsed++;
 			} else if (reader.getErrorDescription() != null){
 				if (!err) {
 					System.out.println();
@@ -81,6 +89,7 @@ public class DirectoryParser {
 				System.out.println("[DATABASE MESSAGE] " + reader.getErrorDescription());
 			}
 		}
+		return parsed;
 	}
 
 	/**

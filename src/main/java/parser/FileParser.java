@@ -35,8 +35,9 @@ public class FileParser {
 		try {
 			String rootpath = root.getAbsolutePath();
 			String filepath = input.getAbsolutePath();
-			String fileType = filepath.substring(filepath.lastIndexOf('.') + 1).toLowerCase();
-			switch (fileType) {
+			String extension = filepath.substring(filepath.lastIndexOf('.') + 1).toLowerCase();
+			extension = filepath.endsWith("hosts") ? "hosts" : extension;
+			switch (extension) {
 			case "cfg":
 			case "conf":
 			case "config":
@@ -47,6 +48,7 @@ public class FileParser {
 				data = new ParseYaml();
 				break;
 			case "env":
+			case "jars":
 			case "prop":
 			case "properties":
 				data = new ParseProp();

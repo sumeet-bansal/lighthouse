@@ -10,7 +10,7 @@ import databaseModule.*;
  * Runs the complete diagnostic tool from the command line.
  * 
  * @author ActianceEngInterns
- * @version 1.2
+ * @version 1.3
  */
 public class Access {
 
@@ -60,15 +60,12 @@ public class Access {
 
 				// prompts and takes input, split into array in case of multiple commands
 				System.out.print("lighthouse-v" + VERSION + ": " + branch + " $ ");
-				String[] input = s.nextLine().split(";");
+				String[] input = parseStatements(s.nextLine());
 
 				for (int cmdi = 0; cmdi < input.length; cmdi++) {
 
 					// cleans commands for processing
 					args = parseArgs(input[cmdi]);
-					if (args == null) {
-						continue;
-					}
 
 					// switches modules or exits application
 					switch (args[0]) {
@@ -114,7 +111,7 @@ public class Access {
 						AccessQRY.run(args);
 						break;
 					default:
-						System.err.println("This should never run.");
+						System.err.println("[ERROR] This should never run.");
 						break;
 					}
 
@@ -133,21 +130,16 @@ public class Access {
 	}
 
 	/**
-	 * Cleans command-line statements for processing.
+	 * Cleans single command-line statements for processing.
 	 * 
 	 * @param command
 	 *            a full command-line statement
 	 * @return an array of command-line arguments meant to mimic the standard 'args' parameter
 	 */
-	private static String[] parseArgs(String command) {
+	public static String[] parseArgs(String command) {
 
 		// replaces all trailing, leading, or duplicate spaces
 		command = command.trim().replaceAll("\\s{2,}", " ");
-
-		// skips empty commands
-		if (command.equals("")) {
-			return null;
-		}
 
 		String[] args = command.split(" ");
 
@@ -155,19 +147,30 @@ public class Access {
 		if (command.indexOf('\"') != -1) {
 			ArrayList<String> parsed = new ArrayList<>(); // to simplify chaining logic
 			String full = null; // chains args within quotation marks, null otherwise
+			boolean added = false;
 			for (int i = 0; i < args.length; i++) {
 				if (args[i].indexOf("\"") != args[i].lastIndexOf("\"")) {
-					parsed.add(args[i].replaceAll("\"", ""));
+					String cleaned = args[i].replaceAll("\"", "");
+					full = full == null ? cleaned : full + " " + cleaned;
+					added = false;
 				} else if (full == null && !args[i].contains("\"")) {
 					parsed.add(args[i]);
+					added = true;
 				} else if (full == null && args[i].contains("\"")) {
 					full = args[i];
+					added = false;
 				} else if (full != null && !args[i].contains("\"")) {
 					full += " " + args[i];
-				} else if (full != null && args[i].contains("\"") || i == args.length - 1) {
+					added = false;
+				} else if ((full != null && args[i].contains("\""))) {
 					full += " " + args[i];
 					parsed.add(full.replaceAll("\"", ""));
 					full = null;
+					added = true;
+				}
+
+				if (i == args.length - 1 && !added) {
+					parsed.add(full.replaceAll("\"", ""));
 				}
 			}
 
@@ -180,6 +183,32 @@ public class Access {
 		}
 
 		return args;
+	}
+
+	/**
+	 * Cleans multiple delimited command-line statements for processing.
+	 * 
+	 * @param commands
+	 *            multiple delimited command-line statements (e.g.: "db clear -y; populate root;
+	 *            ignore")
+	 * @return an array of single commands that can individually be executed
+	 */
+	public static String[] parseStatements(String commands) {
+		String[] input = commands.split(";");
+		ArrayList<String> parsed = new ArrayList<>();
+		for (int i = 0; i < input.length; i++) {
+			input[i] = input[i].trim().replaceAll("\\s{2,}", " ");
+
+			// skips empty commands
+			if (input[i].length() > 0) {
+				parsed.add(input[i]);
+			}
+		}
+		String[] mult = new String[parsed.size()];
+		for (int i = 0; i < parsed.size(); i++) {
+			mult[i] = parsed.get(i);
+		}
+		return mult;
 	}
 
 	/**

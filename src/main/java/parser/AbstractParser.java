@@ -120,7 +120,7 @@ public abstract class AbstractParser {
 		}
 
 		while (p.indexOf("//") != -1) {
-			p.replace("//", "/");
+			p = p.replace("//", "/");
 		}
 
 		return p;

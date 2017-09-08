@@ -78,8 +78,16 @@ public class MongoManager {
 	public static Document generateFilter(String path) {
 
 		// cleans up the path
+		while (path.indexOf("\\") != -1) {
+			path = path.replace("\\", "/");
+		}
 		while (path.indexOf("//") != -1) {
-			path.replace("//", "/");
+			path = path.replace("//", "/");
+		}
+
+		path = path.length() > 0 && path.charAt(0) == '/' ? path.substring(1) : path;
+		if (path.length() == 0) {
+			return new Document();
 		}
 
 		// splits the path by delimiter and adds metadata to filter

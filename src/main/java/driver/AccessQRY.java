@@ -283,6 +283,7 @@ public class AccessQRY {
 				System.out.println("\nLooking for properties with attributes:\n" + status);
 			} else {
 				System.err.println(status);
+				return;
 			}
 		}
 
@@ -294,8 +295,9 @@ public class AccessQRY {
 		if (status != null) {
 			if (!status.equals("") && !status.contains("[ERROR]")) {
 				System.out.println("\nExcluding properties with attributes:\n" + status);
-			} else {
+			} else if (status.contains("[ERROR]")) {
 				System.err.println(status);
+				return;
 			}
 		}
 

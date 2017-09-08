@@ -182,7 +182,7 @@ public class DbFunctions extends MongoManager {
 	 * @return the generated DirTree, a representation of the complete directory structure within
 	 *         the database
 	 */
-	private static DirTree popTree() {
+	public static DirTree popTree() {
 		DirTree tree = new DirTree();
 		MongoCursor<String> cursor = collection.distinct("path", String.class).iterator();
 		while (cursor.hasNext()) {

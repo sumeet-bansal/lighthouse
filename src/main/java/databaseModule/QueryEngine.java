@@ -101,7 +101,7 @@ public class QueryEngine extends MongoManager {
 		ArrayList<String> subdirs = new ArrayList<>();
 		Document filter = generateFilter(path);
 		if (filter.get("filename") != null) {
-			return "[ERROR] Internal queries must be at a directory level" + "(i.e. environment, fabric, or node).\n";
+			return "[ERROR] Internal queries must be at a directory level (i.e. environment, fabric, or node).\n";
 		}
 
 		// rebuilds path (in case of wildcard extensions)
