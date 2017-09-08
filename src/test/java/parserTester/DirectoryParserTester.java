@@ -1,29 +1,49 @@
 package parserTester;
 
-import java.io.*;
-import java.util.*;
+import static org.junit.Assert.*;
 
-import parser.*;
+import java.io.*;
+
+import org.junit.*;
+
+import parser.DirectoryParser;
 
 /**
- * Tests the Parser.
+ * Tests {@link parser.DirectoryParser}.
  * 
  * @author ActianceEngInterns
- * @version 1.1
+ * @version 1.3.0
  */
 public class DirectoryParserTester {
-	
+
+	private String root;
+	private DirectoryParser parser;
+
 	/**
-	 * Runs the tester.
-	 * @param args command-line arguments
+	 * Sets up the testbed by populating the AbstractParser.
 	 */
-	public static void main(String[] args) {
-		String path = System.getProperty("user.home") + "/workspace/diagnosticSuite/root/";
-		File folder = new File(path);
-		DirectoryParser directory = new DirectoryParser(folder);
-		directory.parseAll();
-		ArrayList<AbstractParser> parsedFiles = directory.getParsedData();
-		System.out.println(parsedFiles);
+	@Before
+	public void setup() {
+		root = System.getProperty("user.home").replace("\\", "/") + "/workspace/lighthouse/root/";
+		parser = new DirectoryParser(new File(root));
 	}
-	
+
+	/**
+	 * Tests {@link parser.DirectoryParser#findFiles(java.io.File directory)}.
+	 */
+	@Test
+	public void testFindFiles() {
+		assertEquals(parser.findFiles(new File(root)), 290);
+		assertNotEquals(parser.findFiles(new File(root)), 254);
+	}
+
+	/**
+	 * Tests {@link parser.DirectoryParser#parseAll()}.
+	 */
+	@Test
+	public void testParseAll() {
+		assertEquals(parser.parseAll(), 254);
+		assertNotEquals(parser.parseAll(), 290);
+	}
+
 }
