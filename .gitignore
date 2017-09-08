@@ -27,14 +27,29 @@ Thumbs.db
 .classpath
 .project
 .settings/
-*.yaml
-*.yml
-*.config
-*.conf
+
+# sensitive documents
 *.cfg
-*.properties
+*.conf
+*.config
+*.yml
+*.yaml
+*.env
+*.jars
 *.prop
+*.properties
+*.hosts
 *.xml
 *.info
-hosts
+*.whitelist
+*.blacklist
+*.keyring
+*.gateway
+*.ignore
+rbdmap
+*.ini
+*.xsl
 root/
+
+# lighthouse-generated documents
+*.csv
