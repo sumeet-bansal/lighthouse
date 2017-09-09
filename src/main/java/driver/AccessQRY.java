@@ -3,7 +3,8 @@ package driver;
 import java.io.*;
 import java.util.*;
 
-import databaseModule.*;
+import queryModule.QueryEngine;
+import queryModule.QueryFunctions;
 
 /**
  * Runs the QueryFunctions from the command line.

@@ -1,4 +1,4 @@
-package databaseModule;
+package queryModule;
 
 import java.io.*;
 import java.text.*;
@@ -7,6 +7,8 @@ import java.util.*;
 import org.bson.Document;
 
 import com.mongodb.client.*;
+
+import driver.MongoManager;
 
 /**
  * Pulls queried data from MongoDB and compares key values.
@@ -109,6 +111,8 @@ public class QueryEngine extends MongoManager {
 		for (int j = 0; j < genericPath.length; j++) {
 			if (filter.get(genericPath[j]) != null) {
 				loc += filter.getString(genericPath[j]) + "/";
+			} else if (j < path.split("/").length) {
+				loc += "*/";
 			}
 		}
 
@@ -119,6 +123,11 @@ public class QueryEngine extends MongoManager {
 				cursor = collection.distinct(reversePath[i - 1], filter, String.class).iterator();
 				break;
 			}
+		}
+		
+		if (cursor == null) {
+			cursor = collection.distinct("environment", filter, String.class).iterator();
+			loc = "";
 		}
 
 		// adds all individual paths to dirSet
@@ -141,6 +150,8 @@ public class QueryEngine extends MongoManager {
 			return "\n[ERROR] Directory must contain at least 2 files or subdirectories."
 					+ "\n\tOnly matching subdirectory found: " + subdirs.get(0) + "\n";
 		}
+		
+		System.out.println(subdirs);
 
 		// query each unique pair of files within List
 		String status = "";
@@ -291,14 +302,14 @@ public class QueryEngine extends MongoManager {
 		}
 
 		// if single query, sets column filenames to query comparison
+		// else, in case of internal query, determines parent directory
 		String left = "root";
 		String right = "root";
 		if (queryPairs.size() == 1) {
 			Document comp1 = queryPairs.get(0)[0];
 			Document comp2 = queryPairs.get(0)[1];
 
-			String[] pathKeys = { "environment", "fabric", "node", "filename" };
-			for (String key : pathKeys) {
+			for (String key : genericPath) {
 				String val1 = comp1.getString(key);
 				String val2 = comp2.getString(key);
 				if (val1 != null && val2 != null && !val1.equals(val2)) {
@@ -306,7 +317,24 @@ public class QueryEngine extends MongoManager {
 					right = val2;
 				}
 			}
-
+		} else {
+			Document query = queryPairs.get(0)[0];
+			String stop = "";
+			for (int i = 0; i < reversePath.length; i++) {
+				if (query.containsKey(reversePath[i])) {
+					stop = reversePath[i];
+					break;
+				}
+			}
+			if (!stop.equals("environment")) {
+				int i = 0;
+				left = "";
+				while (i < genericPath.length && !genericPath[i].equals(stop)) {
+					left += query.getString(genericPath[i]) + "/";
+					i++;
+				}
+				right = left;
+			}
 		}
 
 		String[] header = { left, "left key", "left value", right, "right key", "right value", "key status",

@@ -6,8 +6,9 @@ import java.util.*;
 import org.bson.Document;
 
 import com.mongodb.*;
-import com.mongodb.client.MongoCursor;
+import com.mongodb.client.*;
 
+import driver.MongoManager;
 import parser.*;
 
 /**
@@ -160,7 +161,7 @@ public class DbFunctions extends MongoManager {
 	 * @return a String returning the results of the operation, null if successful
 	 */
 	public static String ignore(String location, Set<String> properties, boolean toggle) {
-		Document filter = location != null ? generateFilter(location) : null;
+		Document filter = location != null ? MongoManager.generateFilter(location) : null;
 		return ignore(filter, properties, toggle);
 	}
 

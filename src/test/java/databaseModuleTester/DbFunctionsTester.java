@@ -12,7 +12,7 @@ import com.mongodb.client.MongoCursor;
 
 import databaseModule.DbFunctions;
 import databaseModule.DirTree;
-import databaseModule.MongoManager;
+import driver.MongoManager;
 
 /**
  * Tests {@link databaseModule.DbFunctions}.
@@ -23,6 +23,7 @@ import databaseModule.MongoManager;
 public class DbFunctionsTester {
 
 	String root;
+	private final int PROPERTIES = 17965;
 
 	/**
 	 * Sets up the testbed by populating the Mongo database.
@@ -49,9 +50,9 @@ public class DbFunctionsTester {
 	 */
 	@Test
 	public void testPopulate() {
-		DbFunctions.clearDB();
+		MongoManager.clearDB();
 		long populated = DbFunctions.populate(root);
-		assertEquals(populated, 17965);
+		assertEquals(populated, PROPERTIES);
 		assertEquals(MongoManager.getCol().count(), populated);
 	}
 

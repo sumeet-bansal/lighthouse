@@ -1,10 +1,12 @@
-package databaseModule;
+package queryModule;
 
 import java.util.*;
 
 import org.bson.Document;
 
 import com.mongodb.client.*;
+
+import driver.MongoManager;
 
 /**
  * Pulls queried data from MongoDB for non-comparison searches.

@@ -1,4 +1,4 @@
-package databaseModuleTester;
+package driverTester;
 
 import static org.junit.Assert.*;
 
@@ -9,10 +9,10 @@ import org.bson.Document;
 import org.junit.*;
 
 import databaseModule.DbFunctions;
-import databaseModule.MongoManager;
+import driver.MongoManager;
 
 /**
- * Tests {@link databaseModule.MongoManager}.
+ * Tests {@link driver.MongoManager}.
  * 
  * @author ActianceEngInterns
  * @version 1.3.0
@@ -39,7 +39,7 @@ public class MongoManagerTester {
 	}
 
 	/**
-	 * Tests {@link databaseModule.MongoManager#generateFilter(java.lang.String)}
+	 * Tests {@link driver.MongoManager#generateFilter(java.lang.String)}
 	 */
 	@Test
 	public void testGenerateFilter() {
@@ -95,7 +95,7 @@ public class MongoManagerTester {
 	}
 
 	/**
-	 * Tests {@link databaseModule.MongoManager#clearDB()}.
+	 * Tests {@link driver.MongoManager#clearDB()}.
 	 */
 	@Test
 	public void testClearDB() {

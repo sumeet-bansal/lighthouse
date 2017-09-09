@@ -1,4 +1,4 @@
-package databaseModuleTester;
+package queryModuleTester;
 
 import static org.junit.Assert.*;
 
@@ -8,11 +8,11 @@ import org.apache.log4j.*;
 import org.junit.*;
 
 import databaseModule.DbFunctions;
-import databaseModule.MongoManager;
-import databaseModule.QueryFunctions;
+import queryModule.QueryFunctions;
+import driver.MongoManager;
 
 /**
- * Tests {@link databaseModule.QueryFunctions}.
+ * Tests {@link queryModule.QueryFunctions}.
  * 
  * @author ActianceEngInterns
  * @version 1.3.0
@@ -42,7 +42,7 @@ public class QueryFunctionsTester {
 	}
 
 	/**
-	 * Tests {@link databaseModule.QueryFunctions#grep(java.lang.String, int)}.
+	 * Tests {@link queryModule.QueryFunctions#grep(java.lang.String, int)}.
 	 */
 	@Test
 	public void testGrep() {
@@ -78,7 +78,7 @@ public class QueryFunctionsTester {
 
 	/**
 	 * Tests
-	 * {@link databaseModule.QueryFunctions#findProp(java.lang.String, java.lang.String, int)}.
+	 * {@link queryModule.QueryFunctions#findProp(java.lang.String, java.lang.String, int)}.
 	 */
 	@Test
 	public void testFindProp() {

@@ -18,6 +18,8 @@ public class DirectoryParserTester {
 
 	private String root;
 	private DirectoryParser parser;
+	private final int FILES = 291;
+	private final int PARSEABLE = 260;
 
 	/**
 	 * Sets up the testbed by populating the AbstractParser.
@@ -33,8 +35,7 @@ public class DirectoryParserTester {
 	 */
 	@Test
 	public void testFindFiles() {
-		assertEquals(parser.findFiles(new File(root)), 290);
-		assertNotEquals(parser.findFiles(new File(root)), 254);
+		assertEquals(parser.findFiles(new File(root)), FILES);
 	}
 
 	/**
@@ -42,8 +43,7 @@ public class DirectoryParserTester {
 	 */
 	@Test
 	public void testParseAll() {
-		assertEquals(parser.parseAll(), 254);
-		assertNotEquals(parser.parseAll(), 290);
+		assertEquals(parser.parseAll(), PARSEABLE);
 	}
 
 }

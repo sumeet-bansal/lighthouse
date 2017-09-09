@@ -4,8 +4,6 @@ import java.util.*;
 import org.apache.log4j.*;
 import com.mongodb.*;
 
-import databaseModule.*;
-
 /**
  * Runs the complete diagnostic tool from the command line.
  * 
