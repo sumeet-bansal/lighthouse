@@ -19,3 +19,6 @@ fi
 sudo apt-get update
 sudo apt-get install -y mongodb-org
 sudo service mongod start
+
+# installs Maven
+sudo apt install maven
