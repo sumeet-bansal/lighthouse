@@ -421,25 +421,21 @@ public class QueryEngine extends MongoManager {
 			return "[ERROR] Unable to write CSV because no documents were found matching your query.";
 		}
 
-		String content = "";
-		for (ArrayList<String[]> table : tables) {
-			for (String[] arr : table) {
-				for (String str : arr) {
-					if (str.equals("null")) {
-						content += ("\"\"" + ",");
-					} else {
-						str = str.replace("\"", "'");
-						content += ("\"" + str + "\"" + ",");
-					}
-				}
-				content += "\n";
-			}
-		}
-
 		try {
 			String path = directory + "/" + filename + ".csv";
 			BufferedWriter writer = new BufferedWriter(new FileWriter(path, true));
-			writer.write(content);
+			for (ArrayList<String[]> table : tables) {
+				for (String[] arr : table) {
+					for (String str : arr) {
+						if (str.equals("null")) {
+							writer.write("\"\"" + ",");
+						} else {
+							writer.write("\"" + str.replace("\"", "'") + "\"" + ",");
+						}
+					}
+					writer.write("\n");
+				}
+			}
 			writer.close();
 			return "Successfully wrote " + filename + ".csv to " + directory;
 		} catch (IOException e) {
