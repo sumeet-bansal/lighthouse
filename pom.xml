@@ -41,7 +41,14 @@
 			<version>3.4.2</version>
 		</dependency>
 
-		<!-- parsing dependenciies -->
+		<!-- SQLite dependencies -->
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.20.0</version>
+		</dependency>
+
+		<!-- parsing dependencies -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-yaml</artifactId>
