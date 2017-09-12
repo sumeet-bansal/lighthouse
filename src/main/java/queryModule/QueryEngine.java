@@ -375,6 +375,8 @@ public class QueryEngine extends MongoManager {
 			// copies property values to Strings
 			String pathL = propL != null ? propL.getString("path") : "";
 			String pathR = propR != null ? propR.getString("path") : "";
+			String keyL = propL != null ? key : "";
+			String keyR = propR != null ? key : "";
 			String valueL = propL != null ? propL.getString("value") : "";
 			String valueR = propR != null ? propR.getString("value") : "";
 
@@ -398,7 +400,7 @@ public class QueryEngine extends MongoManager {
 			} else {
 				keyStatus = valueStatus = "";
 			}
-			String[] row = { pathL, key, valueL, pathR, key, valueR, keyStatus, valueStatus };
+			String[] row = { pathL, keyL, valueL, pathR, keyR, valueR, keyStatus, valueStatus };
 			table.add(row);
 		}
 		return table;
