@@ -72,17 +72,43 @@ public class SQLiteManager {
 		return -1;
 	}
 
+	public static String getTable() {
+		return table;
+	}
+
+	public static List<Map<String, String>> parseResultSet(ResultSet rs) {
+		LinkedList<Map<String, String>> result = new LinkedList<>();
+		try {
+			Set<String> metadata = new LinkedHashSet<>();
+			for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+				metadata.add(rs.getMetaData().getColumnName(i));
+			}
+			while (rs.next()) {
+				Map<String, String> row = new LinkedHashMap<>();
+				for (String field : metadata) {
+					row.put(field, rs.getString(field));
+				}
+				result.add(row);
+			}
+		} catch (SQLException e) {
+			exit(e);
+		}
+		return result;
+	}
+
 	/**
 	 * Extracts data from the database.
 	 * 
 	 * @param sql
 	 *            the full SQLite command
-	 * @return the extracted data as a {@link java.sql.ResultSet}
+	 * @return the extracted data as a List of Maps, each of which represent a single property, or
+	 *         row within the SQL table
 	 */
-	public static ResultSet select(String sql) {
+	public static List<Map<String, String>> select(String sql) {
 		try {
 			Statement statement = connection.createStatement();
-			return statement.executeQuery(sql);
+			ResultSet rs = statement.executeQuery(sql);
+			return parseResultSet(rs);
 		} catch (SQLException e) {
 			exit(e);
 		}
@@ -129,8 +155,6 @@ public class SQLiteManager {
 		}
 
 		sql += ";";
-		System.out.println(sql);
-		System.out.println();
 		try {
 			PreparedStatement ps = connection.prepareStatement(sql);
 			int i = 1;
@@ -307,181 +331,116 @@ public class SQLiteManager {
 	 *            command-line arguments
 	 */
 	public static void main(String[] args) {
-		try {
+		// connects to database
+		System.out.println("[DATABASE MESSAGE] Connecting to database...");
+		connectToDatabase();
+		System.out.println("[DATABASE MESSAGE] Database connection successful.\n");
 
-			// connects to database
-			System.out.println("[DATABASE MESSAGE] Connecting to database...");
-			connectToDatabase();
-			System.out.println("[DATABASE MESSAGE] Database connection successful.\n");
-			clear();
+		// tests insertion
+		Map<String, String> prop;
+		prop = new LinkedHashMap<>();
+		prop.put("key", "testk");
+		prop.put("value", "testv");
+		prop.put("filename", "sth2.prop");
+		prop.put("node", "h2");
+		prop.put("fabric", "storm");
+		prop.put("environment", "Redwood-City");
+		prop.put("path", prop.get("environment") + "/" + prop.get("fabric") + "/" + prop.get("node") + "/"
+				+ prop.get("filename"));
+		prop.put("extension", "properties");
+		prop.put("ignore", "false");
+		insert(prop);
 
-			// tests insertion
-			Map<String, String> prop;
-			prop = new LinkedHashMap<>();
-			prop.put("key", "testk");
-			prop.put("value", "testv");
-			prop.put("filename", "sth2.prop");
-			prop.put("node", "h2");
-			prop.put("fabric", "storm");
-			prop.put("environment", "Redwood-City");
-			prop.put("path", prop.get("environment") + "/" + prop.get("fabric") + "/" + prop.get("node") + "/"
-					+ prop.get("filename"));
-			prop.put("extension", "properties");
-			prop.put("ignore", "false");
-			insert(prop);
+		prop.put("key", "port");
+		prop.put("value", "8080");
+		prop.put("filename", "esh3.prop");
+		prop.put("node", "h3");
+		prop.put("fabric", "elastic");
+		prop.put("environment", "developer1");
+		prop.put("path", prop.get("environment") + "/" + prop.get("fabric") + "/" + prop.get("node") + "/"
+				+ prop.get("filename"));
+		prop.put("extension", "prop");
+		prop.put("ignore", "false");
+		insert(prop);
 
-			prop.put("key", "port");
-			prop.put("value", "8080");
-			prop.put("filename", "esh3.prop");
-			prop.put("node", "h3");
-			prop.put("fabric", "elastic");
-			prop.put("environment", "developer1");
-			prop.put("path", prop.get("environment") + "/" + prop.get("fabric") + "/" + prop.get("node") + "/"
-					+ prop.get("filename"));
-			prop.put("extension", "prop");
-			prop.put("ignore", "false");
-			insert(prop);
+		prop.put("key", "mongo");
+		prop.put("value", "db");
+		prop.put("filename", "zkh1.prop");
+		prop.put("node", "h1");
+		prop.put("fabric", "zkepler");
+		prop.put("environment", "developer8");
+		prop.put("path", prop.get("environment") + "/" + prop.get("fabric") + "/" + prop.get("node") + "/"
+				+ prop.get("filename"));
+		prop.put("extension", "prop");
+		prop.put("ignore", "false");
+		insert(prop);
 
-			prop.put("key", "mongo");
-			prop.put("value", "db");
-			prop.put("filename", "zkh1.prop");
-			prop.put("node", "h1");
-			prop.put("fabric", "zkepler");
-			prop.put("environment", "developer8");
-			prop.put("path", prop.get("environment") + "/" + prop.get("fabric") + "/" + prop.get("node") + "/"
-					+ prop.get("filename"));
-			prop.put("extension", "prop");
-			prop.put("ignore", "false");
-			insert(prop);
+		List<Map<String, String>> res;
+		String sql = "";
 
-			ResultSet rs = null;
-			String sql = "";
+		// retrieves all rows
+		sql = "SELECT * FROM properties;";
+		res = select(sql);
+		print(res);
 
-			// retrieves all rows
-			sql = "SELECT * FROM properties;";
-			rs = select(sql);
-			for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-				System.out.print(rs.getMetaData().getColumnName(i) + "\t\t");
+		// retrieves key, value, and ignore rows from Redwood-City
+		sql = "SELECT key, value, ignore FROM properties WHERE environment = 'Redwood-City';";
+		res = select(sql);
+		print(res);
+
+		// checks count
+		System.out.println("\nCount: " + getSize() + " rows of properties.");
+
+		// deletes a row
+		Map<String, String> d = new LinkedHashMap<>();
+		d.put("environment", "Redwood-City");
+		d.put("fabric", "storm");
+		delete(d);
+		System.out.println("Deleted rows with 'Redwood-City' environment, 'storm' fabric.\n");
+
+		// updates row's 'ignore' field to true
+		Map<String, String> u = new LinkedHashMap<>();
+		u.put("ignore", "true");
+		Map<String, String> f = new LinkedHashMap<>();
+		f.put("environment", "developer1");
+		Set<String> p = new HashSet<>();
+		p.add("port");
+		p.add("mongo");
+		update(u, f, p);
+
+		// retrieves all rows
+		sql = "SELECT * FROM properties;";
+		res = select(sql);
+		print(res);
+
+		// tests DbFunctions#populate
+		System.out.println("Count: " + getSize() + " rows of properties.");
+		System.out.println("Cleared " + clear() + " rows. Remaining: " + getSize());
+		DbFunctions.populate(System.getProperty("user.home") + "/workspace/lighthouse/root");
+		res = select("SELECT * FROM properties");
+		print(res);
+		System.out.println("\nCount: " + getSize() + " rows of properties.\n");
+
+		res = select("SELECT * FROM properties WHERE key LIKE '%lfs/ingestion%'");
+		print(res);
+
+		res = select("SELECT * FROM properties WHERE ignore = 'true'");
+		print(res);
+
+		res = select("SELECT * FROM properties WHERE key = 'report/port'");
+		print(res);
+	}
+
+	private static void print(List<Map<String, String>> res) {
+		Iterator<Map<String, String>> iter = res.iterator();
+		System.out.println();
+		while (iter.hasNext()) {
+			Map<String, String> property = iter.next();
+			for (String value : property.values()) {
+				System.out.print(value + "\t\t");
 			}
 			System.out.println();
-			while (rs.next()) {
-				for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-					System.out.print(rs.getString(i) + "\t\t");
-				}
-				System.out.println();
-			}
-			System.out.println();
-
-			// retrieves key, value, and ignore rows from Redwood-City
-			sql = "SELECT key, value, ignore FROM properties WHERE environment = 'Redwood-City';";
-			rs = select(sql);
-			for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-				System.out.print(rs.getMetaData().getColumnName(i) + "\t\t");
-			}
-			System.out.println();
-			while (rs.next()) {
-				for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-					System.out.print(rs.getString(i) + "\t\t");
-				}
-				System.out.println();
-			}
-
-			// checks count
-			System.out.println("\nCount: " + getSize() + " rows of properties.");
-
-			// deletes a row
-			Map<String, String> d = new LinkedHashMap<>();
-			d.put("environment", "Redwood-City");
-			d.put("fabric", "storm");
-			delete(d);
-			System.out.println("Deleted rows with 'Redwood-City' environment, 'storm' fabric.\n");
-
-			// updates row's 'ignore' field to true
-			Map<String, String> u = new LinkedHashMap<>();
-			u.put("ignore", "true");
-			Map<String, String> f = new LinkedHashMap<>();
-			f.put("environment", "developer1");
-			Set<String> p = new HashSet<>();
-			p.add("port");
-			p.add("mongo");
-			update(u, f, p);
-
-			// retrieves all rows
-			sql = "SELECT * FROM properties;";
-			rs = select(sql);
-			for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-				System.out.print(rs.getMetaData().getColumnName(i) + "\t\t");
-			}
-			System.out.println();
-			while (rs.next()) {
-				for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-					System.out.print(rs.getString(i) + "\t\t");
-				}
-				System.out.println();
-			}
-			System.out.println();
-
-			// tests DbFunctions#populate
-			System.out.println("Count: " + getSize() + " rows of properties.");
-			System.out.println("Cleared " + clear() + " rows. Remaining: " + getSize());
-			DbFunctions.populate(System.getProperty("user.home") + "/workspace/lighthouse/root");
-			rs = select("SELECT * FROM properties");
-			for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-				System.out.print(rs.getMetaData().getColumnName(i) + "\t\t");
-			}
-			System.out.println();
-			while (rs.next()) {
-				for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-//					System.out.print(rs.getString(i) + "\t\t");
-				}
-//				System.out.println();
-			}
-			System.out.println();
-			System.out.println("\nCount: " + getSize() + " rows of properties.\n");
-
-			rs = select("SELECT * FROM properties WHERE key LIKE '%lfs/ingestion%'");
-			for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-				System.out.print(rs.getMetaData().getColumnName(i) + "\t\t");
-			}
-			System.out.println();
-			while (rs.next()) {
-				for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-					System.out.print(rs.getString(i) + "\t\t");
-				}
-				System.out.println();
-			}
-			System.out.println();
-
-			rs = select("SELECT * FROM properties WHERE ignore = 'true'");
-			for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-				System.out.print(rs.getMetaData().getColumnName(i) + "\t\t");
-			}
-			System.out.println();
-			while (rs.next()) {
-				for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-					System.out.print(rs.getString(i) + "\t\t");
-				}
-				System.out.println();
-			}
-			System.out.println();
-
-			rs = select("SELECT * FROM properties WHERE key = 'report/port'");
-			for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-				System.out.print(rs.getMetaData().getColumnName(i) + "\t\t");
-			}
-			System.out.println();
-			while (rs.next()) {
-				for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-					System.out.print(rs.getString(i) + "\t\t");
-				}
-				System.out.println();
-			}
-			System.out.println();
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-			System.err.println("[DATABASE ERROR] A database access error occurred. Exiting with error code 1.");
-			System.exit(1);
 		}
+		System.out.println();
 	}
 }
