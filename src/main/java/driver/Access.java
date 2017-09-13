@@ -2,7 +2,6 @@ package driver;
 
 import java.util.*;
 import org.apache.log4j.*;
-import com.mongodb.*;
 
 /**
  * Runs the complete diagnostic tool from the command line.
@@ -19,15 +18,11 @@ public class Access {
 	public static final String APPNAME = "lighthouse-v" + VERSION;
 
 	private static String help = "\nHOME PAGE -- POSSIBLE COMMANDS"
-			+ "\n'help'\n\tgoes to the help page for the general diagnostic tool"
-			+ "\n\tUsage: ~$ help"
-			+ "\n'db'\n\tswitches to the database module to access functions that directly edit the database"
+			+ "\n'help'\n\tgoes to the help page for the general diagnostic tool" + "\n\tUsage: ~$ help"
+			+ "\n'db'\n\tswitches to the database module to access functions that work directly with the database"
 			+ "\n\tUsage: ~$ db"
 			+ "\n'query'\n\tswitches to the query module to access functions that analyze the contents of the database"
 			+ "\n\tUsage: ~$ query\n";
-
-	private static String note = "Note: lighthouse must be used in conjuntion with a working MongoDB connection."
-			+ "\nTo ensure a working connection to the database, ensure the executable 'mongod' is running.";
 
 	/**
 	 * Takes command-line arguments and delegates functionality as appropriate.
@@ -45,86 +40,73 @@ public class Access {
 			logger.setLevel(Level.OFF);
 		}
 
-		try {
+		// startup
+		printSplash();
+		SQLiteManager.connectToDatabase();
+		System.out.println(help);
 
-			// startup
-			printSplash();
-			System.out.println("\n" + note);
-			MongoManager.connectToDatabase();
-			System.out.println(help);
+		// runs until `exit` command given
+		while (true) {
 
-			// runs until `exit` command given
-			while (true) {
+			// prompts and takes input, split into array in case of multiple commands
+			System.out.print("lighthouse-v" + VERSION + ": " + branch + " $ ");
+			String[] input = parseStatements(s.nextLine());
 
-				// prompts and takes input, split into array in case of multiple commands
-				System.out.print("lighthouse-v" + VERSION + ": " + branch + " $ ");
-				String[] input = parseStatements(s.nextLine());
+			for (int cmdi = 0; cmdi < input.length; cmdi++) {
 
-				for (int cmdi = 0; cmdi < input.length; cmdi++) {
+				// cleans commands for processing
+				args = parseArgs(input[cmdi]);
 
-					// cleans commands for processing
-					args = parseArgs(input[cmdi]);
+				// switches modules or exits application
+				switch (args[0]) {
+				case "home":
+				case "db":
+				case "query":
+					branch = args[0];
+					if (args.length > 1) {
+						args = Arrays.copyOfRange(args, 1, args.length);
+					} else {
+						args[0] = "help";
+					}
+					break;
+				case "quit":
+				case "exit":
+					s.close();
+					System.exit(0);
+					break;
+				}
 
-					// switches modules or exits application
+				// executes commands for 'home' branch
+				if (branch.equals("home")) {
 					switch (args[0]) {
-					case "home":
-					case "db":
-					case "query":
-						branch = args[0];
-						if (args.length > 1) {
-							args = Arrays.copyOfRange(args, 1, args.length);
-						} else {
-							args[0] = "help";
-						}
-						break;
-					case "quit":
-					case "exit":
-						s.close();
-						MongoManager.disconnect();
-						System.exit(0);
-						break;
-					}
-
-					// executes commands for 'home' branch
-					if (branch.equals("home")) {
-						switch (args[0]) {
-						case "man":
-						case "help":
-							System.out.println(help);
-							break;
-						default:
-							System.err.println("Invalid input. Use the 'help' command for details on usage.\n");
-							continue;
-						}
-					}
-
-					// delegates functionality as appropriate
-					switch (branch) {
-					case "home":
-						break;
-					case "db":
-						AccessDB.run(args);
-						break;
-					case "query":
-						AccessQRY.run(args);
+					case "man":
+					case "help":
+						System.out.println(help);
 						break;
 					default:
-						System.err.println("[ERROR] This should never run.");
-						break;
+						System.err.println("Invalid input. Use the 'help' command for details on usage.\n");
+						continue;
 					}
+				}
 
-				} // end of multi-command loop
-			} // end of indefinite while loop
+				// delegates functionality as appropriate
+				switch (branch) {
+				case "home":
+					break;
+				case "db":
+					AccessDB.run(args);
+					break;
+				case "query":
+					AccessQRY.run(args);
+					break;
+				default:
+					System.err.println("[ERROR] This should never run.");
+					break;
+				}
 
-		} catch (MongoTimeoutException t) {
-			String error = "[DATABASE MESSAGE] Server connection timed out. Make sure a 'mongod' instance is running.";
-			System.out.println(error + "\n\nExiting with error code 1.");
-			System.exit(1);
-		} catch (MongoSocketWriteException | MongoSocketOpenException s) {
-			String error = "[DATABASE MESSAGE] Mongo connection interrupted. Check if 'mongod' is still running.";
-			System.out.println(error + "\n\nExiting with error code 2.");
-			System.exit(2);
-		}
+			} // end of multi-command loop
+		} // end of indefinite while loop
+
 	}
 
 	/**

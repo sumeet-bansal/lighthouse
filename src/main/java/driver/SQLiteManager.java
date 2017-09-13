@@ -32,6 +32,66 @@ public class SQLiteManager {
 		}
 	}
 
+	/**
+	 * Private helper method. Given path inputs, verifies the validity of the inputs and generates
+	 * filters for the inputs.
+	 * <dl>
+	 * <dt>example path parameters:
+	 * <dd>dev1/fabric2
+	 * </dl>
+	 * <dl>
+	 * <dt>example filter:
+	 * <dd>{environment: "dev1", fabric: "fabric2"}
+	 * </dl>
+	 * 
+	 * @param path
+	 *            the path for which a filter is being generated
+	 * @return the generated filter
+	 */
+	public static Map<String, String> generatePathFilter(String path) {
+
+		// cleans up the path
+		while (path.indexOf("\\") != -1) {
+			path = path.replace("\\", "/");
+		}
+		while (path.indexOf("//") != -1) {
+			path = path.replace("//", "/");
+		}
+
+		path = path.length() > 0 && path.charAt(0) == '/' ? path.substring(1) : path;
+		if (path.length() == 0) {
+			return new LinkedHashMap<>();
+		}
+
+		// splits the path by delimiter and adds metadata to filter
+		String[] split = path.split("/");
+		Map<String, String> filter = new LinkedHashMap<>();
+		for (int i = 0; i < split.length; i++) {
+			if (split[i].charAt(0) != ('*')) {
+				filter.put(genericPath[i], split[i]);
+			} else if (split[i].startsWith("*.")) {
+				filter.put("extension", split[i].substring("*.".length()));
+			}
+		}
+		return filter;
+	}
+
+	public static Set<String> getDistinct(String field) {
+		Set<String> distinct = new LinkedHashSet<>();
+		try {
+			String sql = "SELECT DISTINCT " + field + " FROM " + table;
+			Statement statement = connection.createStatement();
+			ResultSet rs = statement.executeQuery(sql);
+			Iterator<Map<String, String>> distinctMaps = parseResultSet(rs).iterator();
+			while (distinctMaps.hasNext()) {
+				distinct.add(distinctMaps.next().get(field));
+			}
+		} catch (SQLException e) {
+			exit(e);
+		}
+		return distinct;
+	}
+
 	private static void exit(SQLException e) {
 		e.printStackTrace();
 		System.err.println("[DATABASE ERROR] A database access error occurred. Exiting with error code 1.");
@@ -113,6 +173,27 @@ public class SQLiteManager {
 			exit(e);
 		}
 		return null;
+	}
+
+	public static String generateSQLFilter(Map<String, String> filter, Set<String> keys) {
+		String sql = "";
+		if (filter != null && !filter.isEmpty()) {
+			sql += " WHERE ";
+			for (Map.Entry<String, String> entry : filter.entrySet()) {
+				sql += "(" + entry.getKey() + " = '" + entry.getValue() + "') AND ";
+			}
+			sql = sql.substring(0, sql.length() - " AND ".length());
+		}
+
+		if (keys != null && !keys.isEmpty()) {
+			sql = filter == null || filter.isEmpty() ? sql + " WHERE " : sql + " AND ";
+			sql += "key IN (";
+			for (String key : keys) {
+				sql += "'" + key + "', ";
+			}
+			sql = sql.substring(0, sql.length() - ", ".length()) + ")";
+		}
+		return sql;
 	}
 
 	/**

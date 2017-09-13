@@ -3,8 +3,6 @@ package driver;
 import java.io.*;
 import java.util.*;
 
-import com.mongodb.MongoNamespace;
-
 import databaseModule.*;
 
 /**
@@ -16,24 +14,16 @@ import databaseModule.*;
 public class AccessDB {
 
 	private static final String help = "\nDATABASE MODULE -- POSSIBLE COMMANDS"
-			+ "\n'help'\n\tgoes to the help page for 'db'"
-			+ "\n\tUsage: ~$ help"
-			+ "\n'populate'\n\tpopulates the database with the given files"
-			+ "\n\tUsage: ~$ populate <root directory>"
-			+ "\n'info'\n\tprovides info about the contents of the database"
-			+ "\n\tUsage: ~$ info"
+			+ "\n'help'\n\tgoes to the help page for 'db'" + "\n\tUsage: ~$ help"
+			+ "\n'populate'\n\tpopulates the database with the given files" + "\n\tUsage: ~$ populate <root directory>"
+			+ "\n'info'\n\tprovides info about the contents of the database" + "\n\tUsage: ~$ info"
 			+ "\n'list'\n\tprints the structure of the database at optional branches and levels"
-			+ "\n\tUsage: ~$ list [path] [level (1+)]"
-			+ "\n\tNote: the higher the level, the deeper the list."
+			+ "\n\tUsage: ~$ list [path] [level (1+)]" + "\n\tNote: the higher the level, the deeper the list."
 			+ "\n'ignore'\n\tprovides info about ignored properties, can additionally ignore further properties"
-			+ "\n\tUsage: ~$ ignore [toggle] [-l path] [property] ... [property]"
-			+ "\n\ttoggles:"
-			+ "\n\t\t-t, --true\tto ignore the following properties"
-			+ "\n\t\t\t\talt.: -i, --ignore"
-			+ "\n\t\t-f, --false\tto acknowledge the following properties"
-			+ "\n\t\t\t\talt.: -a, --acknowledge"
-			+ "\n'clear'\n\tclears the database"
-			+ "\n\tUsage: ~$ clear"
+			+ "\n\tUsage: ~$ ignore [toggle] [-l path] [property] ... [property]" + "\n\ttoggles:"
+			+ "\n\t\t-t, --true\tto ignore the following properties" + "\n\t\t\t\talt.: -i, --ignore"
+			+ "\n\t\t-f, --false\tto acknowledge the following properties" + "\n\t\t\t\talt.: -a, --acknowledge"
+			+ "\n'clear'\n\tclears the database" + "\n\tUsage: ~$ clear"
 			+ "\nType the name of another module to switch modules. Available modules: home, db, query.\n";
 
 	/**
@@ -45,7 +35,7 @@ public class AccessDB {
 	public static void run(String[] args) {
 
 		// warns that database is empty
-		if (MongoManager.getCol().count() == 0 && !args[0].equals("populate") && !args[0].equals("help")) {
+		if (SQLiteManager.getSize() == 0 && !args[0].equals("populate") && !args[0].equals("help")) {
 			System.err.println("Database is empty. Use the 'populate' command to feed files to the database.\n");
 			return;
 		}
@@ -69,7 +59,7 @@ public class AccessDB {
 
 			// adds all specified directories to database
 			for (int i = 0; i < args.length; i++) {
-				int popcount = DbFunctions.populate(args[i]);
+				long popcount = DbFunctions.populate(args[i]);
 				System.out.println("\nAdded " + popcount + " properties to database.\n");
 			}
 
@@ -81,9 +71,8 @@ public class AccessDB {
 			}
 			permission = !permission ? promptClear() : permission;
 			if (permission) {
-				long n = MongoManager.clearDB();
-				MongoNamespace col = MongoManager.getCol().getNamespace();
-				System.out.println("\nCleared " + n + " properties from collection " + col + "\n");
+				long n = SQLiteManager.clear();
+				System.out.println("\nCleared " + n + " properties from database.\n");
 			}
 			break;
 		case "info":
@@ -146,7 +135,7 @@ public class AccessDB {
 
 		String location = null;
 		boolean toggle = true;
-		Set<String> toIgnore = new HashSet<>();
+		Set<String> properties = new HashSet<>();
 
 		// option parsing
 		for (int i = 0; i < args.length; i++) {
@@ -156,14 +145,14 @@ public class AccessDB {
 			case "--true":
 			case "--ig":
 			case "--ignore":
-				toggle = true; 		// toggle set to true to ignore
+				toggle = true; // toggle set to true to ignore
 				break;
 			case "-f":
 			case "-a":
 			case "--false":
 			case "--ack":
 			case "--acknowledge":
-				toggle = false; 	// toggle set to false to acknowledge
+				toggle = false; // toggle set to false to acknowledge
 				break;
 			case "-l":
 			case "--loc":
@@ -181,21 +170,33 @@ public class AccessDB {
 			default:
 
 				// if non-opt arg, adds to Set of properties to ignore
-				toIgnore.add(args[i]);
+				properties.add(args[i]);
 				break;
 
 			}
 		}
 
-		if (toIgnore.size() == 0) {
+		if (properties.isEmpty()) {
 			System.err.println("\n[ERROR] No properties specified.");
 			return;
 		}
 
-		String result = DbFunctions.ignore(location, toIgnore, toggle);
-		if (result != null) {
-			System.err.println("\n" + result);
+		String table = SQLiteManager.getTable();
+		String check;
+		Map<String, String> filter = location != null ? SQLiteManager.generatePathFilter(location) : null;
+
+		// if the filtered query returns no properties, path is not within database
+		check = "SELECT COUNT(*) FROM " + table + SQLiteManager.generateSQLFilter(filter, null) + ";";
+		if (SQLiteManager.select(check).isEmpty()) {
+			System.err.println("[ERROR] No matching path found.");
 		}
+
+		check = "SELECT COUNT(*) FROM " + table + SQLiteManager.generateSQLFilter(filter, properties) + ";";
+		if (SQLiteManager.select(check).isEmpty()) {
+			System.err.println("[ERROR] No matching properties found.");
+		}
+
+		DbFunctions.ignore(location, properties, toggle);
 
 	}
 
