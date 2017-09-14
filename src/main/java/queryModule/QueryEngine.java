@@ -24,7 +24,8 @@ public class QueryEngine {
 	/*
 	 * String[]: CSV row, formatted {file, key, value, file, key, value, key diff, value diff}
 	 * 
-	 * ArrayList<String[]>: a single SQL_TABLE containing the entirety of a comparison between queries
+	 * ArrayList<String[]>: a single SQL_TABLE containing the entirety of a comparison between
+	 * queries
 	 * 
 	 * ArrayList<ArrayList<String>>: multiple tables, necessary due to how internal queries generate
 	 * several tables for each comparison between fabrics/nodes
@@ -33,7 +34,7 @@ public class QueryEngine {
 
 	private Set<String> filenames = new TreeSet<>();
 	private Map<String, Integer> discrepancies = new HashMap<>();
-	
+
 	private String[] genericPath = SQLiteManager.genericPath;
 	private String[] reversePath = SQLiteManager.reversePath;
 	private final String SQL_TABLE = SQLiteManager.getTable();
@@ -90,8 +91,8 @@ public class QueryEngine {
 	 *            the path containing the subdirectories being compared against each other
 	 * @return a String representing the status of the query: null if successful, else error message
 	 */
-	public String generateInternalQueries(String path) {
-		
+	public ArrayList<String> generateInternalQueries(String path) {
+
 		// generates filter
 		Map<String, String> filter = SQLiteManager.generatePathFilter(path);
 
@@ -105,7 +106,7 @@ public class QueryEngine {
 			}
 		}
 
-		// retrieves all the subdirectories of the path
+		// retrieves all the subpaths of the path
 		Iterator<String> iter = null;
 		for (int i = 0; i < reversePath.length; i++) {
 			if (filter.get(reversePath[i]) != null) {
@@ -113,7 +114,7 @@ public class QueryEngine {
 				break;
 			}
 		}
-		
+
 		// defaults to large-scale environment comparisons (e.g. in the case of path "*")
 		if (iter == null) {
 			iter = SQLiteManager.getDistinct("environment", filter).iterator();
@@ -121,36 +122,21 @@ public class QueryEngine {
 		}
 
 		// adds all paths in the level directly below to a List
-		ArrayList<String> subdirs = new ArrayList<>();
+		ArrayList<String> subpaths = new ArrayList<>();
 		while (iter.hasNext()) {
-			String subdir = loc + iter.next();
-			
+			String subpath = loc + iter.next();
+
 			// if an extension wildcard was specified, rebuilds complete path
 			if (filter.get("extension") != null) {
-				for (int i = subdir.split("/").length - 1; i < genericPath.length; i++) {
-					subdir += "/*";
+				for (int i = subpath.split("/").length - 1; i < genericPath.length; i++) {
+					subpath += "/*";
 				}
-				subdir += "." + filter.get("extension");
+				subpath += "." + filter.get("extension");
 			}
-			subdirs.add(subdir);
+			subpaths.add(subpath);
 		}
 
-		if (subdirs.isEmpty()) {
-			return "[ERROR] No matching path found.";
-		}
-		if (subdirs.size() < 2) {
-			return "[ERROR] Directory must contain at least 2 files or subdirectories."
-					+ "\n        Only matching subdirectory found: " + subdirs.get(0);
-		}
-
-		// query each unique pair of files within List
-		String status = "";
-		for (int i = 0; i < subdirs.size() - 1; i++) {
-			for (int j = i + 1; j < subdirs.size(); j++) {
-				status += addQuery(subdirs.get(i), subdirs.get(j));
-			}
-		}
-		return status.length() == 0 ? null : status;
+		return subpaths;
 	}
 
 	/**
@@ -198,18 +184,16 @@ public class QueryEngine {
 	/**
 	 * Excludes queried files with certain attributes from being compared.
 	 * 
+	 * // adds all exclusions to a Set to be cross-referenced during comparison
+	 * 
+	 * 
 	 * @param path
 	 *            the path of the file being blocked
 	 * @return a String containing all exclusion filters (empty if none)
 	 */
 	public Map<String, String> exclude(String path) {
-
-		// generates filter for exclusion
 		Map<String, String> filter = SQLiteManager.generatePathFilter(path);
-
-		// adds all exclusions to a Set to be cross-referenced during comparison
 		exclusions.addAll(SQLiteManager.getDistinct("path", filter));
-
 		return filter;
 	}
 
@@ -230,7 +214,7 @@ public class QueryEngine {
 	 * 
 	 * @return a String detailing the results of the operation
 	 */
-	public String run() {
+	public Map<String, Integer> run() {
 
 		// if single query, sets column filenames to query comparison
 		// else, in case of internal query, determines parent directory
@@ -274,7 +258,7 @@ public class QueryEngine {
 		LinkedList<String[]> tableHeader = new LinkedList<>();
 		tableHeader.add(header);
 		tables.add(tableHeader);
-		
+
 		// initializes statistic tracking for comparison
 		int queried = 0;
 		int excluded = 0;
@@ -287,7 +271,7 @@ public class QueryEngine {
 			// Maps used to rapidly hash keys and corresponding properties for constant lookup
 			Map<String, Map<String, String>> propsL = new LinkedHashMap<>();
 			Map<String, Map<String, String>> propsR = new LinkedHashMap<>();
-			
+
 			String sql;
 			Iterator<Map<String, String>> iter;
 
@@ -322,10 +306,10 @@ public class QueryEngine {
 
 		}
 
-		if (queried == 0) {
-			return "[ERROR] No matching properties found.";
-		}
-		return "Found " + queried + " properties and excluded " + excluded + " properties matching query.";
+		Map<String, Integer> stats = new HashMap<>();
+		stats.put("queried", queried);
+		stats.put("excluded", excluded);
+		return stats;
 	}
 
 	/**
@@ -335,10 +319,11 @@ public class QueryEngine {
 	 *            a List of Documents representing every property in the left side of the query
 	 * @param propsR
 	 *            a List of Documents representing every property in the right side of the query
-	 * @return the SQL_TABLE as an ArrayList of String[] containing the entirety of a comparison between
-	 *         queries, with each String[] representing a CSV row
+	 * @return the SQL_TABLE as an ArrayList of String[] containing the entirety of a comparison
+	 *         between queries, with each String[] representing a CSV row
 	 */
-	private LinkedList<String[]> compare(Map<String, Map<String, String>> propsL, Map<String, Map<String, String>> propsR) {
+	private LinkedList<String[]> compare(Map<String, Map<String, String>> propsL,
+			Map<String, Map<String, String>> propsR) {
 
 		// generates key set
 		Set<String> keyAmalgam = new LinkedHashSet<>();

@@ -3,7 +3,7 @@ package driver;
 import java.io.*;
 import java.util.*;
 
-import databaseModule.*;
+import databaseModule.DbFunctions;
 
 /**
  * Runs DbFunctions from the command line.

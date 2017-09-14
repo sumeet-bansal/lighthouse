@@ -34,7 +34,7 @@ public class QueryFunctions {
 		String sql = "SELECT DISTINCT " + type + " FROM " + SQLiteManager.getTable() + " WHERE " + type + " LIKE '%"
 				+ pattern + "%';";
 		Iterator<Map<String, String>> iter = SQLiteManager.select(sql).iterator();
-		
+
 		// iterates through and formats all matches
 		Set<String> matches = new HashSet<>();
 		while (iter.hasNext()) {
@@ -64,11 +64,10 @@ public class QueryFunctions {
 		Map<String, String> filter = null;
 		filter = location != null ? SQLiteManager.generatePathFilter(location) : new LinkedHashMap<>();
 		filter.put(type, pattern);
-		
+
 		// sets up SQL statement to get all key/value/path for each match
 		String table = SQLiteManager.getTable();
 		String sql = "SELECT key, value, path FROM " + table + SQLiteManager.generateSQLFilter(filter, null) + ";";
-		System.out.println(sql);//TODO remove
 		return SQLiteManager.select(sql);
 	}
 
