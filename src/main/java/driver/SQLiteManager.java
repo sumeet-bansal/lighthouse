@@ -76,10 +76,10 @@ public class SQLiteManager {
 		return filter;
 	}
 
-	public static Set<String> getDistinct(String field) {
+	public static Set<String> getDistinct(String field, Map<String, String> filter) {
 		Set<String> distinct = new LinkedHashSet<>();
 		try {
-			String sql = "SELECT DISTINCT " + field + " FROM " + table;
+			String sql = "SELECT DISTINCT " + field + " FROM " + table + generateSQLFilter(filter, null);
 			Statement statement = connection.createStatement();
 			ResultSet rs = statement.executeQuery(sql);
 			Iterator<Map<String, String>> distinctMaps = parseResultSet(rs).iterator();

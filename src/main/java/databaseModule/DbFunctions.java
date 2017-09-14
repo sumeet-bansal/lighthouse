@@ -140,7 +140,7 @@ public class DbFunctions {
 	 */
 	public static DirTree popTree() {
 		DirTree tree = new DirTree();
-		Iterator<String> paths = SQLiteManager.getDistinct("path").iterator();
+		Iterator<String> paths = SQLiteManager.getDistinct("path", null).iterator();
 		while (paths.hasNext()) {
 			tree.insert(paths.next());
 		}
@@ -172,7 +172,7 @@ public class DbFunctions {
 			System.out.println("\nEnvironments:");
 		}
 		int i = 0;
-		Iterator<String> environments = SQLiteManager.getDistinct("environment").iterator();
+		Iterator<String> environments = SQLiteManager.getDistinct("environment", null).iterator();
 		while (environments.hasNext()) {
 			System.out.println(++i + ". " + environments.next());
 		}

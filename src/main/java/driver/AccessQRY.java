@@ -14,10 +14,11 @@ import queryModule.QueryFunctions;
  */
 public class AccessQRY {
 
-	private static String sep = File.separator;
+	private static final String sep = File.separator;
+	private static final int MAX_SPACING = 100;
+	private static final int DEFAULT_SPACING = 4;
 
-	private static String help = "\nQUERY MODULE -- POSSIBLE COMMANDS"
-			+ "\n'help'\n\tgoes to the help page for 'query'"
+	private static String help = "\nQUERY MODULE -- POSSIBLE COMMANDS" + "\n'help'\n\tgoes to the help page for 'query'"
 			+ "\n\tUsage: ~$ help"
 			+ "\n'compare'\n\tcompares the selected root directories and generates appropriate CSVs"
 			+ "\n\tUsage: ~$ compare <path1> <path2>"
@@ -41,7 +42,7 @@ public class AccessQRY {
 	public static void run(String[] args) {
 
 		// warns that database is empty
-		if (MongoManager.getCol().count() == 0) {
+		if (SQLiteManager.getSize() == 0) {
 			System.err.println("[ERROR] Database is empty. Switch to the db module to feed files to the database.\n");
 			return;
 		}
@@ -53,14 +54,14 @@ public class AccessQRY {
 			args = null;
 		}
 
-		// handles command line input	
+		// handles command line input
 		switch (cmd) {
 		case "compare":
 			if (args == null) {
 				System.err.println("\n[ERROR] No queries specified.\n");
 				break;
 			}
-			runComparison(args);
+			parseCompare(args);
 			break;
 		case "find":
 			parseFind(args);
@@ -77,7 +78,7 @@ public class AccessQRY {
 		}
 
 	}
-	
+
 	/**
 	 * Parses args into a format that can be fed as parameters to the `grep` function.
 	 * 
@@ -85,51 +86,51 @@ public class AccessQRY {
 	 *            command-line arguments
 	 */
 	static void parseGrep(String[] args) {
-		
+
 		String pattern = null;
 		int toggle = 0;
-		
+
 		// in case of no args
 		if (args == null) {
 			System.err.println("\n[ERROR] No pattern specified.\n");
 			return;
 		}
-		
+
 		// option parsing
 		for (int i = 0; i < args.length; i++) {
 			switch (args[i]) {
 			case "-k":
 			case "--key":
-				toggle = 0;		// toggle set to 0 for key
+				toggle = 0; // toggle set to 0 for key
 				break;
 			case "-v":
 			case "--val":
 			case "--value":
-				toggle = 1;		// toggle set to 1 for value
+				toggle = 1; // toggle set to 1 for value
 				break;
 			case "-l":
 			case "--loc":
 			case "--location":
-				
+
 				// location opts not supported for `grep`
 				System.err.println("\n[ERROR] Invalid option: " + args[i] + "\n");
 				return;
-				
+
 			default:
-				
+
 				// if pattern unassigned, assigns the first non-opt arg
 				pattern = pattern == null ? args[i] : pattern;
 				break;
 
 			}
 		}
-		
+
 		// checks if no pattern found
 		if (pattern == null) {
 			System.err.println("\n[ERROR] No pattern specified.\n");
 			return;
 		}
-		
+
 		// prints CLI output
 		Set<String> matches = QueryFunctions.grep(pattern, toggle);
 		String type = toggle == 0 ? "key" : "value";
@@ -137,13 +138,13 @@ public class AccessQRY {
 			System.out.println("\nNo " + type + " matching \"" + pattern + "\" found.\n");
 		} else {
 			System.out.println("\nFound " + matches.size() + " matching " + type + "(s):");
-			for (String prop : matches) {
-				System.out.println(" - " + prop);
+			for (String match : matches) {
+				System.out.println(" - " + match);
 			}
 			System.out.println();
 		}
 	}
-	
+
 	/**
 	 * Parses args into a format that can be fed as parameters to the `find` function.
 	 * 
@@ -151,27 +152,27 @@ public class AccessQRY {
 	 *            command-line arguments
 	 */
 	static void parseFind(String[] args) {
-		
+
 		String pattern = null, location = null;
 		int toggle = 0;
-		
+
 		// in case of no args
 		if (args == null) {
 			System.err.println("\n[ERROR] No pattern specified.\n");
 			return;
 		}
-		
+
 		// option parsing
 		for (int i = 0; i < args.length; i++) {
 			switch (args[i]) {
 			case "-k":
 			case "--key":
-				toggle = 0;		// toggle set to 0 for key
+				toggle = 0; // toggle set to 0 for key
 				break;
 			case "-v":
 			case "--val":
 			case "--value":
-				toggle = 1;		// toggle set to 1 for value
+				toggle = 1; // toggle set to 1 for value
 				break;
 			case "-l":
 			case "--loc":
@@ -179,32 +180,32 @@ public class AccessQRY {
 				if (i == args.length - 2) {
 					System.err.println("[ERROR] location flag `-l` requires a location argument.");
 				} else {
-					
+
 					// if location unassigned, assigns the arg after -l flag
 					location = location == null ? args[++i] : location;
-					
+
 				}
 				break;
 			default:
-				
+
 				// if pattern unassigned, assigns the first non-opt arg
 				pattern = pattern == null ? args[i] : pattern;
 				break;
 
 			}
 		}
-		
+
 		// checks if no pattern found
 		if (pattern == null) {
 			System.err.println("\n[ERROR] No pattern specified.\n");
 			return;
 		}
-		
-		String type = toggle == 0 ? "key" : "value";		// used for printing to CLI
-		ArrayList<String> matches = QueryFunctions.findProp(pattern, location, toggle);
-		
+
+		String type = toggle == 0 ? "key" : "value"; // used for printing to CLI
+		List<Map<String, String>> matches = QueryFunctions.findProp(pattern, location, toggle);
+
 		// prints CLI output
-		if (matches.size() == 0) {
+		if (matches.isEmpty()) {
 			type = toggle == 0 ? "Key" : "Value";
 			System.out.print("\n" + type + " \"" + pattern + "\" not found in database");
 			if (location != null) {
@@ -213,8 +214,16 @@ public class AccessQRY {
 			System.out.println(".\nUse the `grep` command to find relevant properties.\n");
 		} else {
 			System.out.println("\nFound " + matches.size() + " instance(s)" + " of " + type + " \"" + pattern + "\":");
-			for (String path : matches) {
-				System.out.println(" " + path);
+			Iterator<Map<String, String>> iter = matches.iterator();
+			while (iter.hasNext()) {
+				Map<String, String> match = iter.next();
+				String path = "PATH: " + match.get("path");
+				String pair = type.equalsIgnoreCase("key") ? "value" : "key";
+				pair = pair.toUpperCase() + ": " + match.get(pair);
+				int spaces = path.length() + pair.length();
+				spaces = spaces < MAX_SPACING ? MAX_SPACING - spaces : DEFAULT_SPACING;
+				String spacing = new String(new char[spaces]).replace('\0', ' ');
+				System.out.println(" " + path + spacing + pair);
 			}
 			System.out.println();
 		}
@@ -227,7 +236,7 @@ public class AccessQRY {
 	 * @param args
 	 *            command-line arguments
 	 */
-	private static void runComparison(String[] args) {
+	private static void parseCompare(String[] args) {
 		ArrayList<String> queried = new ArrayList<String>();
 		ArrayList<String> excluded = new ArrayList<String>();
 
@@ -273,17 +282,35 @@ public class AccessQRY {
 		// adds queries to comparator
 		String status = "";
 		if (queried.size() == 1) {
-			status += comparator.generateInternalQueries(queried.get(0));
+			String path = queried.get(0);
+
+			// checks that the internal query is not an a file level (an invalid depth)
+			if (SQLiteManager.generatePathFilter(path).get("filename") != null) {
+				System.err.println("[ERROR] Internal queries must be at a directory level (i.e. environment, fabric, or node).");
+				return;
+			}
+			status += comparator.generateInternalQueries(path);
 		} else {
 			for (int q = 0; q < queried.size(); q += 2) {
-				status += comparator.addQuery(queried.get(q), queried.get(q + 1));
+				String pathL = queried.get(q);
+				String pathR = queried.get(q + 1);
+				if (pathL.split("/").length != pathR.split("/").length) {
+					System.err.println("\n[ERROR] Paths must be at the same specified level.\n");
+					return;
+				}
+				ArrayList<Map<String, String>> added = comparator.addQuery(pathL, pathR);
+				if (added.get(0).containsKey("error")) {
+					status += "\nUnable to add properties with attributes:";
+				}
+				status += "\t" + added.get(0) + "\n";
+				status += "\t" + added.get(1) + "\n";
 			}
 		}
 		if (status != null) {
 			if (!status.contains("[ERROR]")) {
 				System.out.println("\nLooking for properties with attributes:\n" + status);
 			} else {
-				System.err.println(status);
+				System.err.println("\n" + status + "\n");
 				return;
 			}
 		}
@@ -291,7 +318,7 @@ public class AccessQRY {
 		// adds exclusions to comparator
 		status = "";
 		for (int e = 0; e < excluded.size(); e++) {
-			status += comparator.exclude(excluded.get(e)) + "\n";
+			status += "\t" + comparator.exclude(excluded.get(e)) + "\n";
 		}
 		if (status != null) {
 			if (!status.equals("") && !status.contains("[ERROR]")) {
@@ -303,16 +330,19 @@ public class AccessQRY {
 		}
 
 		// aborts if unable to compare for any reason
-		String result = comparator.compare();
+		String result = comparator.run();
 		if (result.contains("[ERROR]")) {
-			System.err.println(result);
+			System.err.println(result + "\n");
 			return;
 		} else {
 			System.out.println(result);
 		}
 
-		// prompts user to either enter a custom CSV name or use default name
+		// creates necessary directories for CSV write
 		String writePath = System.getProperty("user.dir") + sep + "lighthouse-reports";
+		while (writePath.contains("\\")) {
+			writePath = writePath.replace("\\", "/");
+		}
 		new File(writePath).mkdirs();
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
@@ -350,7 +380,7 @@ public class AccessQRY {
 			System.out.println();
 		}
 
-
+		// prompts user to either enter a custom CSV name or use default name
 		String filename = comparator.getDefaultName();
 		while (true) {
 			System.out.print("Use default CSV file name " + filename + "? (y/n): ");
@@ -377,7 +407,7 @@ public class AccessQRY {
 						System.out.println("[ERROR] Illegal input.");
 						continue;
 					}
-					
+
 					// regex contains all valid characters: alphanumeric and _.-
 					String legal = custom.replaceAll("[^a-zA-Z0-9_ .-]", "~");
 
@@ -394,16 +424,28 @@ public class AccessQRY {
 						break;
 					}
 				} // end of custom file naming loop
-				
+
 				break;
-				
+
 			} else {
 				continue;
 			}
-			
+
 		} // end of main prompt loop
-		
+
 		result = comparator.writeToCSV(filename, writePath);
-		System.out.println("\n" + result + "\n");		
+		result = result == null ? "Succesfully wrote " + writePath + "/" + filename : result;
+		System.out.println("\n" + result + "\n");
+	}
+	
+	private String cleanPath(String path) {
+		// cleans up path input for processing
+		if (path.charAt(0) == '/') {
+			path = path.substring(1);
+		}
+		if (path.charAt(path.length() - 1) == '/') {
+			path = path.substring(0, path.length() - 1);
+		}
+		return path;
 	}
 }

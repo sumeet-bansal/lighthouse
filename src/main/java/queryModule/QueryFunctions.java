@@ -1,12 +1,7 @@
 package queryModule;
 
 import java.util.*;
-
-import org.bson.Document;
-
-import com.mongodb.client.*;
-
-import driver.MongoManager;
+import driver.SQLiteManager;
 
 /**
  * Pulls queried data from MongoDB for non-comparison searches.
@@ -14,13 +9,10 @@ import driver.MongoManager;
  * @author ActianceEngInterns
  * @version 1.2
  */
-public class QueryFunctions extends MongoManager {
-	
-	private final static int MAX_PATH_SPACING = 64;
+public class QueryFunctions {
 
 	/**
-	 * Finds every key or value in the database that contains a user-given
-	 * pattern.
+	 * Finds every key or value in the database that contains a user-given pattern.
 	 * 
 	 * @param pattern
 	 *            substring being searched for
@@ -33,21 +25,26 @@ public class QueryFunctions extends MongoManager {
 		// determine search type (key or value)
 		String type = toggle == 0 ? "key" : "value";
 
-		// iterates through all properties in database to find matches
+		// replaces regular wildcards with SQL-style wildcards
+		while (pattern.indexOf('*') != -1) {
+			pattern = pattern.replace("*", "%");
+		}
+
+		// sets up SQL statement to get all unique matches
+		String sql = "SELECT DISTINCT " + type + " FROM " + SQLiteManager.getTable() + " WHERE " + type + " LIKE '%"
+				+ pattern + "%';";
+		Iterator<Map<String, String>> iter = SQLiteManager.select(sql).iterator();
+		
+		// iterates through and formats all matches
 		Set<String> matches = new HashSet<>();
-		MongoCursor<Document> cursor = collection.find(new Document()).iterator();
-		while (cursor.hasNext()) {
-			String data = cursor.next().getString(type);
-			if (data.contains(pattern)) {
-				matches.add(data);
-			}
+		while (iter.hasNext()) {
+			matches.add(iter.next().get(type));
 		}
 		return matches;
 	}
 
 	/**
-	 * Queries the database for a user-given key and returns location(s) and
-	 * values(s) of the key.
+	 * Queries the database for a user-given key and returns location(s) and values(s) of the key.
 	 * 
 	 * @param pattern
 	 *            the key or value being found
@@ -55,49 +52,24 @@ public class QueryFunctions extends MongoManager {
 	 *            a specific path within which to find the key
 	 * @param toggle
 	 *            0 for key, 1 for value
-	 * @return a List of Strings representing each key location and value
+	 * @return a List of Map<String, String> representing each matching property, where each Map
+	 *         contains the key, value, and path of the matching property instance
 	 */
-	public static ArrayList<String> findProp(String pattern, String location, int toggle) {
+	public static List<Map<String, String>> findProp(String pattern, String location, int toggle) {
 
 		// determine search type (key or value)
 		String type = toggle == 0 ? "key" : "value";
 
-		// sets up filter for given property and retrieves all matching properties
-		Document filter = new Document();
-		if (location != null) {
-			filter = generateFilter(location);
-		}
-		filter.append(type, pattern);
-		MongoCursor<Document> cursor = collection.find(filter).iterator();
-
-		// iterates through matching properties and organizes them for stdout
-		ArrayList<String> props = new ArrayList<>();
-		while (cursor.hasNext()) {
-			Document prop = cursor.next();
-			String path = "PATH: ";
-			for (int i = 0; i < genericPath.length; i++) {
-				path += prop.getString(genericPath[i]) + "/";
-			}
-
-			// set up spacing for CLI output and lines up path with key
-			int spaces = 5;
-			if (path.length() < MAX_PATH_SPACING) {
-				spaces = MAX_PATH_SPACING - path.length();
-			}
-			for (int i = 0; i < spaces; i++) {
-				path += " ";
-			}
-
-			// output line with path, key, and value
-			String line = path;
-			if (toggle == 1) {
-				line += "Key: " + prop.getString("key");
-			} else {
-				line += "Value: " + prop.getString("value");
-			}
-			props.add(line);
-		}
-		return props;
+		// sets up filter for given property
+		Map<String, String> filter = null;
+		filter = location != null ? SQLiteManager.generatePathFilter(location) : new LinkedHashMap<>();
+		filter.put(type, pattern);
+		
+		// sets up SQL statement to get all key/value/path for each match
+		String table = SQLiteManager.getTable();
+		String sql = "SELECT key, value, path FROM " + table + SQLiteManager.generateSQLFilter(filter, null) + ";";
+		System.out.println(sql);//TODO remove
+		return SQLiteManager.select(sql);
 	}
 
 }
