@@ -5,20 +5,17 @@ import static org.junit.Assert.*;
 import java.util.*;
 
 import org.apache.log4j.*;
-import org.bson.Document;
 import org.junit.*;
-
-import com.mongodb.client.MongoCursor;
 
 import databaseModule.DbFunctions;
 import databaseModule.DirTree;
-import driver.MongoManager;
+import driver.SQLiteManager;
 
 /**
  * Tests {@link databaseModule.DbFunctions}.
  * 
  * @author ActianceEngInterns
- * @version 1.3.0
+ * @version 1.4.0
  */
 public class DbFunctionsTester {
 
@@ -40,9 +37,6 @@ public class DbFunctionsTester {
 		}
 
 		root = System.getProperty("user.home") + "/workspace/lighthouse/root/";
-		MongoManager.connectToDatabase();
-		MongoManager.clearDB();
-		DbFunctions.populate(root);
 	}
 
 	/**
@@ -50,58 +44,57 @@ public class DbFunctionsTester {
 	 */
 	@Test
 	public void testPopulate() {
-		MongoManager.clearDB();
 		long populated = DbFunctions.populate(root);
 		assertEquals(populated, PROPERTIES);
-		assertEquals(MongoManager.getCol().count(), populated);
+		assertEquals(SQLiteManager.getSize(), populated);
 	}
 
 	/**
 	 * Tests
-	 * {@link databaseModule.DbFunctions#ignore(java.lang.String location, java.util.Set properties, boolean toggle)}
-	 * and
-	 * {@link databaseModule.DbFunctions#ignore(org.bson.Document filter, java.util.Set properties, boolean toggle)}.
+	 * {@link databaseModule.DbFunctions#ignore(java.lang.String location, java.util.Set properties, boolean toggle)}.
 	 */
 	@Test
 	public void testIgnore() {
 
 		Set<String> properties;
-		MongoCursor<Document> cursor;
-		Document filter;
+		Iterator<Map<String, String>> iter;
+		Map<String, String> filter;
+		String sql;
 
 		// adds all property keys to HashSet
-		properties = new HashSet<>();
-		cursor = MongoManager.getCol().find().iterator();
-		while (cursor.hasNext()) {
-			properties.add(cursor.next().getString("key"));
-		}
+		properties = SQLiteManager.getDistinct("key", null);
 
 		// sets all properties to not be ignored and verifies none are being ignored
-		DbFunctions.ignore(new Document(), properties, false);
-		filter = new Document().append("ignore", "true");
-		assertFalse(MongoManager.getCol().find(filter).iterator().hasNext());
+		DbFunctions.ignore("", properties, false);
+		filter = new HashMap<>();
+		filter.put("ignore", "true");
+		sql = "SELECT * FROM properties" + SQLiteManager.generateSQLFilter(filter, null) + ";";
+		assertFalse(SQLiteManager.select(sql).iterator().hasNext());
 
 		// sets all properties to be ignored and verifies all are being ignored
-		DbFunctions.ignore(new Document(), properties, true);
-		filter = new Document().append("ignore", "false");
-		assertFalse(MongoManager.getCol().find(filter).iterator().hasNext());
+		DbFunctions.ignore("", properties, true);
+		filter.put("ignore", "false");
+		sql = "SELECT * FROM properties" + SQLiteManager.generateSQLFilter(filter, null) + ";";
+		assertFalse(SQLiteManager.select(sql).iterator().hasNext());
 
 		// sets all properties within RWC-Dev/hazelcast to be ignored and verifies
 		DbFunctions.ignore("RWC-Dev/hazelcast", properties, true);
-		filter = new Document().append("environment", "RWC-Dev").append("fabric", "hazelcast");
-		filter.append("ignore", "false");
-		assertFalse(MongoManager.getCol().find(filter).iterator().hasNext());
+		filter = new HashMap<>();
+		filter.put("environment", "RWC-Dev");
+		filter.put("fabric", "hazelcast");
+		filter.put("ignore", "false");
+		sql = "SELECT * FROM properties" + SQLiteManager.generateSQLFilter(filter, null);
+		assertFalse(SQLiteManager.select(sql).iterator().hasNext());
 		properties = DbFunctions.getIgnored();
 		for (String prop : properties) {
-			filter = new Document().append("key", prop);
-			cursor = MongoManager.getCol().find(filter).iterator();
-			while (cursor.hasNext()) {
-				assertEquals(cursor.next().getString("ignore"), "true");
+			filter = new HashMap<>();
+			filter.put("key", prop);
+			sql = "SELECT * FROM properties" + SQLiteManager.generateSQLFilter(filter, null);
+			iter = SQLiteManager.select(sql).iterator();
+			while (iter.hasNext()) {
+				assertEquals(iter.next().get("ignore"), "true");
 			}
 		}
-		// path and matching property verification
-		assertEquals(DbFunctions.ignore("BENG-Dev", properties, true), "[ERROR] Invalid path.");
-		assertEquals(DbFunctions.ignore("jeremy", new HashSet<>(), true), "No matching properties found.");
 
 	}
 
@@ -110,13 +103,15 @@ public class DbFunctionsTester {
 	 */
 	@Test
 	public void testPopTree() {
+		SQLiteManager.connectToDatabase();
+		DbFunctions.populate(root);
 		DirTree tree = DbFunctions.popTree();
 
 		// verify tree contains only and all distinct filepaths
-		MongoCursor<String> cursor = MongoManager.getCol().distinct("path", String.class).iterator();
+		Iterator<String> iter = SQLiteManager.getDistinct("path", null).iterator();
 		int size = tree.getSize();
-		while (cursor.hasNext()) {
-			assertTrue(tree.hasKey(cursor.next()));
+		while (iter.hasNext()) {
+			assertTrue(tree.hasKey(iter.next()));
 			size--;
 		}
 		assertEquals(size, 0);

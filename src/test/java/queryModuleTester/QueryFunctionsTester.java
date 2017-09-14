@@ -9,20 +9,20 @@ import org.junit.*;
 
 import databaseModule.DbFunctions;
 import queryModule.QueryFunctions;
-import driver.MongoManager;
+import driver.SQLiteManager;
 
 /**
  * Tests {@link queryModule.QueryFunctions}.
  * 
  * @author ActianceEngInterns
- * @version 1.3.0
+ * @version 1.4.0
  */
 public class QueryFunctionsTester {
 
 	String root;
 
 	/**
-	 * Sets up the testbed by populating the Mongo database.
+	 * Sets up the testbed by populating the SQLite database.
 	 */
 	@Before
 	public void setup() {
@@ -36,9 +36,6 @@ public class QueryFunctionsTester {
 		}
 
 		root = System.getProperty("user.home") + "/workspace/lighthouse/root/";
-		MongoManager.connectToDatabase();
-		MongoManager.clearDB();
-		DbFunctions.populate(root);
 	}
 
 	/**
@@ -46,6 +43,9 @@ public class QueryFunctionsTester {
 	 */
 	@Test
 	public void testGrep() {
+		SQLiteManager.connectToDatabase();
+		SQLiteManager.clear();
+		DbFunctions.populate(root);
 		Set<String> expected;
 
 		// verifies grep, no toggle
@@ -87,27 +87,27 @@ public class QueryFunctionsTester {
 
 		// verifies find, no toggle and no location
 		expected = "5000000";
-		for (String found : QueryFunctions.findProp("lgs/ingestion/large-file/chunk/size", null, 0)) {
-			assertTrue(found.endsWith(expected));
+		for (Map<String, String> found : QueryFunctions.findProp("lgs/ingestion/large-file/chunk/size", null, 0)) {
+			assertEquals(found.get("value"), expected);
 		}
 
 		// verifies find, toggled but no location
 		expected = "es.settings.metrics.cluster.name";
-		for (String found : QueryFunctions.findProp("eng02essreports", null, 1)) {
-			assertTrue(found.endsWith(expected));
+		for (Map<String, String> found : QueryFunctions.findProp("eng02essreports", null, 1)) {
+			assertEquals(found.get("key"), expected);
 		}
 
 		// verifies find, no toggle but with location
 		expected = "8888";
 		location = "jeremy/karaf/common/server.properties";
-		assertTrue(QueryFunctions.findProp("report/port", "jeremy", 0).get(0).endsWith(expected));
-		assertTrue(QueryFunctions.findProp("report/port", "jeremy", 0).get(0).contains(location));
+		assertEquals(QueryFunctions.findProp("report/port", "jeremy", 0).get(0).get("value"), expected);
+		assertEquals(QueryFunctions.findProp("report/port", "jeremy", 0).get(0).get("path"), location);
 
 		// verifies find, toggled and with location
 		expected = "server.primary.es.host.cluster.name";
 		location = "RWC-Dev/karaf/h1/bamboo.server.properties";
-		assertTrue(QueryFunctions.findProp("elasticsearch", "RWC-Dev", 1).get(0).endsWith(expected));
-		assertTrue(QueryFunctions.findProp("elasticsearch", "RWC-Dev", 1).get(0).contains(location));
+		assertEquals(QueryFunctions.findProp("elasticsearch", "RWC-Dev", 1).get(0).get("key"), expected);
+		assertEquals(QueryFunctions.findProp("elasticsearch", "RWC-Dev", 1).get(0).get("path"), location);
 	}
 
 }
