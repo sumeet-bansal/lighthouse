@@ -3,8 +3,6 @@ package driver;
 import java.sql.*;
 import java.util.*;
 
-import databaseModule.DbFunctions;
-
 public class SQLiteManager {
 
 	private static final String database = "lighthouse.db";
@@ -33,8 +31,7 @@ public class SQLiteManager {
 	}
 
 	/**
-	 * Private helper method. Given path inputs, verifies the validity of the inputs and generates
-	 * filters for the inputs.
+	 * Given path inputs, generates filters in a format standard across the entire project.
 	 * <dl>
 	 * <dt>example path parameters:
 	 * <dd>dev1/fabric2
@@ -51,10 +48,10 @@ public class SQLiteManager {
 	public static Map<String, String> generatePathFilter(String path) {
 
 		// cleans up the path
-		while (path.indexOf("\\") != -1) {
+		while (path.contains("\\")) {
 			path = path.replace("\\", "/");
 		}
-		while (path.indexOf("//") != -1) {
+		while (path.contains("//")) {
 			path = path.replace("//", "/");
 		}
 
@@ -76,105 +73,64 @@ public class SQLiteManager {
 		return filter;
 	}
 
-	public static Set<String> getDistinct(String field, Map<String, String> filter) {
-		Set<String> distinct = new LinkedHashSet<>();
-		try {
-			String sql = "SELECT DISTINCT " + field + " FROM " + table + generateSQLFilter(filter, null);
-			Statement statement = connection.createStatement();
-			ResultSet rs = statement.executeQuery(sql);
-			Iterator<Map<String, String>> distinctMaps = parseResultSet(rs).iterator();
-			while (distinctMaps.hasNext()) {
-				distinct.add(distinctMaps.next().get(field));
-			}
-		} catch (SQLException e) {
-			exit(e);
+	/**
+	 * Given a {@link java.util.Collection} of Strings, generates a SQL-compatible set.
+	 * 
+	 * @param collection
+	 *            a {@link java.util.Collection} of Strings
+	 * @param full
+	 *            true if the collection contains all the properties of the intended set, else false
+	 * @param prepared
+	 *            true if the collection is intended to be used in a prepared SQL statement as
+	 *            placeholders for values, else false
+	 * @return the SQL-compatible set of properties
+	 */
+	public static String generateSQLSet(Collection<String> collection, boolean full, boolean prepared) {
+		String sql = "";
+		if (collection == null || collection.isEmpty()) {
+			return sql;
 		}
-		return distinct;
-	}
-
-	private static void exit(SQLException e) {
-		e.printStackTrace();
-		System.err.println("[DATABASE ERROR] A database access error occurred. Exiting with error code 1.");
-		System.exit(1);
+		Iterator<String> iter = collection.iterator();
+		while (iter.hasNext()) {
+			String item = iter.next();
+			if (prepared) {
+				item = "?";
+			}
+			sql += item;
+			if (iter.hasNext()) {
+				sql += ", ";
+			}
+		}
+		return full ? "(" + sql + ")" : sql;
 	}
 
 	/**
-	 * Clears all rows from database table.
+	 * Generates a SQL command-style filter for a given Map and optional set of keys.
+	 * <dl>
+	 * <dt>example filter:
+	 * <dd>{environment=RWC-Dev, fabric=hazelcast}
+	 * </dl>
+	 * <dl>
+	 * <dt>generated filter:
+	 * <dd>" WHERE (environment = 'RWC-Dev') AND (fabric = 'hazelcast')"
+	 * </dl>
+	 * <dl>
+	 * <dt>example filter and set of keys:
+	 * <dd>{environment=RWC-Dev, fabric=hazelcast}
+	 * <dd>{'lfs/ingestion/large-file/chunk/size', 'lfs/ingestion/topics', 'report/kibana/version'}
+	 * </dl>
+	 * <dl>
+	 * <dt>generated filter:
+	 * <dd>" WHERE (environment = 'RWC-Dev') AND (fabric = 'hazelcast') AND (key IN
+	 * ('lfs/ingestion/large-file/chunk/size', 'lfs/ingestion/topics', 'report/kibana/version'))"
+	 * </dl>
 	 * 
-	 * @return the number of properties cleared from the database
+	 * @param filter
+	 *            the filter, as a Map with String keys and values
+	 * @param keys
+	 *            an optional Set of keys for the IN operator
+	 * @return a SQL command-style filter
 	 */
-	public static long clear() {
-		long size = -1;
-		try {
-			size = getSize();
-			Statement statement = connection.createStatement();
-			statement.execute("DELETE FROM " + table + ";");
-		} catch (SQLException e) {
-			exit(e);
-		}
-		return size;
-	}
-
-	/**
-	 * Returns the size of the properties table.
-	 * 
-	 * @return the size of the properties table
-	 */
-	public static long getSize() {
-		try {
-			Statement statement = connection.createStatement();
-			ResultSet result = statement.executeQuery("SELECT COUNT(*) FROM " + table + ";");
-			result.next();
-			return result.getInt(1);
-		} catch (SQLException e) {
-			exit(e);
-		}
-		return -1;
-	}
-
-	public static String getTable() {
-		return table;
-	}
-
-	public static List<Map<String, String>> parseResultSet(ResultSet rs) {
-		LinkedList<Map<String, String>> result = new LinkedList<>();
-		try {
-			Set<String> metadata = new LinkedHashSet<>();
-			for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-				metadata.add(rs.getMetaData().getColumnName(i));
-			}
-			while (rs.next()) {
-				Map<String, String> row = new LinkedHashMap<>();
-				for (String field : metadata) {
-					row.put(field, rs.getString(field));
-				}
-				result.add(row);
-			}
-		} catch (SQLException e) {
-			exit(e);
-		}
-		return result;
-	}
-
-	/**
-	 * Extracts data from the database.
-	 * 
-	 * @param sql
-	 *            the full SQLite command
-	 * @return the extracted data as a List of Maps, each of which represent a single property, or
-	 *         row within the SQL table
-	 */
-	public static List<Map<String, String>> select(String sql) {
-		try {
-			Statement statement = connection.createStatement();
-			ResultSet rs = statement.executeQuery(sql);
-			return parseResultSet(rs);
-		} catch (SQLException e) {
-			exit(e);
-		}
-		return null;
-	}
-
 	public static String generateSQLFilter(Map<String, String> filter, Set<String> keys) {
 		String sql = "";
 		if (filter != null && !filter.isEmpty()) {
@@ -197,12 +153,121 @@ public class SQLiteManager {
 	}
 
 	/**
+	 * Returns the name of the database table.
+	 * 
+	 * @return the name of the database table
+	 */
+	public static String getTable() {
+		return table;
+	}
+
+	/**
+	 * Returns the size of the properties table.
+	 * 
+	 * @return the size of the properties table
+	 */
+	public static long getSize() {
+		try {
+			Statement statement = connection.createStatement();
+			ResultSet result = statement.executeQuery("SELECT COUNT(*) FROM " + table + ";");
+			result.next();
+			return result.getInt(1);
+		} catch (SQLException e) {
+			exit(e);
+		}
+		return -1;
+	}
+
+	/**
+	 * Gets all distinct instances of the specified field name.
+	 * 
+	 * @param field
+	 *            the field name
+	 * @param filter
+	 *            the query filter
+	 * @return a Set of all distinct instances of the field name
+	 */
+	public static Set<String> getDistinct(String field, Map<String, String> filter) {
+		Set<String> distinct = new LinkedHashSet<>();
+		try {
+			String sql = "SELECT DISTINCT " + field + " FROM " + table + generateSQLFilter(filter, null);
+			Statement statement = connection.createStatement();
+			ResultSet rs = statement.executeQuery(sql);
+			Iterator<Map<String, String>> distinctMaps = parseResultSet(rs).iterator();
+			while (distinctMaps.hasNext()) {
+				distinct.add(distinctMaps.next().get(field));
+			}
+		} catch (SQLException e) {
+			exit(e);
+		}
+		return distinct;
+	}
+
+	/**
+	 * Clears all rows from the database table.
+	 * 
+	 * @return the number of properties cleared from the database
+	 */
+	public static long clear() {
+		long size = -1;
+		try {
+			size = getSize();
+			Statement statement = connection.createStatement();
+			statement.execute("DELETE FROM " + table + ";");
+		} catch (SQLException e) {
+			exit(e);
+		}
+		return size;
+	}
+
+	/**
+	 * Extracts data from the database.
+	 * 
+	 * @param sql
+	 *            the full SQLite command
+	 * @return the extracted data as a List of Maps, each of which represent a single property, or
+	 *         row within the SQL table
+	 */
+	public static List<Map<String, String>> select(String sql) {
+		try {
+			Statement statement = connection.createStatement();
+			ResultSet rs = statement.executeQuery(sql);
+			return parseResultSet(rs);
+		} catch (SQLException e) {
+			exit(e);
+		}
+		return null;
+	}
+
+	/**
+	 * Inserts new data into a database.
+	 * 
+	 * @param property
+	 *            a Map representing the property as a series of key-value pairs (e.g. "environment"
+	 *            : "RWC-Dev", "key" : "some key")
+	 */
+	public static void insert(Map<String, String> property) {
+		try {
+			String sql = "INSERT INTO " + table + generateSQLSet(property.keySet(), true, false) + " VALUES "
+					+ generateSQLSet(property.keySet(), true, true) + ";";
+			PreparedStatement ps = connection.prepareStatement(sql);
+			int i = 1;
+			for (String value : property.values()) {
+				ps.setString(i++, value);
+			}
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			exit(e);
+		}
+	}
+
+	/**
 	 * Updates data in a database.
 	 * 
 	 * @param updated
-	 *            a Map<String, String> of fields to be updated
+	 *            a Map of fields to be updated
 	 * @param filter
-	 *            a Map<String, String> of fields with which to filter the updates
+	 *            a Map of fields with which to filter the updates
 	 * @param keys
 	 *            a Set containing the keys of each property to be updated
 	 */
@@ -211,6 +276,7 @@ public class SQLiteManager {
 			return;
 		}
 
+		// generates the appropriate SQL command
 		String sql = "";
 		sql = "UPDATE " + table + " SET ";
 		for (String key : updated.keySet()) {
@@ -234,8 +300,8 @@ public class SQLiteManager {
 			}
 			sql += "?)";
 		}
-
 		sql += ";";
+
 		try {
 			PreparedStatement ps = connection.prepareStatement(sql);
 			int i = 1;
@@ -259,19 +325,22 @@ public class SQLiteManager {
 	}
 
 	/**
-	 * Inserts new data into a database.
+	 * Deletes data from a database.
 	 * 
-	 * @param property
-	 *            a Map<String, String> representing the property as a series of key-value pairs
-	 *            (e.g. "environment" : "RWC-Dev", "key" : "some key")
+	 * @param filter
+	 *            a Map containing the filtered fields (e.g. environment, fabric)
 	 */
-	public static void insert(Map<String, String> property) {
+	public static void delete(Map<String, String> filter) {
+		String sql = "";
+		sql = "DELETE FROM " + table + " WHERE ";
+		for (String key : filter.keySet()) {
+			sql += "(" + key + " = ?) AND ";
+		}
+		sql = sql.substring(0, sql.length() - " AND ".length()) + ";";
 		try {
-			String sql = "INSERT INTO " + table + generateSQLSet(property.keySet(), true, false) + " VALUES "
-					+ generateSQLSet(property.keySet(), true, true) + ";";
 			PreparedStatement ps = connection.prepareStatement(sql);
 			int i = 1;
-			for (String value : property.values()) {
+			for (String value : filter.values()) {
 				ps.setString(i++, value);
 			}
 			ps.executeUpdate();
@@ -280,6 +349,13 @@ public class SQLiteManager {
 		}
 	}
 
+	/**
+	 * Batch inserts new data into a database. Significantly more efficient for groups of documents
+	 * than individual insertion.
+	 * 
+	 * @param properties
+	 *            a Collection of properties (represented by the standard Map)
+	 */
 	public static void insertBatch(Collection<Map<String, String>> properties) {
 		if (properties == null || properties.isEmpty()) {
 			return;
@@ -314,30 +390,12 @@ public class SQLiteManager {
 	}
 
 	/**
-	 * Deletes data from a database.
+	 * Batch deletes data from a database. Significantly more efficient for groups of documents than
+	 * individual deletion.
 	 * 
-	 * @param filter
-	 *            a Map<String, String> containing the filtered fields (e.g. environment, fabric)
+	 * @param filters
+	 *            a {@link java.util.Collection} of filters (represented by the standard Map)
 	 */
-	public static void delete(Map<String, String> filter) {
-		String sql = "";
-		sql = "DELETE FROM " + table + " WHERE ";
-		for (String key : filter.keySet()) {
-			sql += "(" + key + " = ?) AND ";
-		}
-		sql = sql.substring(0, sql.length() - " AND ".length()) + ";";
-		try {
-			PreparedStatement ps = connection.prepareStatement(sql);
-			int i = 1;
-			for (String value : filter.values()) {
-				ps.setString(i++, value);
-			}
-			ps.executeUpdate();
-		} catch (SQLException e) {
-			exit(e);
-		}
-	}
-
 	public static void deleteBatch(Collection<Map<String, String>> filters) {
 		if (filters == null || filters.isEmpty()) {
 			return;
@@ -375,153 +433,43 @@ public class SQLiteManager {
 	}
 
 	/**
-	 * Given a {@link java.util.Collection} of Strings, generates a SQL-compatible set.
+	 * Reformats the ResultSet SQLite returns in response to SQL commands as Maps with String keys
+	 * and values, to maintain a standard data structure for properties throughout the project.
 	 * 
-	 * @param collection
-	 *            a Collection of Strings
-	 * @param full
-	 *            true if the collection contains all the properties of the intended set, else false
-	 * @param prepared
-	 *            true if the collection is intended to be used in a prepared SQL statement as
-	 *            placeholders for values, else false
-	 * @return the SQL-compatible set of properties
+	 * @param rs
+	 *            the ResultSet SQLite returns in response to SQL commands
+	 * @return a {@link java.util.List} of Maps with String keys and values
 	 */
-	public static String generateSQLSet(Collection<String> collection, boolean full, boolean prepared) {
-		String sql = "";
-		if (collection == null || collection.isEmpty()) {
-			return sql;
-		}
-		Iterator<String> iter = collection.iterator();
-		while (iter.hasNext()) {
-			String item = iter.next();
-			if (prepared) {
-				item = "?";
+	private static List<Map<String, String>> parseResultSet(ResultSet rs) {
+		LinkedList<Map<String, String>> result = new LinkedList<>();
+		try {
+			Set<String> metadata = new LinkedHashSet<>();
+			for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+				metadata.add(rs.getMetaData().getColumnName(i));
 			}
-			sql += item;
-			if (iter.hasNext()) {
-				sql += ", ";
+			while (rs.next()) {
+				Map<String, String> row = new LinkedHashMap<>();
+				for (String field : metadata) {
+					row.put(field, rs.getString(field));
+				}
+				result.add(row);
 			}
+		} catch (SQLException e) {
+			exit(e);
 		}
-		return full ? "(" + sql + ")" : sql;
+		return result;
 	}
 
 	/**
-	 * Temporary testbed to verify all SQLiteManager methods working as intended.
+	 * Terminates the JVM upon a SQLException. Useful for quickly modifying the behavior of any
+	 * SQLiteManager function during SQLExceptions.
 	 * 
-	 * @param args
-	 *            command-line arguments
+	 * @param e
+	 *            the SQLException
 	 */
-	public static void main(String[] args) {
-		// connects to database
-		System.out.println("[DATABASE MESSAGE] Connecting to database...");
-		connectToDatabase();
-		System.out.println("[DATABASE MESSAGE] Database connection successful.\n");
-
-		// tests insertion
-		Map<String, String> prop;
-		prop = new LinkedHashMap<>();
-		prop.put("key", "testk");
-		prop.put("value", "testv");
-		prop.put("filename", "sth2.prop");
-		prop.put("node", "h2");
-		prop.put("fabric", "storm");
-		prop.put("environment", "Redwood-City");
-		prop.put("path", prop.get("environment") + "/" + prop.get("fabric") + "/" + prop.get("node") + "/"
-				+ prop.get("filename"));
-		prop.put("extension", "properties");
-		prop.put("ignore", "false");
-		insert(prop);
-
-		prop.put("key", "port");
-		prop.put("value", "8080");
-		prop.put("filename", "esh3.prop");
-		prop.put("node", "h3");
-		prop.put("fabric", "elastic");
-		prop.put("environment", "developer1");
-		prop.put("path", prop.get("environment") + "/" + prop.get("fabric") + "/" + prop.get("node") + "/"
-				+ prop.get("filename"));
-		prop.put("extension", "prop");
-		prop.put("ignore", "false");
-		insert(prop);
-
-		prop.put("key", "mongo");
-		prop.put("value", "db");
-		prop.put("filename", "zkh1.prop");
-		prop.put("node", "h1");
-		prop.put("fabric", "zkepler");
-		prop.put("environment", "developer8");
-		prop.put("path", prop.get("environment") + "/" + prop.get("fabric") + "/" + prop.get("node") + "/"
-				+ prop.get("filename"));
-		prop.put("extension", "prop");
-		prop.put("ignore", "false");
-		insert(prop);
-
-		List<Map<String, String>> res;
-		String sql = "";
-
-		// retrieves all rows
-		sql = "SELECT * FROM properties;";
-		res = select(sql);
-		print(res);
-
-		// retrieves key, value, and ignore rows from Redwood-City
-		sql = "SELECT key, value, ignore FROM properties WHERE environment = 'Redwood-City';";
-		res = select(sql);
-		print(res);
-
-		// checks count
-		System.out.println("\nCount: " + getSize() + " rows of properties.");
-
-		// deletes a row
-		Map<String, String> d = new LinkedHashMap<>();
-		d.put("environment", "Redwood-City");
-		d.put("fabric", "storm");
-		delete(d);
-		System.out.println("Deleted rows with 'Redwood-City' environment, 'storm' fabric.\n");
-
-		// updates row's 'ignore' field to true
-		Map<String, String> u = new LinkedHashMap<>();
-		u.put("ignore", "true");
-		Map<String, String> f = new LinkedHashMap<>();
-		f.put("environment", "developer1");
-		Set<String> p = new HashSet<>();
-		p.add("port");
-		p.add("mongo");
-		update(u, f, p);
-
-		// retrieves all rows
-		sql = "SELECT * FROM properties;";
-		res = select(sql);
-		print(res);
-
-		// tests DbFunctions#populate
-		System.out.println("Count: " + getSize() + " rows of properties.");
-		System.out.println("Cleared " + clear() + " rows. Remaining: " + getSize());
-		DbFunctions.populate(System.getProperty("user.home") + "/workspace/lighthouse/root");
-		res = select("SELECT * FROM properties");
-		print(res);
-		System.out.println("\nCount: " + getSize() + " rows of properties.\n");
-
-		res = select("SELECT * FROM properties WHERE key LIKE '%lfs/ingestion%'");
-		print(res);
-
-		res = select("SELECT * FROM properties WHERE ignore = 'true'");
-		print(res);
-
-		res = select("SELECT * FROM properties WHERE key = 'report/port'");
-		print(res);
+	private static void exit(SQLException e) {
+		System.err.println("[DATABASE ERROR] A database access error occurred. Exiting with error code 1.");
+		System.exit(1);
 	}
 
-	private static void print(List<Map<String, String>> res) {
-		Iterator<Map<String, String>> iter = res.iterator();
-		System.out.println();
-		while (iter.hasNext()) {
-			Map<String, String> property = iter.next();
-			for (String value : property.values()) {
-				System.out.print(value + "\t\t");
-			}
-			System.out.println();
-		}
-		System.out.println();
-	}
 }

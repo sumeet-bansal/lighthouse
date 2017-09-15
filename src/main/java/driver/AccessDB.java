@@ -6,24 +6,33 @@ import java.util.*;
 import databaseModule.DbFunctions;
 
 /**
- * Runs DbFunctions from the command line.
+ * Main driver for the database module. Processes input, executes the appropriate functionality, and
+ * handles all related and relevant stdout. Runs DbFunctions from the command line.
  * 
  * @author ActianceEngInterns
- * @version 1.3
+ * @version 1.4.0
  */
 public class AccessDB {
 
 	private static final String help = "\nDATABASE MODULE -- POSSIBLE COMMANDS"
-			+ "\n'help'\n\tgoes to the help page for 'db'" + "\n\tUsage: ~$ help"
-			+ "\n'populate'\n\tpopulates the database with the given files" + "\n\tUsage: ~$ populate <root directory>"
-			+ "\n'info'\n\tprovides info about the contents of the database" + "\n\tUsage: ~$ info"
+			+ "\n'help'\n\tgoes to the help page for 'db'"
+			+ "\n\tUsage: ~$ help"
+			+ "\n'populate'\n\tpopulates the database with the given files"
+			+ "\n\tUsage: ~$ populate <root directory>"
+			+ "\n'info'\n\tprovides info about the contents of the database"
+			+ "\n\tUsage: ~$ info"
 			+ "\n'list'\n\tprints the structure of the database at optional branches and levels"
-			+ "\n\tUsage: ~$ list [path] [level (1+)]" + "\n\tNote: the higher the level, the deeper the list."
+			+ "\n\tUsage: ~$ list [path] [level (1+)]"
+			+ "\n\tNote: the higher the level, the deeper the list."
 			+ "\n'ignore'\n\tprovides info about ignored properties, can additionally ignore further properties"
-			+ "\n\tUsage: ~$ ignore [toggle] [-l path] [property] ... [property]" + "\n\ttoggles:"
-			+ "\n\t\t-t, --true\tto ignore the following properties" + "\n\t\t\t\talt.: -i, --ignore"
-			+ "\n\t\t-f, --false\tto acknowledge the following properties" + "\n\t\t\t\talt.: -a, --acknowledge"
-			+ "\n'clear'\n\tclears the database" + "\n\tUsage: ~$ clear"
+			+ "\n\tUsage: ~$ ignore [toggle] [-l path] [property] ... [property]"
+			+ "\n\ttoggles:"
+			+ "\n\t\t-t, --true\tto ignore the following properties"
+			+ "\n\t\t\t\talt.: -i, --ignore"
+			+ "\n\t\t-f, --false\tto acknowledge the following properties"
+			+ "\n\t\t\t\talt.: -a, --acknowledge"
+			+ "\n'clear'\n\tclears the database"
+			+ "\n\tUsage: ~$ clear"
 			+ "\nType the name of another module to switch modules. Available modules: home, db, query.\n";
 
 	/**
@@ -102,7 +111,7 @@ public class AccessDB {
 			}
 
 			Set<String> ignored = DbFunctions.getIgnored();
-			if (ignored.size() == 0) {
+			if (ignored.isEmpty()) {
 				System.out.println("\nNo properties set to be ignored.\n");
 				break;
 			}
@@ -145,14 +154,14 @@ public class AccessDB {
 			case "--true":
 			case "--ig":
 			case "--ignore":
-				toggle = true; // toggle set to true to ignore
+				toggle = true;		// toggle set to true to ignore
 				break;
 			case "-f":
 			case "-a":
 			case "--false":
 			case "--ack":
 			case "--acknowledge":
-				toggle = false; // toggle set to false to acknowledge
+				toggle = false;		// toggle set to false to acknowledge
 				break;
 			case "-l":
 			case "--loc":

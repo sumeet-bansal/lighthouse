@@ -7,10 +7,11 @@ import queryModule.QueryEngine;
 import queryModule.QueryFunctions;
 
 /**
- * Runs the QueryFunctions from the command line.
+ * Main driver for the query module. Processes input, executes the appropriate functionality, and
+ * handles all related and relevant stdout. Runs DbFunctions from the command line.
  * 
  * @author ActianceEngInterns
- * @version 1.3
+ * @version 1.4.0
  */
 public class AccessQRY {
 
@@ -101,12 +102,12 @@ public class AccessQRY {
 			switch (args[i]) {
 			case "-k":
 			case "--key":
-				toggle = 0; // toggle set to 0 for key
+				toggle = 0;		// toggle set to 0 for key
 				break;
 			case "-v":
 			case "--val":
 			case "--value":
-				toggle = 1; // toggle set to 1 for value
+				toggle = 1;		// toggle set to 1 for value
 				break;
 			case "-l":
 			case "--loc":
@@ -134,7 +135,7 @@ public class AccessQRY {
 		// prints CLI output
 		Set<String> matches = QueryFunctions.grep(pattern, toggle);
 		String type = toggle == 0 ? "key" : "value";
-		if (matches.size() == 0) {
+		if (matches.isEmpty()) {
 			System.out.println("\nNo " + type + " matching \"" + pattern + "\" found.\n");
 		} else {
 			System.out.println("\nFound " + matches.size() + " matching " + type + "(s):");
@@ -167,12 +168,12 @@ public class AccessQRY {
 			switch (args[i]) {
 			case "-k":
 			case "--key":
-				toggle = 0; // toggle set to 0 for key
+				toggle = 0;		// toggle set to 0 for key
 				break;
 			case "-v":
 			case "--val":
 			case "--value":
-				toggle = 1; // toggle set to 1 for value
+				toggle = 1;		// toggle set to 1 for value
 				break;
 			case "-l":
 			case "--loc":
@@ -230,8 +231,8 @@ public class AccessQRY {
 	}
 
 	/**
-	 * Handles user input for 'compare' command, prints the results of the comparison, and writes
-	 * them to a CSV file as appropriate.
+	 * Processes user input for the 'compare' command, runs through the full comparison process, and
+	 * writes the results to a CSV file as appropriate.
 	 * 
 	 * Runs through the entire process.
 	 * 
@@ -260,7 +261,7 @@ public class AccessQRY {
 		}
 
 		// invalid query parameters (queries must be made in pairs unless internal)
-		if (queries.size() == 0 || queries.size() > 1 && queries.size() % 2 != 0) {
+		if (queries.isEmpty() || queries.size() > 1 && queries.size() % 2 != 0) {
 			System.err.println("\n[ERROR] Invalid number of queries.\n");
 			return;
 		}
@@ -474,17 +475,32 @@ public class AccessQRY {
 		System.out.println("\n" + writeresult + "\n");
 	}
 
+	/**
+	 * Cleans input paths for processing.
+	 * 
+	 * @param path
+	 *            the path to be cleaned, usually user input
+	 * @return the cleaned path, with standard path delimiters
+	 */
 	private static String cleanPath(String path) {
-		// cleans up path input for processing
-		if (path.charAt(0) == '/') {
-			path = path.substring(1);
+		while (path.contains("\\")) {
+			path = path.replace("\\", "/");
 		}
-		if (path.charAt(path.length() - 1) == '/') {
-			path = path.substring(0, path.length() - 1);
+		while (path.contains("//")) {
+			path = path.replace("//", "/");
 		}
+		path = path.charAt(0) == '/' ? path = path.substring(1) : path;
+		path = path.charAt(path.length() - 1) == '/' ? path = path.substring(0, path.length() - 1) : path;
 		return path;
 	}
 
+	/**
+	 * Formats Maps in JSON format for improved stdout.
+	 * 
+	 * @param map
+	 *            the Map being formatted
+	 * @return a JSON representation of the Map
+	 */
 	private static String formatAsJSON(Map<String, String> map) {
 		String json = "{";
 		for (Map.Entry<String, String> entry : map.entrySet()) {

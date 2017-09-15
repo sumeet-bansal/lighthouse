@@ -7,18 +7,19 @@ import org.apache.log4j.*;
  * Runs the complete diagnostic tool from the command line.
  * 
  * @author ActianceEngInterns
- * @version 1.3
+ * @version 1.4.0
  */
 public class Access {
 
 	public static Scanner s = new Scanner(System.in);
 
 	private static String branch = "home";
-	public static final String VERSION = "1.3.0";
+	public static final String VERSION = "1.4.0";
 	public static final String APPNAME = "lighthouse-v" + VERSION;
 
 	private static String help = "\nHOME PAGE -- POSSIBLE COMMANDS"
-			+ "\n'help'\n\tgoes to the help page for the general diagnostic tool" + "\n\tUsage: ~$ help"
+			+ "\n'help'\n\tgoes to the help page for the general diagnostic tool"
+			+ "\n\tUsage: ~$ help"
 			+ "\n'db'\n\tswitches to the database module to access functions that work directly with the database"
 			+ "\n\tUsage: ~$ db"
 			+ "\n'query'\n\tswitches to the query module to access functions that analyze the contents of the database"
@@ -124,7 +125,7 @@ public class Access {
 		String[] args = command.split(" ");
 
 		// processes args within quotation marks
-		if (command.indexOf('\"') != -1) {
+		if (command.contains("\"")) {
 			ArrayList<String> parsed = new ArrayList<>(); // to simplify chaining logic
 			String full = null; // chains args within quotation marks, null otherwise
 			boolean added = false;
@@ -192,7 +193,7 @@ public class Access {
 	}
 
 	/**
-	 * Prints a welcome page that runs when the user first starts up the jar
+	 * Prints a splash page for when the user first runs the executable JAR.
 	 */
 	public static void printSplash() {
 

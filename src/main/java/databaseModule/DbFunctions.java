@@ -4,19 +4,20 @@ import java.io.*;
 import java.util.*;
 
 import driver.SQLiteManager;
-import parser.*;
+import parser.AbstractParser;
+import parser.DirectoryParser;
 
 /**
- * Generates cache of normalized server config files and data. Must have 'mongod' running
- * simultaneously.
+ * A collection of functions that relate to working directly with the database.
  * 
  * @author ActianceEngInterns
- * @version 2.0
+ * @version 1.4.0
  */
 public class DbFunctions {
 
 	/**
-	 * Feeds parsed Documents into the database.
+	 * Feeds parsed Documents into the database and generates cache of normalized server
+	 * configuration files and data.
 	 * 
 	 * @param path
 	 *            the path of the root directory containing the files to be cached (i.e. a
@@ -121,7 +122,8 @@ public class DbFunctions {
 	}
 
 	/**
-	 * Prints the directory structure of the files within the database.
+	 * Prints the directory structure of the files within the database at an optionally-specified
+	 * scope.
 	 * 
 	 * @param path
 	 *            a specific branch of the structure to print
@@ -134,7 +136,8 @@ public class DbFunctions {
 	}
 
 	/**
-	 * Private method to generate DirTrees of the complete directory structure within the database.
+	 * Generates DirTrees of the complete directory structure within the database.
+	 * 
 	 * @return the generated DirTree, a representation of the complete directory structure within
 	 *         the database
 	 */
@@ -148,7 +151,8 @@ public class DbFunctions {
 	}
 
 	/**
-	 * Details scope of database (i.e. number of environments, fabrics, nodes, files).
+	 * Gives a high-level summary of the contents of the database (i.e. number of environments,
+	 * fabrics, nodes, files).
 	 */
 	public static void printInfo() {
 

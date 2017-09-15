@@ -4,10 +4,10 @@ import java.util.*;
 import driver.SQLiteManager;
 
 /**
- * Pulls queried data from MongoDB for non-comparison searches.
+ * Pulls queried data from the SQLite database for non-comparison searches.
  * 
  * @author ActianceEngInterns
- * @version 1.2
+ * @version 1.4.0
  */
 public class QueryFunctions {
 
@@ -26,7 +26,7 @@ public class QueryFunctions {
 		String type = toggle == 0 ? "key" : "value";
 
 		// replaces regular wildcards with SQL-style wildcards
-		while (pattern.indexOf('*') != -1) {
+		while (pattern.contains("*")) {
 			pattern = pattern.replace("*", "%");
 		}
 
@@ -52,8 +52,8 @@ public class QueryFunctions {
 	 *            a specific path within which to find the key
 	 * @param toggle
 	 *            0 for key, 1 for value
-	 * @return a List of Map<String, String> representing each matching property, where each Map
-	 *         contains the key, value, and path of the matching property instance
+	 * @return a List of Maps, each of which represents a single matching property and contains the
+	 *         key, value, and path of the matching property instance
 	 */
 	public static List<Map<String, String>> findProp(String pattern, String location, int toggle) {
 

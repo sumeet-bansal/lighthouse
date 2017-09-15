@@ -7,10 +7,10 @@ import java.util.*;
 import driver.SQLiteManager;
 
 /**
- * Pulls queried data from MongoDB and compares key values.
+ * Pulls queried data from the SQLite database and compares configuration data.
  * 
  * @author ActianceEngInterns
- * @version 1.3
+ * @version 1.4.0
  */
 public class QueryEngine {
 
@@ -23,12 +23,9 @@ public class QueryEngine {
 
 	/*
 	 * String[]: CSV row, formatted {file, key, value, file, key, value, key diff, value diff}
-	 * 
-	 * ArrayList<String[]>: a single SQL_TABLE containing the entirety of a comparison between
-	 * queries
-	 * 
-	 * ArrayList<ArrayList<String>>: multiple tables, necessary due to how internal queries generate
-	 * several tables for each comparison between fabrics/nodes
+	 * LinkedList<String[]>: a single table containing the entirety of a comparison between queries
+	 * LinkedList<LinkedList<String>>: multiple tables, necessary due to how internal queries
+	 * generate several tables for each comparison between fabrics/nodes
 	 */
 	private LinkedList<LinkedList<String[]>> tables = new LinkedList<>();
 
@@ -40,7 +37,7 @@ public class QueryEngine {
 	private final String SQL_TABLE = SQLiteManager.getTable();
 
 	/**
-	 * Constructor.
+	 * Constructor. Initializes the discrepancy tracking Map.
 	 */
 	public QueryEngine() {
 		discrepancies.put("key", 0);
@@ -49,10 +46,10 @@ public class QueryEngine {
 	}
 
 	/**
-	 * Getter method for SQL_TABLE.
+	 * Getter method for the table.
 	 * 
-	 * @return a 2D representation of CSV as a series of tables, with each SQL_TABLE representing a
-	 *         single comparison
+	 * @return a 2D representation of CSV as a series of tables, with each table representing a
+	 *         single comparison between a query pair
 	 */
 	public LinkedList<LinkedList<String[]>> getTables() {
 		return tables;
@@ -89,7 +86,8 @@ public class QueryEngine {
 	 * 
 	 * @param path
 	 *            the path containing the subdirectories being compared against each other
-	 * @return a String representing the status of the query: null if successful, else error message
+	 * @return an ArrayList of Strings representing all possible subdirectories or subpaths within
+	 *         the given path
 	 */
 	public ArrayList<String> generateInternalQueries(String path) {
 
@@ -147,7 +145,8 @@ public class QueryEngine {
 	 * @param pathR
 	 *            the other path being compared
 	 * 
-	 * @return a String containing any filters throwing exceptions (empty if none)
+	 * @return an ArrayList of filters (represented as the standard Map) that have been successfully
+	 *         added to the internal query queue, unless the filters have an additional "error" key
 	 */
 	public ArrayList<Map<String, String>> addQuery(String pathL, String pathR) {
 
@@ -182,14 +181,12 @@ public class QueryEngine {
 	}
 
 	/**
-	 * Excludes queried files with certain attributes from being compared.
-	 * 
-	 * // adds all exclusions to a Set to be cross-referenced during comparison
-	 * 
+	 * Adds all queried files with certain attributes (matching the filter) to the internal Set of
+	 * exclusions to be cross-referenced during comparison.
 	 * 
 	 * @param path
-	 *            the path of the file being blocked
-	 * @return a String containing all exclusion filters (empty if none)
+	 *            the filter as represented by a file or directory path
+	 * @return the Map equivalent of the path filter
 	 */
 	public Map<String, String> exclude(String path) {
 		Map<String, String> filter = SQLiteManager.generatePathFilter(path);
@@ -198,7 +195,7 @@ public class QueryEngine {
 	}
 
 	/**
-	 * Clears the internal queuedQueries and exclusions Lists.
+	 * Clears the internal query queue and exclusions list.
 	 */
 	public void clearQuery() {
 		queuedQueries.clear();
@@ -209,10 +206,12 @@ public class QueryEngine {
 	}
 
 	/**
-	 * Retrieves filtered files from the MongoDB database, excludes files as appropriate, compares
+	 * Retrieves filtered files from the SQLite database, excludes files as appropriate, compares
 	 * the remaining queried files, and adds the results to a CSV file.
 	 * 
-	 * @return a String detailing the results of the operation
+	 * @return a Map detailing the results of the operation--the "queried" key contains the Integer
+	 *         value of the number of queried properties and the "excluded" key contains the Integer
+	 *         value of the number of properties excluded from comparison
 	 */
 	public Map<String, Integer> run() {
 
@@ -313,14 +312,18 @@ public class QueryEngine {
 	}
 
 	/**
-	 * Compares Documents and adds the comparison outcomes to the SQL_TABLE.
+	 * Compares Documents and adds the comparison outcomes to the table.
 	 * 
 	 * @param propsL
-	 *            a List of Documents representing every property in the left side of the query
+	 *            a Map representing every property in the left side of the query--the key for each
+	 *            entry is the property key name to allow for hashing and efficient lookup and the
+	 *            value is the full property as a standard Map
 	 * @param propsR
-	 *            a List of Documents representing every property in the right side of the query
-	 * @return the SQL_TABLE as an ArrayList of String[] containing the entirety of a comparison
-	 *         between queries, with each String[] representing a CSV row
+	 *            a Map representing every property in the right side of the query--the key for each
+	 *            entry is the property key name to allow for hashing and efficient lookup and the
+	 *            value is the full property as a standard Map
+	 * @return the resulting table as an ArrayList of String[] containing the entirety of a
+	 *         comparison between queries, with each String[] representing a CSV row
 	 */
 	private LinkedList<String[]> compare(Map<String, Map<String, String>> propsL,
 			Map<String, Map<String, String>> propsR) {
