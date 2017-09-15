@@ -6,7 +6,6 @@ import java.util.*;
 
 import org.junit.*;
 
-import databaseModule.DbFunctions;
 import driver.SQLiteManager;
 
 /**
@@ -17,14 +16,16 @@ import driver.SQLiteManager;
  */
 public class SQLiteManagerTester {
 
-	String root = System.getProperty("user.home") + "/workspace/lighthouse/root/";
-	String table = SQLiteManager.getTable();
-	Map<String, String> p1 = new HashMap<>();
-	Map<String, String> p2 = new HashMap<>();
-	Map<String, String> p3 = new HashMap<>();
+	private static final String table = SQLiteManager.getTable();
+	private static Map<String, String> p1 = new HashMap<>();
+	private static Map<String, String> p2 = new HashMap<>();
+	private static Map<String, String> p3 = new HashMap<>();
 
-	@Before
-	public void initialize() {
+	/**
+	 * Sets up testbed by initializing test properties.
+	 */
+	@BeforeClass
+	public static void initialize() {
 		p1 = new LinkedHashMap<>();
 		p1.put("key", "testk");
 		p1.put("value", "testv");
@@ -134,7 +135,11 @@ public class SQLiteManagerTester {
 	@Test
 	public void testClear() {
 		SQLiteManager.clear();
-		DbFunctions.populate(root);
+		ArrayList<Map<String, String>> p123 = new ArrayList<>();
+		p123.add(p1);
+		p123.add(p2);
+		p123.add(p3);
+		SQLiteManager.insertBatch(p123);
 		assertTrue(SQLiteManager.getSize() > 0);
 		SQLiteManager.clear();
 		assertEquals(SQLiteManager.getSize(), 0);
@@ -280,7 +285,6 @@ public class SQLiteManagerTester {
 	 */
 	@Test
 	public void testDeleteBatch() {
-		SQLiteManager.connectToDatabase();
 		SQLiteManager.clear();
 		List<Map<String, String>> res;
 		String sql;

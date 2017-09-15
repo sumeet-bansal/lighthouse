@@ -19,14 +19,14 @@ import driver.SQLiteManager;
  */
 public class DbFunctionsTester {
 
-	String root;
+	private final static String root = System.getProperty("user.home") + "/workspace/lighthouse/root/";
 	private final int PROPERTIES = 17965;
 
 	/**
-	 * Sets up the testbed by populating the Mongo database.
+	 * Sets up the testbed by populating the SQLite database.
 	 */
-	@Before
-	public void setup() {
+	@BeforeClass
+	public static void setup() {
 
 		// disables logging, works in parallel with log4j.properties
 		@SuppressWarnings("unchecked")
@@ -36,7 +36,8 @@ public class DbFunctionsTester {
 			logger.setLevel(Level.OFF);
 		}
 
-		root = System.getProperty("user.home") + "/workspace/lighthouse/root/";
+		SQLiteManager.connectToDatabase();
+		DbFunctions.populate(root);
 	}
 
 	/**
@@ -44,6 +45,7 @@ public class DbFunctionsTester {
 	 */
 	@Test
 	public void testPopulate() {
+		SQLiteManager.clear();
 		long populated = DbFunctions.populate(root);
 		assertEquals(populated, PROPERTIES);
 		assertEquals(SQLiteManager.getSize(), populated);
@@ -103,8 +105,6 @@ public class DbFunctionsTester {
 	 */
 	@Test
 	public void testPopTree() {
-		SQLiteManager.connectToDatabase();
-		DbFunctions.populate(root);
 		DirTree tree = DbFunctions.popTree();
 
 		// verify tree contains only and all distinct filepaths

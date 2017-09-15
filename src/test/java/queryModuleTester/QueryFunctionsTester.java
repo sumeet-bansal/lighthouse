@@ -19,13 +19,13 @@ import driver.SQLiteManager;
  */
 public class QueryFunctionsTester {
 
-	String root;
+	private static final String root = System.getProperty("user.home") + "/workspace/lighthouse/root/";
 
 	/**
 	 * Sets up the testbed by populating the SQLite database.
 	 */
-	@Before
-	public void setup() {
+	@BeforeClass
+	public static void setup() {
 
 		// disables logging, works in parallel with log4j.properties
 		@SuppressWarnings("unchecked")
@@ -35,7 +35,9 @@ public class QueryFunctionsTester {
 			logger.setLevel(Level.OFF);
 		}
 
-		root = System.getProperty("user.home") + "/workspace/lighthouse/root/";
+		SQLiteManager.clear();
+		DbFunctions.populate(root);
+
 	}
 
 	/**
@@ -43,9 +45,6 @@ public class QueryFunctionsTester {
 	 */
 	@Test
 	public void testGrep() {
-		SQLiteManager.connectToDatabase();
-		SQLiteManager.clear();
-		DbFunctions.populate(root);
 		Set<String> expected;
 
 		// verifies grep, no toggle
@@ -77,8 +76,7 @@ public class QueryFunctionsTester {
 	}
 
 	/**
-	 * Tests
-	 * {@link queryModule.QueryFunctions#findProp(java.lang.String, java.lang.String, int)}.
+	 * Tests {@link queryModule.QueryFunctions#findProp(java.lang.String, java.lang.String, int)}.
 	 */
 	@Test
 	public void testFindProp() {
