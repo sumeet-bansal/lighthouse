@@ -40,8 +40,13 @@ public abstract class AbstractParser {
 		String relativePath = path.substring(root.length());
 		String[] split = relativePath.split("/");
 		String[] delimitedPath = new String[predictedPath.length];
-		for (int i = 0; i < split.length - 1; i++) {
-			delimitedPath[i] = split[i];
+		try {
+			for (int i = 0; i < split.length - 1; i++) {
+				delimitedPath[i] = split[i];
+			}
+		} catch (ArrayIndexOutOfBoundsException e) {
+			System.err.println("\n[ERROR] Incompatible directory structure.\nExiting with error code 1.");
+			System.exit(1);
 		}
 		delimitedPath[delimitedPath.length - 1] = split[split.length - 1];
 
