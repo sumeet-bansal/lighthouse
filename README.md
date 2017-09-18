@@ -41,10 +41,10 @@ Lighthouse standardizes and parses various server configuration files (e.g. .pro
 + property searches within the database to see the locations and values of that property
 + an extremely scalable and extensible program architecture
 
-The command-line application features full-fledged help pages with detailed information about each individual command (e.g. purpose, usage). More specific information on the usage of each modular component of Lighthouse can be found within the help pages of the command-line application or [the v1.4.0 demo presentation](https:/docs.google.com/presentation/d/1711yUaoKp8omFTRhEUGPJnlApA5UuHwN2WRJ2gde3c0/pub?start=true&loop=false&delayms=3000). More specific information on the architecture and modular program design can be found below.
+The command-line application features full-fledged help pages with detailed information about each individual command (e.g. purpose, usage). More specific information on the usage of each modular component of Lighthouse can be found within the help pages of the command-line application. More specific information on the architecture and modular program design can be found below.
 
 ## Architecture and Pipeline
-Lighthouse was developed entirely within Java and utilizes the [SQLite-JDBC API](https://github.com/xerial/sqlite-jdbc) significantly. The complementary [`crawler` collection](https:/github.com/sumeet-bansal/crawler) was developed as a collection of both regular scripts and wrappers for Java applications and heavily utilizes the ZooKeeper API.
+Lighthouse was developed entirely within Java and utilizes the [SQLite-JDBC library](https://github.com/xerial/sqlite-jdbc) significantly. The complementary [`crawler` collection](https:/github.com/sumeet-bansal/crawler) was developed as a collection of both regular scripts and wrappers for Java applications and heavily utilizes the ZooKeeper API.
 
 ## Set Up
 __Lighthouse requires having JRE 1.8 installed__. It can be run as a command-line executable:
@@ -52,7 +52,7 @@ __Lighthouse requires having JRE 1.8 installed__. It can be run as a command-lin
 2. Navigate to the directory containing the executable.
 3. Run the following command: `java -jar lighthouse-1.4.0.jar`. From here, the application help pages are sufficiently detailed to run Lighthouse.
 
-The [`prereq-installer.sh` script](https:/github.com/sumeet-bansal/lighthouse/blob/master/scripts/prereq-installer.sh) for \*Nix systems can ensure all Lighthouse prerequisites are installed on stable LTS releases of [Ubuntu](https:/www.ubuntu.com/). The [`addon-installer.sh` script](https:/github.com/sumeet-bansal/lighthouse/blob/master/scripts/addon-installer.sh) installs useful programs to enhance Lighthouse, e.g. [tabview](https:/github.com/TabViewer/tabview), a command-line CSV viewer.
+The [`prereq-installer.sh` script](https:/github.com/sumeet-bansal/lighthouse/blob/master/scripts/prereq-installer.sh) can ensure all Lighthouse prerequisites are installed on stable LTS releases of [Ubuntu](https:/www.ubuntu.com/). The [`addon-installer.sh` script](https:/github.com/sumeet-bansal/lighthouse/blob/master/scripts/addon-installer.sh) installs useful programs to enhance Lighthouse, e.g. [tabview](https:/github.com/TabViewer/tabview), a command-line CSV viewer.
 
 ## Generating Configuration Files
 The `crawler` program acts as a complement to the 'lighthouse' diagnostic suite and can be found [here](https:/github.com/sumeet-bansal/crawler). Crawler retrieves and generates various server configuration files (e.g. .properties, .config, .yaml) from individual dev environments and populates user-specified root directories.
@@ -126,9 +126,9 @@ The second, `jar-organizer.sh`, takes a collection of `.jars` files and organize
 organized root/RWC-Dev/hazelcast/n2/fab-eng02-haz-n2.lib.jars
 organized root/RWC-Dev/hazelcast/n2/fab-eng02-haz-n2.apclib.jars
 ```
-The third, `RWC-jar-generator.sh`, works specifically with the Redwood City dev environments, cycling through them and generating a complete inventory of the dependencies in each node of a fabric. `RWC-jar-generator.sh` can be easily modified to do the same for any set of environments.
+The third, `RWC-jar-generator.sh`, works specifically with the Redwood City dev environments, cycling through them and generating a complete inventory of the dependencies in each node of a fabric. __Note: Generating dependency data through this script requires having the `expect` package installed.__ `RWC-jar-generator.sh` can be easily modified to do the same for any set of environments and takes the sysops password as an argument.
 ```
-~$ ./RWC-jar-generator.sh
+~$ ./RWC-jar-generator.sh pass
 generated ~/fab-eng02-haz-n1.lib.jars
 generated ~/fab-eng02-haz-n1.apclib.jars
 organized root/RWC-Dev/hazelcast/n2/fab-eng02-haz-n1.lib.jars
@@ -606,7 +606,7 @@ Found 3 matching property keys:
     - auto-updating database cache
 - validating IP addresses and ports
     
-Further suggestions welcome. For information on contacting developers, please see ['Developers' section](#developers).
+Further suggestions welcome. For information on contacting developers, please see [the 'Developers' section](#developers).
 
 ## Code and Build
 The code can be found online on [the GitHub page for Lighthouse](https:/github.com/sumeet-bansal/lighthouse) and each release of Lighthouse can be found online on [the GitHub releases page for Lighthouse](https:/github.com/sumeet-bansal/lighthouse/releases). Detailed documentation can be found [here](https://cdn.rawgit.com/sumeet-bansal/lighthouse/v1.4/documentation/main/index.html). Lighthouse is currently on release v1.4.0 with future releases under development. The repository is set up as a Maven project that can be easily compiled and built.
