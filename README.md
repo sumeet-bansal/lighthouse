@@ -44,7 +44,7 @@ Lighthouse standardizes and parses various server configuration files (e.g. .pro
 The command-line application features full-fledged help pages with detailed information about each individual command (e.g. purpose, usage). More specific information on the usage of each modular component of Lighthouse can be found within the help pages of the command-line application. More specific information on the architecture and modular program design can be found below.
 
 ## Architecture and Pipeline
-Lighthouse was developed entirely within Java and utilizes the [SQLite-JDBC library](https://github.com/xerial/sqlite-jdbc) significantly. The complementary [`crawler` collection](https:/github.com/sumeet-bansal/crawler) was developed as a collection of both regular scripts and wrappers for Java applications and heavily utilizes the ZooKeeper API.
+Lighthouse was developed entirely within Java and utilizes the [SQLite-JDBC library](https://github.com/xerial/sqlite-jdbc) significantly. The complementary [`crawler` collection](https://github.com/sumeet-bansal/crawler) was developed as a collection of both regular scripts and wrappers for Java applications and heavily utilizes the ZooKeeper API.
 
 ## Set Up
 __Lighthouse requires having JRE 1.8 installed__. It can be run as a command-line executable:
@@ -52,10 +52,10 @@ __Lighthouse requires having JRE 1.8 installed__. It can be run as a command-lin
 2. Navigate to the directory containing the executable.
 3. Run the following command: `java -jar lighthouse-1.4.0.jar`. From here, the application help pages are sufficiently detailed to run Lighthouse.
 
-The [`prereq-installer.sh` script](https:/github.com/sumeet-bansal/lighthouse/blob/master/scripts/prereq-installer.sh) can ensure all Lighthouse prerequisites are installed on stable LTS releases of [Ubuntu](https:/www.ubuntu.com/). The [`addon-installer.sh` script](https:/github.com/sumeet-bansal/lighthouse/blob/master/scripts/addon-installer.sh) installs useful programs to enhance Lighthouse, e.g. [tabview](https:/github.com/TabViewer/tabview), a command-line CSV viewer.
+The [`prereq-installer.sh` script](https://github.com/sumeet-bansal/lighthouse/blob/master/scripts/prereq-installer.sh) can ensure all Lighthouse prerequisites are installed on stable LTS releases of [Ubuntu](https:/www.ubuntu.com/). The [`addon-installer.sh` script](https://github.com/sumeet-bansal/lighthouse/blob/master/scripts/addon-installer.sh) installs useful programs to enhance Lighthouse, e.g. [tabview](https://github.com/TabViewer/tabview), a command-line CSV viewer.
 
 ## Generating Configuration Files
-The `crawler` program acts as a complement to the 'lighthouse' diagnostic suite and can be found [here](https:/github.com/sumeet-bansal/crawler). Crawler retrieves and generates various server configuration files (e.g. .properties, .config, .yaml) from individual dev environments and populates user-specified root directories.
+The `crawler` program acts as a complement to the 'lighthouse' diagnostic suite and can be found [here](https://github.com/sumeet-bansal/crawler). Crawler retrieves and generates various server configuration files (e.g. .properties, .config, .yaml) from individual dev environments and populates user-specified root directories.
 
 ### Generating ZooKeeper Files
 __Generating ZooKeeper files requires having JRE 1.8 installed.__
@@ -70,7 +70,7 @@ generated .properties file(s) for dev/fabric3
 
 For each fabric within that environment, the command will then create some file `root/dev/fabric/server.properties` and, if there is a `blacklist` branch but no `purge` branches within the fabric, the command will additionally create a file `root/dev/fabric/server.blacklist.properties`.
 
-However, since crawler is designed as a collection of scripts, a Shell wrapper for ZooKeeper generation is available: [`zk-wrapper.sh`](https:/github.com/sumeet-bansal/crawler/blob/master/scripts/zk-wrapper.sh). To use this wrapper, first specify each environment and IP within the associative array of the script. For example, to add `dev1` with environment `127.0.0.1` and `dev3` with environment `127.0.0.3`, modify the script as such:
+However, since crawler is designed as a collection of scripts, a Shell wrapper for ZooKeeper generation is available: [`zk-wrapper.sh`](https://github.com/sumeet-bansal/crawler/blob/master/scripts/zk-wrapper.sh). To use this wrapper, first specify each environment and IP within the associative array of the script. For example, to add `dev1` with environment `127.0.0.1` and `dev3` with environment `127.0.0.3`, modify the script as such:
 
 Before:
 ```bash
@@ -95,7 +95,7 @@ IPTable[dev3]=127.0.0.3
 ...
 ```
 
-Assuming the [`zk-crawler.jar`](https:/github.com/sumeet-bansal/crawler/blob/master/scripts/zk-crawler.jar) file is still in the same directory as the wrapper, [`zk-wrapper.sh`](https:/github.com/sumeet-bansal/crawler/blob/master/scripts/zk-wrapper.sh) can then be run as a normal Shell script:
+Assuming the [`zk-crawler.jar`](https://github.com/sumeet-bansal/crawler/blob/master/scripts/zk-crawler.jar) file is still in the same directory as the wrapper, [`zk-wrapper.sh`](https://github.com/sumeet-bansal/crawler/blob/master/scripts/zk-wrapper.sh) can then be run as a normal Shell script:
 ```
 ~$ chmod u+x zk-wrapper.sh
 ~$ ./zk-wrapper.sh
@@ -108,7 +108,7 @@ generated .properties file(s) for dev3/fabric3
 ```
 
 ### Generating Dependency Data
-Crawler has three scripts that work in tandem to generate dependency data for a node or set of nodes: [`jar-generator.sh`](https:/github.com/sumeet-bansal/crawler/blob/master/scripts/jar-generator.sh), [`jar-organizer.sh`](https:/github.com/sumeet-bansal/crawler/blob/master/scripts/jar-organizer.sh), and [`RWC-jar-generator.sh`](https:/github.com/sumeet-bansal/crawler/blob/master/scripts/RWC-jar-generator.exp). The first, `jar-generator.sh`, must be run from within an environment. Assuming a standard fabric-naming scheme, `jar-generator.sh` detects which fabric it's being run from and comes hardcoded with the locations of each `lib/` folder for that specific fabric. It then generates a `.jars` file with the structure:
+Crawler has three scripts that work in tandem to generate dependency data for a node or set of nodes: [`jar-generator.sh`](https://github.com/sumeet-bansal/crawler/blob/master/scripts/jar-generator.sh), [`jar-organizer.sh`](https://github.com/sumeet-bansal/crawler/blob/master/scripts/jar-organizer.sh), and [`RWC-jar-generator.sh`](https://github.com/sumeet-bansal/crawler/blob/master/scripts/RWC-jar-generator.exp). The first, `jar-generator.sh`, must be run from within an environment. Assuming a standard fabric-naming scheme, `jar-generator.sh` detects which fabric it's being run from and comes hardcoded with the locations of each `lib/` folder for that specific fabric. It then generates a `.jars` file with the structure:
 ```
 dependency1.jar=size1
 dependency2.jar=size2
@@ -180,7 +180,7 @@ and placing that file within the appropriate fabric. All properties with keys ma
 
 ### Adding Support for New File Types
 
-To create a parser for a new file type, extend the `AbstractParser` class, which contains supporting methods for any given parser. Within the new parser, the only code to be written is the `standardize()` method, which varies from file type to file type. Once this new parser is up and running, the parser and its file types must be added to the `instantiateParser()` method of the `FileParser` class, which delegates functionality to different parsers by file type. A more detailed guide to added a new file type can be found [here](https:/github.com/sumeet-bansal/lighthouse/blob/master/src/main/java/parser/ParserGuide.md). When this is all completed, the new parser will be completely functional and Lighthouse as a whole will be able to parse the new file type, cache and query all files of that type in and from the database.
+To create a parser for a new file type, extend the `AbstractParser` class, which contains supporting methods for any given parser. Within the new parser, the only code to be written is the `standardize()` method, which varies from file type to file type. Once this new parser is up and running, the parser and its file types must be added to the `instantiateParser()` method of the `FileParser` class, which delegates functionality to different parsers by file type. A more detailed guide to added a new file type can be found [here](https://github.com/sumeet-bansal/lighthouse/blob/master/src/main/java/parser/ParserGuide.md). When this is all completed, the new parser will be completely functional and Lighthouse as a whole will be able to parse the new file type, cache and query all files of that type in and from the database.
 
 ### Currently Supported File Types:
 + `.properties`
@@ -609,10 +609,10 @@ Found 3 matching property keys:
 Further suggestions welcome. For information on contacting developers, please see [the 'Developers' section](#developers).
 
 ## Code and Build
-The code can be found online on [the GitHub page for Lighthouse](https:/github.com/sumeet-bansal/lighthouse) and each release of Lighthouse can be found online on [the GitHub releases page for Lighthouse](https:/github.com/sumeet-bansal/lighthouse/releases). Detailed documentation can be found [here](https://cdn.rawgit.com/sumeet-bansal/lighthouse/v1.4/documentation/main/index.html). Lighthouse is currently on release v1.4.0 with future releases under development. The repository is set up as a Maven project that can be easily compiled and built.
+The code can be found online on [the GitHub page for Lighthouse](https://github.com/sumeet-bansal/lighthouse) and each release of Lighthouse can be found online on [the GitHub releases page for Lighthouse](https://github.com/sumeet-bansal/lighthouse/releases). Detailed documentation can be found [here](https://cdn.rawgit.com/sumeet-bansal/lighthouse/v1.4/documentation/main/index.html). Lighthouse is currently on release v1.4.0 with future releases under development. The repository is set up as a Maven project that can be easily compiled and built.
 
 ### Useful Maven Commands
-Specific behavior for each of these commands has been defined in the [POM](https:/github.com/sumeet-bansal/lighthouse/blob/master/pom.xml).
+Specific behavior for each of these commands has been defined in the [POM](https://github.com/sumeet-bansal/lighthouse/blob/master/pom.xml).
 
 To purge the local dependency cache (e.g. in case of corrupted dependencies):
 ```

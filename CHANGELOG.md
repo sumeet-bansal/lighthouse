@@ -5,7 +5,7 @@ Currently on [version 1.4.0](https://github.com/sumeet-bansal/lighthouse/release
 ### Added or Changed
 + any requested features
 
-## [Lighthouse v1.4.0](https://github.com/sumeet-bansal/lighthouse/compare/v1.3...v1.4)
+## [Lighthouse v1.4.0](https://github.com/sumeet-bansal/lighthouse/compare/v1.3...v1.4) (Sept 15, 2017)
 Complete database rehaul and [full feature release](https://github.com/sumeet-bansal/lighthouse/releases/tag/v1.4).
 ### Added
 + support for SQLite
