@@ -267,15 +267,20 @@ public class AccessQRY {
 		}
 
 		// verifies query and exclusion paths
-		for (int i = 0; i < queries.size(); i++) {
-			if (queries.get(i).split("/").length > 4) {
-				System.err.println("\n[ERROR] Invalid path input: " + queries.get(i) + "\n");
+		String table = SQLiteManager.getTable();
+		ArrayList<String> paths = new ArrayList<>();
+		paths.addAll(queries);
+		paths.addAll(exclusions);
+		for (String path : paths) {
+			if (path.split("/").length > 4) {
+				System.err.println("\n[ERROR] Invalid path input: " + paths + "\n");
 				return;
 			}
-		}
-		for (int i = 0; i < exclusions.size(); i++) {
-			if (exclusions.get(i).split("/").length > 4) {
-				System.err.println("\n[ERROR] Invalid path input: " + exclusions.get(i) + "\n");
+
+			Map<String, String> filter = SQLiteManager.generatePathFilter(path);
+			String sql = "SELECT * FROM " + table + SQLiteManager.generateSQLFilter(filter, null);
+			if (SQLiteManager.select(sql).isEmpty()) {
+				System.err.println("\n[ERROR] Invalid path: " + path + "\n");
 				return;
 			}
 		}
